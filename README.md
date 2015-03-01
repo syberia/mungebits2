@@ -4,3 +4,5 @@ Mungebits 2 [![Build Status](https://travis-ci.org/robertzk/mungebits2.svg?branc
 A way of thinking about data preparation that couples the definition of what happens in batch processing versus
 online prediction so that both can be described by the same codebase.
 
+A re-implementation of mungebits that removes the need for non-standard evaluation,
+and provides better integration with stageRunner.
