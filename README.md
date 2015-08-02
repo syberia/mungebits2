@@ -5,4 +5,4 @@ A way of thinking about data preparation that couples the definition of what hap
 online prediction so that both can be described by the same codebase.
 
 A re-implementation of mungebits that removes the need for non-standard evaluation,
-and provides better integration with stageRunner.
+and provides better integration with [stageRunner](https://github.com/robertzk/stagerunner).
