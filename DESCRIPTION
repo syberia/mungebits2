@@ -4,19 +4,20 @@ Title: mungebits2 (http://github.com/robertzk/mungebits2)
 Description: A way of thinking about data preparation that
     couples the definition of what happens in batch processing versus
     online prediction so that both can be described by the same codebase.
+    With mungebits, you can save time on having to re-implement your
+    R code to work in production and instead re-use the same codebase.
 Version: 0.1.0
 Author: Robert Krzyzanowski <technoguyrob@gmail.com>
 Maintainer: Robert Krzyzanowski <technoguyrob@gmail.com>
 Authors@R: c(person("Robert", "Krzyzanowski",
     email = "technoguyrob@gmail.com", role = c("aut", "cre")))
 Depends:
-    R (>= 3.0.1)
+    R (>= 3.1.0)
 License: MIT
 LazyData: true
 Imports:
     stagerunner
 Suggests:
-    knitr,
-    microbenchmark,
-    testthat
+    testthat,
+    testthatsomemore
 Roxygen: list(wrap = FALSE)
