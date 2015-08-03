@@ -71,5 +71,25 @@ is a lack of respect for this dichotomy. Using mungebits makes
 this duality blatantly apparent in all circumstances and will hopefully
 reduce the amount of time wasted on cumbersome wrangling.
 }
+\examples{
+\dontrun{
+mb <- mungebit(column_transformation(function(col, scale = NULL) {
+  if (!isTRUE(trained)) { # trained is an injected keyword
+   cat("Column scaled by ", input$scale, "\\n")
+  } else {
+   input$scale <- scale
+  }
+
+  col * inputs$scale
+}))
+
+iris2 <- mb$run(iris, "Sepal.Length", 2)
+# iris2 now contains a copy of iris with Sepal.Length doubled.
+iris3 <- mb$run(iris2, "Sepal.Length")
+# > Column scaled by 2
+head(iris3[[1]] / iris[[1]])
+# > [1] 4 4 4 4 4 4
+}
+}
 \keyword{datasets}
 
