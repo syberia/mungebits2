@@ -1,3 +1,5 @@
+initialize <- run <- train <- predict <- function(...) { }
+
 #' Mungebits are atomic data transformations that are amenable to productionization.
 #'
 #' The majority of data projects are overcome by the burden of excessive
@@ -67,8 +69,16 @@
 #' @name mungebit
 mungebit <- R6::R6Class("mungebit",
   public = list(
-    initialize = function(...) {
-    }
+    .train_function   = NULL, # Function or NULL
+    .predict_function = NULL, # Function or NULL
+    .inputs           = NULL, # Environment
+    .trained          = NULL, # Logical
+    .enforce_train    = NULL, # Logical
+
+    initialize = initialize,
+    run        = run,
+    train      = train,
+    predict    = predict
   )
 )
 
