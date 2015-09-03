@@ -2,7 +2,7 @@ initialize <- run <- train <- predict <- function(...) { }
 
 ## The idea behind mungebits grew out of a year-long session 
 ## attempting to productionize R code without translating it into
-## another language.
+## another programming language.
 ##
 ## Almost every package that implements a statistical predictor
 ## requires the user to provide a *wrangled* dataset, that is, one
@@ -20,8 +20,8 @@ initialize <- run <- train <- predict <- function(...) { }
 ## The choice of which variables make it into the "OTHER"
 ## label is determined by the training set, which may differ across
 ## random cross-validation splits and change as an organization 
-## gathers more data or the distribution shifts, such as due to a changing market
-## or consumer base.
+## gathers more data or the distribution shifts, such as due to
+## a changing consumer base or market conditions.
 ##
 ## When one refits a model with the new dataset, it would be ideal if
 ## the data preparation *automatically* reflected the updated values
@@ -33,7 +33,7 @@ initialize <- run <- train <- predict <- function(...) { }
 ## ```r
 ## during_training <- function(factor_column) {
 ##   frequencies <- table(factor_column)
-##   most_common <- names(which(table(factor_column) / length(factor_column) > 0.05))
+##   most_common <- names(which(frequencies / length(factor_column) > 0.05))
 ##   factor_column <- factor(
 ##     ifelse(factor_column %in% most_common, factor_column, "OTHER"),
 ##     levels = c(most_common, "OTHER")
@@ -41,6 +41,7 @@ initialize <- run <- train <- predict <- function(...) { }
 ##   list(new_column = factor_column, most_common = most_common)
 ## }
 ##
+## # Let's create an example variable.
 ## factor_column <- factor(rep(1:20, 1:20))
 ## output <- during_training(factor_column)
 ## factor_column <- output$new_column
@@ -68,20 +69,23 @@ initialize <- run <- train <- predict <- function(...) { }
 ##   during_prediction(15, output$most_common),
 ##   factor("15", levels = c(as.character(11:20), "OTHER"))
 ## ))
+##
+## # In a real setting, we would want to operate on full data.frames
+## # instead of only on atomic vectors.
 ## ```
 ## 
 ## It may seem silly to create a factor variable with a single value
 ## and a surplus of unused levels, but that is only the case if you
 ## have never tried to productionize your data science models! Remember,
 ## even if you trained a simple regression, your factor columns will need
-## to be converted to 0/1 columns using something like `model.matrix`, and 
-## it will yell at you if the correct levels are not there on the factor
-## column.
+## to be converted to 0/1 columns using something like the `model.matrix`
+## helper function, and this will yell at you if the correct levels are not
+## there on the factor column.
 ## 
-## The point of mungebits is to replace all that hard work, which in the
-## work of the author has sometimes spanned data preparation procedures
+## The point of mungebits is to replace all that hard work--which in the
+## experience of the author has sometimes spanned data preparation procedures
 ## composed of *hundreds* of steps like the above for collections of
-## *thousands* of variables, with the much simplified
+## *thousands* of variables--with the much simplified
 ##
 ## ```r
 ## # During offline training.
@@ -90,8 +94,10 @@ initialize <- run <- train <- predict <- function(...) { }
 ##
 ## The mungebit has now been "trained" and remembers the `common_levels`
 ## defined earlier. In a production system, we will be able to run the
-## exact same code on a single row of data, and have a streaming machine
-## learning engine that includes hard data wrangling work--in R.
+## exact same code on a single row of data, as long as we serialize
+## the mungebit object and recall it during production. This gives us
+## a streaming machine learning engine that includes hard data
+## wrangling work--in R.
 ##
 ## ```r
 ## # During real-time prediction.
