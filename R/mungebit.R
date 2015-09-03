@@ -1,5 +1,105 @@
 initialize <- run <- train <- predict <- function(...) { }
 
+## The idea behind mungebits grew out of a year-long session 
+## attempting to productionize R code without translating it into
+## another language.
+##
+## Almost every package that implements a statistical predictor
+## requires the user to provide a *wrangled* dataset, that is, one
+## stripped of outliers, with correctly coerced types, and an array
+## of other "data preparation" aspects that may affect the final
+## performance of the model.
+##
+## Consider, for example, making use of a categorical variable that
+## has many unique values, some of which occur commonly and others
+## incredibly rarely. It may improve performance of some classifiers
+## to take the rare values, say those which occur with a frequency
+## of less than 5% in the data set, and label them as the value 
+## "OTHER".
+##
+## The choice of which variables make it into the "OTHER"
+## label is determined by the training set, which may differ across
+## random cross-validation splits and change as an organization 
+## gathers more data or the distribution shifts, such as due to a changing market
+## or consumer base.
+##
+## When one refits a model with the new dataset, it would be ideal if
+## the data preparation *automatically* reflected the updated values
+## by picking the set of labels that occur with greater than 5%
+## frequency and labeling all others as "OTHER".
+##
+## In code, we may say that
+##
+## ```r
+## during_training <- function(factor_column) {
+##   frequencies <- table(factor_column)
+##   most_common <- names(which(table(factor_column) / length(factor_column) > 0.05))
+##   factor_column <- factor(
+##     ifelse(factor_column %in% most_common, factor_column, "OTHER"),
+##     levels = c(most_common, "OTHER")
+##   )
+##   list(new_column = factor_column, most_common = most_common)
+## }
+##
+## factor_column <- factor(rep(1:20, 1:20))
+## output <- during_training(factor_column)
+## factor_column <- output$new_column
+## 
+## # We would hold on to output$most_common and "feed it" to
+## # munging code that ran in production on single data points.
+## during_prediction <- function(factor_column, most_common) {
+##   factor(ifelse(factor_column %in% most_common, factor_column, "OTHER"),
+##     levels = c(most_common, "OTHER"))
+## }
+## 
+## # Notice we have re-used our earlier code for constructing the new
+## # column. We will have to use the above function for munging in
+## # production and supply it the list `most_common` levels computed
+## # earlier during training.
+##
+## single_data_point <- 5
+## stopifnot(identical(
+##   during_prediction(5, output$most_common),
+##   factor("OTHER", levels = c(as.character(11:20), "OTHER"))
+## ))
+## 
+## single_data_point <- 15
+## stopifnot(identical(
+##   during_prediction(15, output$most_common),
+##   factor("15", levels = c(as.character(11:20), "OTHER"))
+## ))
+## ```
+## 
+## It may seem silly to create a factor variable with a single value
+## and a surplus of unused levels, but that is only the case if you
+## have never tried to productionize your data science models! Remember,
+## even if you trained a simple regression, your factor columns will need
+## to be converted to 0/1 columns using something like `model.matrix`, and 
+## it will yell at you if the correct levels are not there on the factor
+## column.
+## 
+## The point of mungebits is to replace all that hard work, which in the
+## work of the author has sometimes spanned data preparation procedures
+## composed of *hundreds* of steps like the above for collections of
+## *thousands* of variables, with the much simplified
+##
+## ```r
+## # During offline training.
+## replace_uncommon_levels_mungebit$run(dataset)
+## ```
+##
+## The mungebit has now been "trained" and remembers the `common_levels`
+## defined earlier. In a production system, we will be able to run the
+## exact same code on a single row of data, and have a streaming machine
+## learning engine that includes hard data wrangling work--in R.
+##
+## ```r
+## # During real-time prediction.
+## replace_uncommon_levels_mungebit$run(dataset)
+## ```
+##
+## After understanding mungebits, data science will stop being data
+## janitor work and you will get back to the math.
 #' Mungebits are atomic data transformations that are amenable to productionization.
 #'
 #' The majority of data projects are overcome by the burden of excessive
