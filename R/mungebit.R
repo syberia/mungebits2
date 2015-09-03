@@ -1,4 +1,5 @@
-initialize <- run <- train <- predict <- function(...) { }
+#' @include mungebit-initialize.R
+run <- train <- predict <- function(...) { }
 
 ## The idea behind mungebits grew out of a year-long session 
 ## attempting to productionize R code without translating it into
