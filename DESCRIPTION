@@ -21,3 +21,9 @@ Suggests:
     testthat,
     testthatsomemore
 Roxygen: list(wrap = FALSE)
+Collate:
+    'mungebit-initialize.R'
+    'mungebit.R'
+    'package.mungebits2.R'
+    'pending.R'
+    'zzz.R'
