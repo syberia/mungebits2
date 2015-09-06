@@ -42,7 +42,7 @@
 #' # > Column scaled by 2
 #' head(mp$data[[1]] / iris[[1]])
 #' # > [1] 4 4 4 4 4 4 
-mungebit_initialize <- function(train_function   = base::identity,
+mungebit_initialize <- function(train_function   = NULL,
                                 predict_function = train_function,
                                 enforce_train    = TRUE) {
 

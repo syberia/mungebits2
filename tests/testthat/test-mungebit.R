@@ -93,3 +93,17 @@ test_that("it can retrain if enforce_train = FALSE", {
   testthatsomemore::assert(mb$train(iris))
 })
 
+describe("debugging", {
+  test_that("calling debug on a mungebit sets the debug flag on its train function", {
+    mb <- mungebit$new(identity)
+    debug(mb)
+    expect_true(isdebugged(mb$.train_function))
+  })
+
+  test_that("calling debug on a mungebit sets the debug flag on its predict function", {
+    mb <- mungebit$new(identity)
+    debug(mb)
+    expect_true(isdebugged(mb$.predict_function))
+  })
+})
+
