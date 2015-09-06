@@ -26,7 +26,7 @@ Collate:
     'mungebit-debug.R'
     'mungebit-initialize.R'
     'mungebit-run.R'
-    'mungebit-train.R'
+    'mungebit-train_predict.R'
     'mungebit.R'
     'package.mungebits2.R'
     'pending.R'

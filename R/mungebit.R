@@ -1,5 +1,5 @@
-#' @include mungebit-initialize.R
-run <- train <- predict <- function(...) { }
+#' @include mungebit-initialize.R mungebit-run.R mungebit-train_predict.R
+NULL
 
 ## The idea behind mungebits grew out of a year-long session 
 ## attempting to productionize R code without translating it into
@@ -202,10 +202,12 @@ mungebit <- R6::R6Class("mungebit",
     .trained          = NULL, # Logical
     .enforce_train    = NULL, # Logical
 
-    initialize = initialize,
-    run        = run,
-    train      = train,
-    predict    = predict
+    initialize = mungebit_initialize,
+    run        = mungebit_run,
+    train      = mungebit_train,
+    predict    = mungebit_predict,
+    debug      = function() { debug(self) },
+    undebug    = function() { undebug(self) }
   )
 )
 
