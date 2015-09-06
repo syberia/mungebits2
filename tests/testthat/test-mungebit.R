@@ -82,5 +82,10 @@ test_that("it can sustain nonstandard evaluation in predict", {
   expect_identical(other$faa, quote(hello + world))
 })
 
+test_that("it can retrain if enforce_train = FALSE", {
+  mb <- mungebit$new(enforce_train = FALSE)
+  mb$run(iris)
+  testthatsomemore::assert(mb$train(iris))
+})
 
 
