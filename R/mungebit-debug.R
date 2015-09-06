@@ -13,14 +13,20 @@
 #' @seealso \code{\link[base]{debug}}
 #' @export
 debug <- function(fun, text = "", condition = NULL) {
+  ## The standard [S3 generic](http://adv-r.had.co.nz/OO-essentials.html).
   UseMethod("debug")
 }
 
+## By default, debugging should preserve the behavior from the base package.
 #' @export
 debug.default <- base::debug
 
 #' @export 
 debug.mungebit <- function(fun, text = "", condition = NULL) {
+  ## To debug a mungebit, we loop over the train and predict functions
+  ## and set their internal debugging flag. The `if` statement is
+  ## necessary in case either are `NULL` (e.g., there is no train
+  ## or predict step).
   for (fn in list(fun$.train_function, fun$.predict_function)) {
     if (is.function(fn)) {
       debug(fn, text, condition)
@@ -42,6 +48,11 @@ undebug.default <- base::undebug
 
 #' @export 
 undebug.mungebit <- function(fun) {
+  ## To undebug a mungebit, we loop over the train and predict functions
+  ## and unset their internal debugging flag. The `if` statement is
+  ## necessary in case either are `NULL` (e.g., there is no train
+  ## or predict step), and to avoid throwing a warning if the function
+  ## isn't already being debugged.
   for (fn in list(fun$.train_function, fun$.predict_function)) {
     if (is.function(fn) && isdebugged(fn)) {
       undebug(fn)
