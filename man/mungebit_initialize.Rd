@@ -4,7 +4,7 @@
 \alias{mungebit_initialize}
 \title{Constructor for mungebit class.}
 \usage{
-mungebit_initialize(train_function = base::identity,
+mungebit_initialize(train_function = NULL,
   predict_function = train_function, enforce_train = TRUE)
 }
 \arguments{

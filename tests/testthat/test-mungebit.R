@@ -101,9 +101,23 @@ describe("debugging", {
   })
 
   test_that("calling debug on a mungebit sets the debug flag on its predict function", {
-    mb <- mungebit$new(identity)
+    mb <- mungebit$new(identity, identity)
     debug(mb)
     expect_true(isdebugged(mb$.predict_function))
+  })
+
+  test_that("calling undebug on a mungebit unsets the debug flag on its train function", {
+    mb <- mungebit$new(identity)
+    debug(mb)
+    undebug(mb)
+    expect_false(isdebugged(mb$.train_function))
+  })
+
+  test_that("calling undebug on a mungebit sets the undebug flag on its predict function", {
+    mb <- mungebit$new(identity, identity)
+    debug(mb)
+    undebug(mb)
+    expect_false(isdebugged(mb$.predict_function))
   })
 })
 
