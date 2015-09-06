@@ -24,7 +24,7 @@
 #'   object.
 mungebit_train <- function(data, ...) {
   if (enforce_train) {
-    on.exit(self$.trained <- TRUE)
+    on.exit(self$.trained <- TRUE, add = TRUE)
   }
 
   ## The `input` environment used by the mungebit to record metadata from
@@ -38,6 +38,34 @@ mungebit_train <- function(data, ...) {
   ## can remember necessary metadata for replicating the
   ## munging operation at prediction time.
   inject_metadata(self.$train_function, self$.input, self$.trained)(data, ...)
+}
+
+#' Run the predict function on a mungebit.
+#'
+#' The predict function is responsible for performing a munging step
+#' using metadata it computed during an earlier training step.
+#' This is usually done in a live production environment setting.
+#'
+#' The purpose of the predict function is to
+#'
+#' \enumerate{
+#'   \item{Perform some munging on the data set, such as renaming
+#'     columns, creating derived features, performing principal component
+#'     analysis, replacing some values, removing outliers, etc.}
+#'   \item{Use the metadata computed during the \code{train} step
+#'    to correctly perform this munging.}
+#' }
+#'
+#' @rdname mungebit
+#' @inheritParams mungebit_run
+#' @return The modified \code{data}, whether it is an \code{environment}
+#'   or \code{data.frame}. Side effects on the \code{input} local variable
+#'   provided to the \code{predict_function} will be recorded on the mungebit
+#'   object.
+mungebit_predict <- function(data, ...) {
+  ## We inject the `input` helper so that the mungebit
+  ## can use the metadata that was compute during training time.
+  inject_metadata(self.$predict_function, self$.input, self$.trained)(data, ...)
 }
 
 inject_metadata <- function(func, input, trained) {

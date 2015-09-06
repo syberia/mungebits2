@@ -3,6 +3,7 @@
 \docType{class}
 \name{mungebit_run}
 \alias{mungebit}
+\alias{mungebit_predict}
 \alias{mungebit_run}
 \alias{mungebit_train}
 \title{Run a mungebit.}
@@ -10,6 +11,8 @@
 mungebit_run(data, ...)
 
 mungebit_train(data, ...)
+
+mungebit_predict(data, ...)
 
 mungebit
 }
@@ -31,6 +34,11 @@ The modified \code{data}, whether it is an \code{environment}
   or \code{data.frame}. Side effects on the \code{input} local variable
   provided to the \code{train_function} will be recorded on the mungebit
   object.
+
+The modified \code{data}, whether it is an \code{environment}
+  or \code{data.frame}. Side effects on the \code{input} local variable
+  provided to the \code{predict_function} will be recorded on the mungebit
+  object.
 }
 \description{
 Imagine flipping a switch on a set of train tracks. A mungebit
@@ -41,6 +49,10 @@ run the \code{train_function}.
 The train function is responsible for performing a munging step and
 storing metadata that can replicate the munging step in a live
 production environment without the full reference data set.
+
+The predict function is responsible for performing a munging step
+using metadata it computed during an earlier training step.
+This is usually done in a live production environment setting.
 
 The majority of data projects are overcome by the burden of excessive
 data wrangling. Part of the problem lies in the fact that when new
@@ -64,6 +76,16 @@ The purpose of the train function is to
     after the original training set is no longer available. For example,
     if we are imputing a variable, we would need to remember its mean
     so we can use it later to replace \code{NA} values.}
+}
+
+The purpose of the predict function is to
+
+\enumerate{
+  \item{Perform some munging on the data set, such as renaming
+    columns, creating derived features, performing principal component
+    analysis, replacing some values, removing outliers, etc.}
+  \item{Use the metadata computed during the \code{train} step
+   to correctly perform this munging.}
 }
 
 Consider the following problem. Imagine we wish to discretize a variable,
