@@ -1,0 +1,20 @@
+debug                package:mungebits2                R Documentation
+
+_G_e_n_e_r_i_c _d_e_b_u_g_g_i_n_g.
+
+_D_e_s_c_r_i_p_t_i_o_n:
+
+     Generic debugging.
+
+_U_s_a_g_e:
+
+     debug(...)
+     
+_A_r_g_u_m_e_n_t_s:
+
+     ...: Additional arguments to pass to ‘base::debug’.
+
+_S_e_e _A_l_s_o:
+
+     ‘debug’
+

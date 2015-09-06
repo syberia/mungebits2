@@ -99,6 +99,79 @@
 
         <div class="section">
           <div class="markdown markdown-body">
+            <h1>mungebit-debug.R</h1>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer"></span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>Debugging the train and predict function of a mungebit should be
+transparent to the user. Say we have a mungebit called <code>value_replacer</code>.
+By calling <code>debug(value_replacer)</code>, we should be able to simultaneously
+set debug hooks on both the <code>train_function</code> and <code>predict_function</code>
+of the mungebit. Calling <code>undebug(value_replacer)</code> will remove the hooks.</p>
+
+<p>R has a tremendous array of debugging tools. You should familiarize
+yourself with them to make your life much simpler. A great resource
+is chapter 8 of <a href="http://www.burns-stat.com/pages/Tutor/R_inferno.pdf">The R Inferno</a>.</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">#' Generic debugging.
+#'
+#' @inheritParams base::debug
+#' @seealso \code{\link[base]{debug}}
+#' @export
+debug <- function(fun, text = "", condition = NULL) {
+  UseMethod("debug")
+}
+
+#' @export
+debug.default <- base::debug
+
+#' @export 
+debug.mungebit <- function(fun, text = "", condition = NULL) {
+  for (fn in list(fun$.train_function, fun$.predict_function)) {
+    if (is.function(fn)) {
+      debug(fn, text, condition)
+    }
+  }
+}
+
+#' Generic removal of debugging.
+#'
+#' @inheritParams base::undebug
+#' @seealso \code{\link[base]{undebug}}
+#' @export
+undebug <- function(fun) {
+  UseMethod("undebug")
+}
+
+#' @export
+undebug.default <- base::undebug
+
+#' @export 
+undebug.mungebit <- function(fun) {
+  for (fn in list(fun$.train_function, fun$.predict_function)) {
+    if (is.function(fn) && isdebugged(fn)) {
+      undebug(fn)
+    }
+  }
+}
+</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
             <h1>mungebit-initialize.R</h1>
 
           </div>
@@ -139,13 +212,13 @@
 #'   # `trained` is a helper provided by mungebits indicating TRUE or FALSE
 #'   # according as the mungebit has been run on a dataset.
 #'   if (!trained) {
-#'     cat("Column scaled by ", inputs$scale, "\n")
+#'     cat("Column scaled by ", input$scale, "\n")
 #'   } else {
-#'     # `inputs` is a helper provided by mungebits. We remember the
+#'     # `input` is a helper provided by mungebits. We remember the
 #'     # the `scale` so we can re-use it during prediction.
-#'     inputs$scale <- scale
+#'     input$scale <- scale
 #'   }
-#'   column * inputs$scale
+#'   column * input$scale
 #' }))
 #' 
 #' # A `mungeplane` is just a lightweight wrapper to keep track of our data so
@@ -162,14 +235,268 @@
 #' # > [1] 4 4 4 4 4 4 
 initialize <- function(train_function   = base::identity,
                        predict_function = train_function,
-                       enforce_train = TRUE) {
+                       enforce_train    = TRUE) {
 
   # TODO: (RK) Sanity checks?
   self$.train_function   <- train_function
   self$.predict_function <- predict_function
-  self$.inputs           <- new.env(parent = emptyenv())
+  self$.input            <- new.env(parent = emptyenv())
   self$.trained          <- FALSE
   self$.enforce_train    <- enforce_train
+}
+</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <h1>mungebit-run.R</h1>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer"></span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>Imagine running an imputation script on a dataset. 
+On a training set, we have to compute the mean and replace
+the <code>NA</code>s with its value. However, when a single row comes
+in through a streaming production system, we merely need to
+memorize the computed mean and replace a variable with it
+if it is <code>NA</code>.</p>
+
+<p>Calling the <code>run</code> method on a mungebit will store any
+data it needs for production, such as imputed means,
+in the <code>input</code> member. The second time <code>$run</code> is called
+(i.e., during prediction or real-time production use),
+it will be using the <code>predict_function</code> rather than the
+<code>train_function</code>, which will be less computationally expensive
+since it does not have to operate in reference to a training set
+and can use the memorized results in <code>input</code> to achieve
+the same transformation as the <code>train_function</code>.</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">#' Run a mungebit.
+#' 
+#' Imagine flipping a switch on a set of train tracks. A mungebit
+#' behaves like this: once the \code{trained} switch is flipped,
+#' it can only run the \code{predict_function}, otherwise it will
+#' run the \code{train_function}.
+#'
+#' @rdname mungebit
+#' @param data environment or data.frame. Essentially an environment
+#'   containing a \code{data} variable. In this case, that \code{data} variable
+#'   will have a side effect enacted on it. If a \code{data.frame}, then 
+#'   the return value will be the modified \code{data.frame} and the mungebit
+#'   will record any results it must memorize in its \code{input}.
+#' @param ... additional arguments to the mungebit's \code{train_function} or
+#'   \code{predict_function}.
+#' @return The modified \code{data}, whether it is an \code{environment}
+#'   or \code{data.frame}.
+mungebit_run <- function(data, ...) {
+  if (is.environment(data)) {
+    if (!exists("data", envir = data, inherits = FALSE)) {
+      stop("If you are passing an environment to a mungebit, you must ",
+           "provide one that contains a ", sQuote("data"), " key.")
+    }
+
+    data$data <- self$run(data$data, ...)
+  } else if (isTRUE(self$.trained)) {
+    data <- self$predict(data, ...)
+  } else {
+    data <- self$train(data, ...)  
+  }
+  data
+}
+</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <h1>mungebit-train_predict.R</h1>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer"></span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">#' Run the train function on a mungebit.
+#'
+#' The train function is responsible for performing a munging step and
+#' storing metadata that can replicate the munging step in a live
+#' production environment without the full reference data set.
+#'
+#' The purpose of the train function is to
+#'
+#' \enumerate{
+#'   \item{Perform some munging on the data set, such as renaming
+#'     columns, creating derived features, performing principal component
+#'     analysis, replacing some values, removing outliers, etc.}
+#'   \item{Storing the metadata necessary to replicate the munging operation
+#'     after the original training set is no longer available. For example,
+#'     if we are imputing a variable, we would need to remember its mean
+#'     so we can use it later to replace \code{NA} values.}
+#' }
+#'
+#' @rdname mungebit
+#' @inheritParams mungebit_run
+#' @return The modified \code{data}, whether it is an \code{environment}
+#'   or \code{data.frame}. Side effects on the \code{input} local variable
+#'   provided to the \code{train_function} will be recorded on the mungebit
+#'   object.
+mungebit_train <- function(data, ...) {
+  if (enforce_train) {
+    on.exit(self$.trained <- TRUE, add = TRUE)
+  }
+</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>The <code>input</code> environment used by the mungebit to record metadata from
+the munging performed at training-time is the only opportunity for
+affecting the <code>input</code> environment. Afterwards, we <a href="https://stat.ethz.ch/R-manual/R-devel/library/base/html/bindenv.html">lock it</a>
+so that we are confident the user does not modify it during prediction
+time (i.e., when it is run in a real-time production system).</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">  on.exit(lockEnvironment(self$.input), add = TRUE)
+</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>We inject the <code>input</code> helper so that the mungebit
+can remember necessary metadata for replicating the
+munging operation at prediction time.</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">  inject_metadata(self.$train_function, self$.input, self$.trained)(data, ...)
+}
+
+#' Run the predict function on a mungebit.
+#'
+#' The predict function is responsible for performing a munging step
+#' using metadata it computed during an earlier training step.
+#' This is usually done in a live production environment setting.
+#'
+#' The purpose of the predict function is to
+#'
+#' \enumerate{
+#'   \item{Perform some munging on the data set, such as renaming
+#'     columns, creating derived features, performing principal component
+#'     analysis, replacing some values, removing outliers, etc.}
+#'   \item{Use the metadata computed during the \code{train} step
+#'    to correctly perform this munging.}
+#' }
+#'
+#' @rdname mungebit
+#' @inheritParams mungebit_run
+#' @return The modified \code{data}, whether it is an \code{environment}
+#'   or \code{data.frame}. Side effects on the \code{input} local variable
+#'   provided to the \code{predict_function} will be recorded on the mungebit
+#'   object.
+mungebit_predict <- function(data, ...) {</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>We inject the <code>input</code> helper so that the mungebit
+can use the metadata that was compute during training time.</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">  inject_metadata(self.$predict_function, self$.input, self$.trained)(data, ...)
+}
+
+inject_metadata <- function(func, input, trained) {</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>If there is no training or prediction function, we perform 
+<em>no transformation</em> on the data or the mungebit <code>input</code>, i.e.,
+we use the <a href="https://stat.ethz.ch/R-manual/R-devel/library/base/html/identity.html"><code>identity</code> function</a>.</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">  if (is.null(func)) {
+    identity
+  } else {
+    copy       <- func
+    debug_flag <- isdebugged(func)
+
+    environment(copy) <- list2env(list(
+      input   = input,</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>We also inject a helper called <code>trained</code> used for discriminating
+whether the function has been trained already.</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">      trained = isTRUE(trained)
+    ), parent = environment(func))
+</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>Touching a function&#39;s environment like in the expression above
+<em>clears its internal debug flag</em>. We restore the flag to indicate
+it is being debugged. I don&#39;t know how to detect whether a function
+is <a href="https://stat.ethz.ch/R-manual/R-devel/library/base/html/debug.html"><code>debugonce</code>d</a>
+so if you know how to restore this flag please submit a
+<a href="https://github.com/robertzk/mungebits2">pull request</a>.</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">    if (isdebugged(func)) {
+      debug(copy)
+    }
+
+    copy
+  }
 }
 </span></code>
             </pre>
@@ -387,7 +714,7 @@ janitor work and you will get back to the math.</p>
 #'    input$scale <- scale
 #'   }
 #'  
-#'   col * inputs$scale
+#'   col * input$scale
 #' }))
 #' 
 #' iris2 <- mb$run(iris, "Sepal.Length", 2)
@@ -401,7 +728,7 @@ mungebit <- R6::R6Class("mungebit",
   public = list(
     .train_function   = NULL, # Function or NULL
     .predict_function = NULL, # Function or NULL
-    .inputs           = NULL, # Environment
+    .input            = NULL, # Environment
     .trained          = NULL, # Logical
     .enforce_train    = NULL, # Logical
 
@@ -461,7 +788,7 @@ mungebit <- R6::R6Class("mungebit",
 #' significantly simplified.
 #'
 #' @name mungebits2
-#' @import stagerunner
+#' @import stagerunner crayon
 #' @docType package
 NULL</span></code>
             </pre>
@@ -513,7 +840,17 @@ NULL</span></code>
           <div class="code">
             <pre>
               <code class="R"><span class="spacer"># TODO: (RK) Add notice if mungebits and mungebits2 are
-# loaded at the same time.</span></code>
+# loaded at the same time.
+
+.onLoad <- function(libPath, pkg) {
+  if (as.package_version(R.version) < as.package_version("3.1.0")) {
+    warning(crayon::red(paste0(
+      "Using mungebits2 with R version < 3.1 will result ",
+      "in dramatic performance slowdowns."
+    )))
+  }
+}
+</span></code>
             </pre>
           </div>
         </div>
