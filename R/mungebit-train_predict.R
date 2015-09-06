@@ -24,6 +24,9 @@
 #'   object.
 mungebit_train <- function(data, ...) {
   if (self$.enforce_train) {
+    if (isTRUE(self$.trained)) {
+      stop("This mungebit has already been trained, cannot re-train.")
+    }
     on.exit(self$.trained <- TRUE, add = TRUE)
   }
 

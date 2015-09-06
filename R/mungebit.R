@@ -199,8 +199,8 @@ mungebit <- R6::R6Class("mungebit",
     .train_function   = NULL, # Function or NULL
     .predict_function = NULL, # Function or NULL
     .input            = NULL, # Environment
-    .trained          = NULL, # Logical
-    .enforce_train    = NULL, # Logical
+    .trained          = FALSE, # Logical
+    .enforce_train    = TRUE, # Logical
 
     initialize = mungebit_initialize,
     run        = mungebit_run,

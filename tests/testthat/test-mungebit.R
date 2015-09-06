@@ -1,5 +1,14 @@
 ## Simple mungebit tests.
 context("mungebit")
+library(testthatsomemore)
+
+describe("errors", {
+  test_that("it cannot retrain a mungebit if enforce_train", {
+    mb <- mungebit$new()
+    mb$run(iris)
+    expect_error(mb$train(iris), "already been trained")
+  })
+})
 
 test_that("it correctly sets the trained flag after the first run", {
   mb <- mungebit$new()
@@ -72,4 +81,6 @@ test_that("it can sustain nonstandard evaluation in predict", {
   mb$run(iris, faa = hello + world)
   expect_identical(other$faa, quote(hello + world))
 })
+
+
 
