@@ -130,16 +130,52 @@ is chapter 8 of <a href="http://www.burns-stat.com/pages/Tutor/R_inferno.pdf">Th
 #' @inheritParams base::debug
 #' @seealso \code{\link[base]{debug}}
 #' @export
-debug <- function(fun, text = "", condition = NULL) {
-  UseMethod("debug")
-}
+debug <- function(fun, text = "", condition = NULL) {</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>The standard <a href="http://adv-r.had.co.nz/OO-essentials.html">S3 generic</a>.</p>
 
-#' @export
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">  UseMethod("debug")
+}
+</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>By default, debugging should preserve the behavior from the base package.</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">#' @export
 debug.default <- base::debug
 
 #' @export 
-debug.mungebit <- function(fun, text = "", condition = NULL) {
-  for (fn in list(fun$.train_function, fun$.predict_function)) {
+debug.mungebit <- function(fun, text = "", condition = NULL) {</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>To debug a mungebit, we loop over the train and predict functions
+and set their internal debugging flag. The <code>if</code> statement is
+necessary in case either are <code>NULL</code> (e.g., there is no train
+or predict step).</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">  for (fn in list(fun$.train_function, fun$.predict_function)) {
     if (is.function(fn)) {
       debug(fn, text, condition)
     }
@@ -159,8 +195,23 @@ undebug <- function(fun) {
 undebug.default <- base::undebug
 
 #' @export 
-undebug.mungebit <- function(fun) {
-  for (fn in list(fun$.train_function, fun$.predict_function)) {
+undebug.mungebit <- function(fun) {</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>To undebug a mungebit, we loop over the train and predict functions
+and unset their internal debugging flag. The <code>if</code> statement is
+necessary in case either are <code>NULL</code> (e.g., there is no train
+or predict step), and to avoid throwing a warning if the function
+isn&#39;t already being debugged.</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">  for (fn in list(fun$.train_function, fun$.predict_function)) {
     if (is.function(fn) && isdebugged(fn)) {
       undebug(fn)
     }
@@ -233,9 +284,9 @@ undebug.mungebit <- function(fun) {
 #' # > Column scaled by 2
 #' head(mp$data[[1]] / iris[[1]])
 #' # > [1] 4 4 4 4 4 4 
-initialize <- function(train_function   = base::identity,
-                       predict_function = train_function,
-                       enforce_train    = TRUE) {
+mungebit_initialize <- function(train_function   = base::identity,
+                                predict_function = train_function,
+                                enforce_train    = TRUE) {
 
   # TODO: (RK) Sanity checks?
   self$.train_function   <- train_function
@@ -363,7 +414,7 @@ mungebit_run <- function(data, ...) {
 #'   provided to the \code{train_function} will be recorded on the mungebit
 #'   object.
 mungebit_train <- function(data, ...) {
-  if (enforce_train) {
+  if (self$.enforce_train) {
     on.exit(self$.trained <- TRUE, add = TRUE)
   }
 </span></code>
@@ -382,7 +433,7 @@ time (i.e., when it is run in a real-time production system).</p>
 
           <div class="code">
             <pre>
-              <code class="R"><span class="spacer">  on.exit(lockEnvironment(self$.input), add = TRUE)
+              <code class="R"><span class="spacer">  on.exit(lockEnvironment(self$.input, TRUE), add = TRUE)
 </span></code>
             </pre>
           </div>
@@ -397,7 +448,7 @@ munging operation at prediction time.</p>
 
           <div class="code">
             <pre>
-              <code class="R"><span class="spacer">  inject_metadata(self.$train_function, self$.input, self$.trained)(data, ...)
+              <code class="R"><span class="spacer">  inject_metadata(self$.train_function, self$.input, self$.trained)(data, ...)
 }
 
 #' Run the predict function on a mungebit.
@@ -435,7 +486,7 @@ can use the metadata that was compute during training time.</p>
 
           <div class="code">
             <pre>
-              <code class="R"><span class="spacer">  inject_metadata(self.$predict_function, self$.input, self$.trained)(data, ...)
+              <code class="R"><span class="spacer">  inject_metadata(self$.predict_function, self$.input, self$.trained)(data, ...)
 }
 
 inject_metadata <- function(func, input, trained) {</span></code>
@@ -521,8 +572,8 @@ so if you know how to restore this flag please submit a
 
           <div class="code">
             <pre>
-              <code class="R"><span class="spacer">#' @include mungebit-initialize.R
-run <- train <- predict <- function(...) { }
+              <code class="R"><span class="spacer">#' @include mungebit-initialize.R mungebit-run.R mungebit-train_predict.R
+NULL
 </span></code>
             </pre>
           </div>
@@ -732,10 +783,12 @@ mungebit <- R6::R6Class("mungebit",
     .trained          = NULL, # Logical
     .enforce_train    = NULL, # Logical
 
-    initialize = initialize,
-    run        = run,
-    train      = train,
-    predict    = predict
+    initialize = mungebit_initialize,
+    run        = mungebit_run,
+    train      = mungebit_train,
+    predict    = mungebit_predict,
+    debug      = function() { debug(self) },
+    undebug    = function() { undebug(self) }
   )
 )
 </span></code>
@@ -791,32 +844,6 @@ mungebit <- R6::R6Class("mungebit",
 #' @import stagerunner crayon
 #' @docType package
 NULL</span></code>
-            </pre>
-          </div>
-        </div>
-        <div class="section">
-          <div class="markdown markdown-body">
-            <h1>pending.R</h1>
-
-          </div>
-
-          <div class="code">
-            <pre>
-              <code class="R"><span class="spacer"></span></code>
-            </pre>
-          </div>
-        </div>
-        <div class="section">
-          <div class="markdown markdown-body">
-            
-          </div>
-
-          <div class="code">
-            <pre>
-              <code class="R"><span class="spacer">pending <- function() {
-  TRUE
-}
-</span></code>
             </pre>
           </div>
         </div>
