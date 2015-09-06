@@ -24,3 +24,9 @@ test_that("it sets input correctly", {
   expect_true(mb$input()$trained)
 })
 
+test_that("it can execute NULL functions", {
+  mb <- mungebit$new(NULL, NULL)
+  testthatsomemore::assert(mb$run(iris))
+  testthatsomemore::assert(mb$run(iris))
+})
+
