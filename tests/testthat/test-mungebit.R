@@ -8,6 +8,11 @@ describe("errors", {
     mb$run(iris)
     expect_error(mb$train(iris), "already been trained")
   })
+
+  test_that("it cannot predict if the mungebit has not been trained", {
+    mb <- mungebit$new()
+    expect_error(mb$predict(iris), "not been trained")
+  })
 })
 
 test_that("it correctly sets the trained flag after the first run", {
@@ -87,5 +92,4 @@ test_that("it can retrain if enforce_train = FALSE", {
   mb$run(iris)
   testthatsomemore::assert(mb$train(iris))
 })
-
 

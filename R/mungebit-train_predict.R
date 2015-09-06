@@ -66,6 +66,10 @@ mungebit_train <- function(data, ...) {
 #'   provided to the \code{predict_function} will be recorded on the mungebit
 #'   object.
 mungebit_predict <- function(data, ...) {
+  if (!isTRUE(self$.trained)) {
+    stop("This mungebit cannot predict because it has not been trained.")
+  }
+
   ## We inject the `input` helper so that the mungebit
   ## can use the metadata that was compute during training time.
   inject_metadata(self$.predict_function, self$.input, self$.trained)(data, ...)
