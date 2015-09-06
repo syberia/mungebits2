@@ -7,4 +7,16 @@ test_that("it correctly sets the trained flag after the first run", {
   expect_true(mb$trained())
 })
 
+test_that("it correctly executes training and prediction functions", {
+  env <- new.env()
+  mb <- mungebit$new(function(d) env$trained <- TRUE, function(d) env$predicted <- TRUE)
+  mb$run(iris)
+  expect_true(env$trained)
+  expect_null(env$predicted)
+  mb$run(iris)
+  expect_true(env$trained)
+  expect_true(env$predicted)
+})
+
+
 
