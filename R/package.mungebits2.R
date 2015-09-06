@@ -25,6 +25,6 @@
 #' significantly simplified.
 #'
 #' @name mungebits2
-#' @import stagerunner
+#' @import stagerunner crayon
 #' @docType package
 NULL

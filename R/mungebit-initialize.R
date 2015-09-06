@@ -44,7 +44,7 @@
 #' # > [1] 4 4 4 4 4 4 
 initialize <- function(train_function   = base::identity,
                        predict_function = train_function,
-                       enforce_train = TRUE) {
+                       enforce_train    = TRUE) {
 
   # TODO: (RK) Sanity checks?
   self$.train_function   <- train_function

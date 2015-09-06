@@ -16,13 +16,15 @@ Depends:
 License: MIT
 LazyData: true
 Imports:
-    stagerunner
+    stagerunner,
+    crayon
 Suggests:
     testthat,
     testthatsomemore
 Roxygen: list(wrap = FALSE)
 Collate:
     'mungebit-initialize.R'
+    'mungebit-run.R'
     'mungebit.R'
     'package.mungebits2.R'
     'pending.R'
