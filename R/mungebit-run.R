@@ -29,9 +29,9 @@
 #'   will record any results it must memorize in its \code{inputs}.
 #' @param ... additional arguments to the mungebit's \code{train_function} or
 #'   \code{predict_function}.
-#' @return The modified \code{data}, whether it is an \code{envrironment}
+#' @return The modified \code{data}, whether it is an \code{environment}
 #'   or \code{data.frame}.
-mungebit__run <- function(data, ...) {
+mungebit_run <- function(data, ...) {
   if (is.environment(data)) {
     if (!exists("data", envir = data, inherits = FALSE)) {
       stop("If you are passing an environment to a mungebit, you must ",
