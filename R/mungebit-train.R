@@ -27,9 +27,47 @@ mungebit_train <- function(data, ...) {
     on.exit(self$.trained <- TRUE)
   }
 
+  ## The `input` environment used by the mungebit to record metadata from
+  ## the munging performed at training-time is the only opportunity for
+  ## affecting the `input` environment. Afterwards, we [lock it](https://stat.ethz.ch/R-manual/R-devel/library/base/html/bindenv.html)
+  ## so that we are confident the user does not modify it during prediction
+  ## time (i.e., when it is run in a real-time production system).
+  on.exit(lockEnvironment(self$.input), add = TRUE)
+
   ## We inject the `input` helper so that the mungebit
   ## can remember necessary metadata for replicating the
   ## munging operation at prediction time.
-  inject_metadata(self.$train_function)(data, ...)
+  inject_metadata(self.$train_function, self$.input, self$.trained)(data, ...)
+}
+
+inject_metadata <- function(func, input, trained) {
+  ## If there is no training or prediction function, we perform 
+  ## *no transformation* on the data or the mungebit `input`, i.e.,
+  ## we use the [`identity` function](https://stat.ethz.ch/R-manual/R-devel/library/base/html/identity.html).
+  if (is.null(func)) {
+    identity
+  } else {
+    copy       <- func
+    debug_flag <- isdebugged(func)
+
+    environment(copy) <- list2env(list(
+      input   = input,
+      ## We also inject a helper called `trained` used for discriminating
+      ## whether the function has been trained already.
+      trained = isTRUE(trained)
+    ), parent = environment(func))
+
+    ## Touching a function's environment like in the expression above
+    ## *clears its internal debug flag*. We restore the flag to indicate
+    ## it is being debugged. I don't know how to detect whether a function
+    ## is [`debugonce`d](https://stat.ethz.ch/R-manual/R-devel/library/base/html/debug.html)
+    ## so if you know how to restore this flag please submit a
+    ## [pull request](https://github.com/robertzk/mungebits2).
+    if (isdebugged(func)) {
+      debug(copy)
+    }
+
+    copy
+  }
 }
 

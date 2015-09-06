@@ -23,6 +23,7 @@ Suggests:
     testthatsomemore
 Roxygen: list(wrap = FALSE)
 Collate:
+    'mungebit-debug.R'
     'mungebit-initialize.R'
     'mungebit-run.R'
     'mungebit-train.R'

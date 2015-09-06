@@ -33,13 +33,13 @@ mb <- mungebit(column_transformation(function(column, scale = NULL) {
   # `trained` is a helper provided by mungebits indicating TRUE or FALSE
   # according as the mungebit has been run on a dataset.
   if (!trained) {
-    cat("Column scaled by ", inputs$scale, "\\n")
+    cat("Column scaled by ", input$scale, "\\n")
   } else {
-    # `inputs` is a helper provided by mungebits. We remember the
+    # `input` is a helper provided by mungebits. We remember the
     # the `scale` so we can re-use it during prediction.
-    inputs$scale <- scale
+    input$scale <- scale
   }
-  column * inputs$scale
+  column * input$scale
 }))
 
 # A `mungeplane` is just a lightweight wrapper to keep track of our data so

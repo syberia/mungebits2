@@ -18,7 +18,7 @@ mungebit
 containing a \code{data} variable. In this case, that \code{data} variable
 will have a side effect enacted on it. If a \code{data.frame}, then
 the return value will be the modified \code{data.frame} and the mungebit
-will record any results it must memorize in its \code{inputs}.}
+will record any results it must memorize in its \code{input}.}
 
 \item{...}{additional arguments to the mungebit's \code{train_function} or
 \code{predict_function}.}
@@ -28,7 +28,7 @@ The modified \code{data}, whether it is an \code{environment}
   or \code{data.frame}.
 
 The modified \code{data}, whether it is an \code{environment}
-  or \code{data.frame}. Side effects on the \code{inputs} local variable
+  or \code{data.frame}. Side effects on the \code{input} local variable
   provided to the \code{train_function} will be recorded on the mungebit
   object.
 }
@@ -126,7 +126,7 @@ mb <- mungebit(column_transformation(function(col, scale = NULL) {
    input$scale <- scale
   }
 
-  col * inputs$scale
+  col * input$scale
 }))
 
 iris2 <- mb$run(iris, "Sepal.Length", 2)
