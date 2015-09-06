@@ -59,4 +59,9 @@ test_that("it can take variadic arguments in its predict function", {
   expect_equal(other$baz, c("bar", "baz"))
 })
 
+test_that("it can sustain nonstandard evaluation in train", {
+  mb <- mungebit$new(function(d, foo) input$foo <- substitute(foo))
+  mb$run(iris, foo = hello + world)
+  expect_identical(mb$input()$foo, quote(hello + world))
+})
 
