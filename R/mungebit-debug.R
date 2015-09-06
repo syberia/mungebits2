@@ -3,6 +3,10 @@
 ## By calling `debug(value_replacer)`, we should be able to simultaneously
 ## set debug hooks on both the `train_function` and `predict_function`
 ## of the mungebit. Calling `undebug(value_replacer)` will remove the hooks.
+##
+## R has a tremendous array of debugging tools. You should familiarize
+## yourself with them to make your life much simpler. A great resource
+## is chapter 8 of [The R Inferno](http://www.burns-stat.com/pages/Tutor/R_inferno.pdf).
 #' Generic debugging.
 #'
 #' @inheritParams base::debug
