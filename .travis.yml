@@ -24,7 +24,7 @@ notifications:
     template:
     - "%{repository}#%{build_number} (%{branch} - %{commit} : %{author}): %{message}
       | Details: %{build_url} | Changes: %{compare_url}"
-
+sudo: true 
 env:
   - global:
     - WARNINGS_ARE_ERRORS=1
