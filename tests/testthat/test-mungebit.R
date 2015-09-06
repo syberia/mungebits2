@@ -36,3 +36,11 @@ test_that("it errors if we attempt to modify input after training", {
   expect_error(mb$run(iris), "cannot add bindings to a locked environment")
 })
 
+test_that("it can read from input during predict", {
+  other <- new.env()
+  mb <- mungebit$new(function(d) input$foo <- TRUE, function(d) other$foo <- input$foo) 
+  mb$run(iris)
+  mb$run(iris)
+  expect_identical(as.list(other), mb$input())
+})
+
