@@ -1,3 +1,8 @@
+## Debugging the train and predict function of a mungebit should be
+## transparent to the user. Say we have a mungebit called `value_replacer`.
+## By calling `debug(value_replacer)`, we should be able to simultaneously
+## set debug hooks on both the `train_function` and `predict_function`
+## of the mungebit. Calling `undebug(value_replacer)` will remove the hooks.
 #' Generic debugging.
 #'
 #' @inheritParams base::debug
@@ -12,8 +17,11 @@ debug.default <- base::debug
 
 #' @export 
 debug.mungebit <- function(fun, text = "", condition = NULL) {
-  debug(fun$.train_function, text, condition)
-  debug(fun$.predict_function, text, condition)
+  for (fn in list(fun$.train_function, fun$.predict_function)) {
+    if (is.function(fn)) {
+      debug(fn, text, condition)
+    }
+  }
 }
 
 #' Generic removal of debugging.
@@ -30,7 +38,10 @@ undebug.default <- base::undebug
 
 #' @export 
 undebug.mungebit <- function(fun) {
-  undebug(fun$.train_function)
-  undebug(fun$.predict_function)
+  for (fn in list(fun$.train_function, fun$.predict_function)) {
+    if (is.function(fn) && isdebugged(fn)) {
+      undebug(fn)
+    }
+  }
 }
 
