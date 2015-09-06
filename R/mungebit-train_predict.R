@@ -23,7 +23,7 @@
 #'   provided to the \code{train_function} will be recorded on the mungebit
 #'   object.
 mungebit_train <- function(data, ...) {
-  if (enforce_train) {
+  if (self$.enforce_train) {
     on.exit(self$.trained <- TRUE, add = TRUE)
   }
 
@@ -32,12 +32,12 @@ mungebit_train <- function(data, ...) {
   ## affecting the `input` environment. Afterwards, we [lock it](https://stat.ethz.ch/R-manual/R-devel/library/base/html/bindenv.html)
   ## so that we are confident the user does not modify it during prediction
   ## time (i.e., when it is run in a real-time production system).
-  on.exit(lockEnvironment(self$.input), add = TRUE)
+  on.exit(lockEnvironment(self$.input, TRUE), add = TRUE)
 
   ## We inject the `input` helper so that the mungebit
   ## can remember necessary metadata for replicating the
   ## munging operation at prediction time.
-  inject_metadata(self.$train_function, self$.input, self$.trained)(data, ...)
+  inject_metadata(self$.train_function, self$.input, self$.trained)(data, ...)
 }
 
 #' Run the predict function on a mungebit.
@@ -65,7 +65,7 @@ mungebit_train <- function(data, ...) {
 mungebit_predict <- function(data, ...) {
   ## We inject the `input` helper so that the mungebit
   ## can use the metadata that was compute during training time.
-  inject_metadata(self.$predict_function, self$.input, self$.trained)(data, ...)
+  inject_metadata(self$.predict_function, self$.input, self$.trained)(data, ...)
 }
 
 inject_metadata <- function(func, input, trained) {
