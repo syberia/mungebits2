@@ -18,5 +18,9 @@ test_that("it correctly executes training and prediction functions", {
   expect_true(env$predicted)
 })
 
-
+test_that("it sets input correctly", {
+  mb <- mungebit$new(function(d) input$trained <- TRUE)
+  mb$run(iris)
+  expect_true(mb$input()$trained)
+})
 
