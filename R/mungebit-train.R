@@ -19,25 +19,17 @@
 #' @rdname mungebit
 #' @inheritParams mungebit_run
 #' @return The modified \code{data}, whether it is an \code{environment}
-#'   or \code{data.frame}. Side effects on the \code{inputs} local variable
+#'   or \code{data.frame}. Side effects on the \code{input} local variable
 #'   provided to the \code{train_function} will be recorded on the mungebit
 #'   object.
 mungebit_train <- function(data, ...) {
-  if (!is.null(train_function)) {
-    original_env <- environment(train_function)
-    inject_inputs(train_function)
-    on.exit(environment(train_function) <<- original_env)
-
-    train_function(mungeplane$data, ...) 
-
-    # TODO: Oh no. :( Sometimes inputs is being set and sometimes
-    # environment(train_function)$inputs is being set--I think this
-    # has to do with changing the environment of the function that's
-    # running. How do we get around this? This seems incredibly messy.
-    inputs <<-
-      if (length(tmp <- environment(train_function)$inputs) > 0) tmp
-      else inputs
+  if (enforce_train) {
+    on.exit(self$.trained <- TRUE)
   }
-  if (enforce_train) trained <<- TRUE
-  invisible(TRUE)
+
+  ## We inject the `input` helper so that the mungebit
+  ## can remember necessary metadata for replicating the
+  ## munging operation at prediction time.
+  inject_metadata(self.$train_function)(data, ...)
 }
+

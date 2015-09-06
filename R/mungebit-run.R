@@ -7,12 +7,12 @@
 ##
 ## Calling the `run` method on a mungebit will store any
 ## data it needs for production, such as imputed means,
-## in the `inputs` member. The second time `$run` is called
+## in the `input` member. The second time `$run` is called
 ## (i.e., during prediction or real-time production use),
 ## it will be using the `predict_function` rather than the
 ## `train_function`, which will be less computationally expensive
 ## since it does not have to operate in reference to a training set
-## and can use the memorized results in `inputs` to achieve
+## and can use the memorized results in `input` to achieve
 ## the same transformation as the `train_function`.
 #' Run a mungebit.
 #' 
@@ -26,7 +26,7 @@
 #'   containing a \code{data} variable. In this case, that \code{data} variable
 #'   will have a side effect enacted on it. If a \code{data.frame}, then 
 #'   the return value will be the modified \code{data.frame} and the mungebit
-#'   will record any results it must memorize in its \code{inputs}.
+#'   will record any results it must memorize in its \code{input}.
 #' @param ... additional arguments to the mungebit's \code{train_function} or
 #'   \code{predict_function}.
 #' @return The modified \code{data}, whether it is an \code{environment}

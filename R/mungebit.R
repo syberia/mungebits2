@@ -184,7 +184,7 @@ run <- train <- predict <- function(...) { }
 #'    input$scale <- scale
 #'   }
 #'  
-#'   col * inputs$scale
+#'   col * input$scale
 #' }))
 #' 
 #' iris2 <- mb$run(iris, "Sepal.Length", 2)
@@ -198,7 +198,7 @@ mungebit <- R6::R6Class("mungebit",
   public = list(
     .train_function   = NULL, # Function or NULL
     .predict_function = NULL, # Function or NULL
-    .inputs           = NULL, # Environment
+    .input            = NULL, # Environment
     .trained          = NULL, # Logical
     .enforce_train    = NULL, # Logical
 
