@@ -45,10 +45,18 @@ test_that("it can read from input during predict", {
 })
 
 test_that("it can take variadic arguments in its train function", {
-  other <- new.env()
   mb <- mungebit$new(function(d, foo) input$foo <- foo)
   mb$run(iris, foo = "bar")
   expect_equal(mb$input()$foo, "bar")
+})
+
+test_that("it can take variadic arguments in its predict function", {
+  other <- new.env()
+  mb <- mungebit$new(function(d, foo) input$foo <- foo,
+                     function(d, baz) other$baz <- c(input$foo, baz))
+  mb$run(iris, foo = "bar")
+  mb$run(iris, baz = "baz")
+  expect_equal(other$baz, c("bar", "baz"))
 })
 
 
