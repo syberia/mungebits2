@@ -1,4 +1,4 @@
-#' Constructor for mungepiece class.
+#' Construct a new mungepiece.
 #'
 #' A mungebit defines atomic data tranformation of an \emph{arbitrary}
 #' data set. In order to fix the parameters that may be relevant for

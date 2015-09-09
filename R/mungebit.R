@@ -107,7 +107,7 @@ NULL
 ##
 ## After understanding mungebits, data science will stop being data
 ## janitor work and you will get back to the math.
-#' Mungebits are atomic data transformations that are amenable to productionization.
+#' Construct a new mungebit.
 #'
 #' The majority of data projects are overcome by the burden of excessive
 #' data wrangling. Part of the problem lies in the fact that when new

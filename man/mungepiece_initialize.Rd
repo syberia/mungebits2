@@ -2,7 +2,7 @@
 % Please edit documentation in R/mungepiece-initialize.R
 \name{mungepiece_initialize}
 \alias{mungepiece_initialize}
-\title{Constructor for mungepiece class.}
+\title{Construct a new mungepiece.}
 \usage{
 mungepiece_initialize(mungebit = NULL, train_args = list(),
   predict_args = train_args)
