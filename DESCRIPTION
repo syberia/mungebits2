@@ -29,5 +29,8 @@ Collate:
     'mungebit-run.R'
     'mungebit-train_predict.R'
     'mungebit.R'
+    'mungepiece-initialize.R'
+    'mungepiece-run.R'
+    'mungepiece.R'
     'package.mungebits2.R'
     'zzz.R'

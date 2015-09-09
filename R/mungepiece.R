@@ -1,3 +1,6 @@
+#' @include mungepiece-initialize.R mungepiece-run.R
+NULL
+
 ## Mungebits are intended to record the dichotomy between computations
 ## that occur at training time, such as computing the means of variables
 ## during imputation, and prediction time, such as restoring `NA` values
@@ -41,7 +44,7 @@ mungepiece <- R6::R6Class("mungepiece",
     .predict_args = NULL,
 
     initialize = mungepiece_initialize,
-    run        = mungepiece_run
+    run        = mungepiece_run,
 
     debug      = function() { debug(self$.mungebit) },
     undebug    = function() { undebug(self$.mungebit) },
