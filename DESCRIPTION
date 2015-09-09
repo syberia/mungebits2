@@ -17,7 +17,8 @@ License: MIT
 LazyData: true
 Imports:
     stagerunner,
-    crayon
+    crayon,
+    R6
 Suggests:
     testthat,
     testthatsomemore
