@@ -69,8 +69,10 @@ describe("simple calls", {
       testthatsomemore::assert(make_piece()$run(iris, "foo", "bar"))
     })
 
-    test_that("it can train with variable arguments", {
-      testthatsomemore::assert(make_piece()$run(iris, "foo", "bar"))
+    test_that("it can predict with variable arguments", {
+      piece <- make_piece()
+      piece$run(iris, "foo", "bar")
+      testthatsomemore::assert(piece$run(iris, "foo", "bar"))
     })
   })
 })
