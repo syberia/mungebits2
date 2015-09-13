@@ -45,8 +45,20 @@
 mungebit_initialize <- function(train_function   = base::identity,
                                 predict_function = train_function,
                                 enforce_train    = TRUE) {
+  stopifnot(isTRUE(enforce_train) || identical(enforce_train, FALSE))
 
-  # TODO: (RK) Sanity checks?
+  if (!is.acceptable_function(train_function)) {
+    stop("To create a new mungebit, please pass a ",
+         sQuote("function"), " as the first argument. I received ",
+         "something of class ", sQuote(crayon::red(class(train_function)[1L])), ".")
+  }
+
+  if (!is.acceptable_function(predict_function)) {
+    stop("To create a new mungebit, please pass a ",
+         sQuote("function"), " as the second argument. I received ",
+         "something of class ", sQuote(crayon::red(class(second_function)[1L])), ".")
+  }
+
   self$.train_function   <- train_function
   self$.predict_function <- predict_function
   self$.input            <- new.env(parent = emptyenv())

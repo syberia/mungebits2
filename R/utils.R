@@ -25,6 +25,12 @@ list_merge <- function(list1, list2) {
 
 `%||%` <- function(x, y) if (is.null(x)) y else x
 
+is.acceptable_function <- function(x) {
+  is.function(x) || 
+  is.null(x)     ||
+  is.mungebit(x)
+}
+
 # If an environment contains variables "a" and "b",
 # create a list (a = quote(a), b = quote(b)).
 env2listcall <- function(env) {
