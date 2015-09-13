@@ -214,3 +214,11 @@ mungebit <- R6::R6Class("mungebit",
   )
 )
 
+#' Determine whether an object is a mungebit.
+#'
+#' @keywords typecheck
+#' @export
+is.mungebit <- function(x) {
+  inherits(x, "mungebit")
+}
+
