@@ -23,3 +23,5 @@ list_merge <- function(list1, list2) {
   list1
 }
 
+`%||%` <- function(x, y) if (is.null(x)) y else x
+
