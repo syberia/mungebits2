@@ -25,6 +25,6 @@
 #' significantly simplified.
 #'
 #' @name mungebits2
-#' @import stagerunner crayon R6
+#' @import crayon lazyeval R6 stagerunner
 #' @docType package
 NULL

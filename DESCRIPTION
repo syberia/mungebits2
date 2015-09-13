@@ -16,9 +16,10 @@ Depends:
 License: MIT
 LazyData: true
 Imports:
-    stagerunner,
     crayon,
-    R6
+    lazyeval,
+    R6,
+    stagerunner
 Suggests:
     testthat,
     testthatsomemore

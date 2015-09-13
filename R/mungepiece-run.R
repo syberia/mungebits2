@@ -113,5 +113,11 @@
 #'    environment (i.e., the transformed data in the environment) after 
 #'    application of the underlying mungebit. If \code{data} is a data.frame,
 #'    the transformed data.frame is returned.
-mungepiece_run <- NULL
+mungepiece_run <- function(data, ...) {
+
+  if (self$.bit$trained()) {
+    
+  }
+}
+
 
