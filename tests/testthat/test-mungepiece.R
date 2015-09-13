@@ -32,7 +32,7 @@ describe("errors", {
   
 describe("simple calls", {
   make_fn <- function(train) {
-    function(data, first, ...) {
+    function(data, first = NULL, ...) {
       list(train = train, first = first, dots = list(...),
            first_expr = substitute(first),
            dots_expr = eval(substitute(alist(...))))
@@ -44,6 +44,10 @@ describe("simple calls", {
 
   test_that("it can create a mungepiece without error", {
     testthatsomemore::assert(make_piece())
+  })
+
+  test_that("it can train a mungepiece without error", {
+    testthatsomemore::assert(make_piece()$run(iris))
   })
 })
 
