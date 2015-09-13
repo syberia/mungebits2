@@ -41,7 +41,7 @@ make_fn <- function(train) {
 make_bit   <- function() { mungebit$new(make_fn(TRUE), make_fn(FALSE)) }
 make_piece <- function(...) { mungepiece$new(make_bit(), ...) }
   
-describe("simple calls", {
+describe("without default arguments", {
   test_that("it can create a mungepiece without error", {
     testthatsomemore::assert(make_piece())
   })
@@ -62,6 +62,11 @@ describe("simple calls", {
       piece$run(iris)
       expect_true(piece$mungebit()$trained())
     })
+
+    test_that("it captures the expected values during train", {
+      expect_contains(make_piece()$run(iris, "foo", "bar"),
+                      list(train = TRUE, first = "foo", dots = list("bar")))
+    })
   })
 
   describe("with variable arguments", {
@@ -76,5 +81,7 @@ describe("simple calls", {
     })
   })
 })
+
+
 
 
