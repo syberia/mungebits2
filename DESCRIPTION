@@ -26,7 +26,7 @@ Suggests:
 Roxygen: list(wrap = FALSE)
 Collate:
     'column_transformation.R'
-    'mungebit-debug.R'
+    'debug.R'
     'mungebit-initialize.R'
     'mungebit-run.R'
     'mungebit-train_predict.R'

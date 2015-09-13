@@ -36,6 +36,12 @@ debug.mungebit <- function(fun, text = "", condition = NULL) {
   }
 }
 
+#' @export 
+debug.mungepiece <- function(fun, text = "", condition = NULL) {
+  ## To debug a mungepiece, we delegate all the work to the mungebit.
+  debug(fun$mungebit())
+}
+
 #' Generic removal of debugging.
 #'
 #' @inheritParams base::undebug
@@ -62,5 +68,11 @@ undebug.mungebit <- function(fun) {
       undebug(fn)
     }
   }
+}
+
+#' @export 
+debug.mungepiece <- function(fun, text = "", condition = NULL) {
+  ## To undebug a mungepiece, we delegate all the work to the mungebit.
+  undebug(fun$mungebit())
 }
 
