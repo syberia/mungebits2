@@ -114,6 +114,7 @@
 #'    application of the underlying mungebit. If \code{data} is a data.frame,
 #'    the transformed data.frame is returned.
 mungepiece_run <- function(data, ...) {
+  dots <- lazyeval::lazy_dots(...)
 
   if (self$.bit$trained()) {
     
