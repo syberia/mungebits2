@@ -62,34 +62,53 @@ describe("without default arguments", {
       piece$run(iris)
       expect_true(piece$mungebit()$trained())
     })
-
-    test_that("it captures the expected values during train", {
-      expect_contains(make_piece()$run(iris, "foo", "bar"),
-                      list(train = TRUE, first = "foo", dots = list("bar")))
-    })
-
-    test_that("it captures expressions during train", {
-      x <- "fo"
-      expect_contains(make_piece()$run(iris, paste0(x, "o"), identity("bar")),
-                      list(train = TRUE, first = "foo", dots = list("bar"),
-                           first_expr = quote(paste0(x, "o")),
-                           dots_expr = list(quote(identity("bar")))))
-    })
   })
 
   describe("with variable arguments", {
-    test_that("it can train with variable arguments", {
-      testthatsomemore::assert(make_piece()$run(iris, "foo", "bar"))
+    describe("during training", {
+      test_that("it can train with variable arguments", {
+        testthatsomemore::assert(make_piece()$run(iris, "foo", "bar"))
+      })
+
+      test_that("it captures the expected values during train", {
+        expect_contains(make_piece()$run(iris, "foo", "bar"),
+                        list(train = TRUE, first = "foo", dots = list("bar")))
+      })
+
+      test_that("it captures expressions during train", {
+        x <- "fo"
+        expect_contains(make_piece()$run(iris, paste0(x, "o"), identity("bar")),
+                        list(train = TRUE, first = "foo", dots = list("bar"),
+                             first_expr = quote(paste0(x, "o")),
+                             dots_expr = list(quote(identity("bar")))))
+      })
     })
 
-    test_that("it can predict with variable arguments", {
-      piece <- make_piece()
-      piece$run(iris, "foo", "bar")
-      testthatsomemore::assert(piece$run(iris, "foo", "bar"))
+    describe("during prediction", {
+      test_that("it can predict with variable arguments", {
+        piece <- make_piece()
+        piece$run(iris, "foo", "bar")
+        testthatsomemore::assert(piece$run(iris, "foo", "bar"))
+      })
+
+      test_that("it captures the expected values during train", {
+        piece <- make_piece()
+        piece$run(iris)
+        expect_contains(piece$run(iris, "foo", "bar"),
+                        list(train = FALSE, first = "foo", dots = list("bar")))
+      })
+
+      test_that("it captures expressions during train", {
+        piece <- make_piece()
+        piece$run(iris)
+        x <- "fo"
+        expect_contains(piece$run(iris, paste0(x, "o"), identity("bar")),
+                        list(train = FALSE, first = "foo", dots = list("bar"),
+                             first_expr = quote(paste0(x, "o")),
+                             dots_expr = list(quote(identity("bar")))))
+      })
     })
   })
 })
-
-
 
 
