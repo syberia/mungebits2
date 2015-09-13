@@ -1,4 +1,3 @@
-## Simple mungepiece tests.
 context("mungepiece")
 library(testthatsomemore)
 
