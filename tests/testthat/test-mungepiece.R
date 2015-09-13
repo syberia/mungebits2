@@ -29,37 +29,49 @@ describe("errors", {
     expect_error(mungepiece$new(mb, list(), identity), "as the third argument")
   })
 })
+
+make_fn <- function(train) {
+  function(data, first = NULL, ...) {
+    list(train = train, first = first, dots = list(...),
+         first_expr = substitute(first),
+         dots_expr = eval(substitute(alist(...))))
+  }
+}
+
+make_bit   <- function() { mungebit$new(make_fn(TRUE), make_fn(FALSE)) }
+make_piece <- function(...) { mungepiece$new(make_bit(), ...) }
   
 describe("simple calls", {
-  make_fn <- function(train) {
-    function(data, first = NULL, ...) {
-      list(train = train, first = first, dots = list(...),
-           first_expr = substitute(first),
-           dots_expr = eval(substitute(alist(...))))
-    }
-  }
-
-  make_bit   <- function() { mungebit$new(make_fn(TRUE), make_fn(FALSE)) }
-  make_piece <- function(...) { mungepiece$new(make_bit(), ...) }
-
   test_that("it can create a mungepiece without error", {
     testthatsomemore::assert(make_piece())
   })
 
-  test_that("it can train a mungepiece without error", {
-    testthatsomemore::assert(make_piece()$run(iris))
+  describe("with no arguments", {
+    test_that("it can train a mungepiece without error", {
+      testthatsomemore::assert(make_piece()$run(iris))
+    })
+
+    test_that("it can predict on a mungepiece without error", {
+      piece <- make_piece()
+      piece$run(iris)
+      testthatsomemore::assert(piece$run(iris))
+    })
+
+    test_that("it can predict on a mungepiece without error", {
+      piece <- make_piece()
+      piece$run(iris)
+      expect_true(piece$mungebit()$trained())
+    })
   })
 
-  test_that("it can predict on a mungepiece without error", {
-    piece <- make_piece()
-    piece$run(iris)
-    testthatsomemore::assert(piece$run(iris))
-  })
+  describe("with variable arguments", {
+    test_that("it can train with variable arguments", {
+      testthatsomemore::assert(make_piece()$run(iris, "foo", "bar"))
+    })
 
-  test_that("it can predict on a mungepiece without error", {
-    piece <- make_piece()
-    piece$run(iris)
-    expect_true(piece$mungebit()$trained())
+    test_that("it can train with variable arguments", {
+      testthatsomemore::assert(make_piece()$run(iris, "foo", "bar"))
+    })
   })
 })
 
