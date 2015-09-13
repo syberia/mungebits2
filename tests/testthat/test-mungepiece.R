@@ -49,6 +49,18 @@ describe("simple calls", {
   test_that("it can train a mungepiece without error", {
     testthatsomemore::assert(make_piece()$run(iris))
   })
+
+  test_that("it can predict on a mungepiece without error", {
+    piece <- make_piece()
+    piece$run(iris)
+    testthatsomemore::assert(piece$run(iris))
+  })
+
+  test_that("it can predict on a mungepiece without error", {
+    piece <- make_piece()
+    piece$run(iris)
+    expect_true(piece$mungebit()$trained())
+  })
 })
 
 
