@@ -217,4 +217,111 @@ describe("with unnamed default arguments", {
   })
 })
 
+describe("with named default arguments", {
+  make_piece2 <- function() {
+    make_piece(list(first = "Stephen", "Colbert"), list("Jon", first = "Stewart"))
+  }
+
+  test_that("it can create a mungepiece without error", {
+    testthatsomemore::assert(make_piece2())
+  })
+
+  describe("without arguments", {
+    test_that("it can train a mungepiece without error", {
+      testthatsomemore::assert(make_piece2()$run(iris))
+    })
+
+    test_that("it can predict on a mungepiece without error", {
+      piece <- make_piece2()
+      piece$run(iris)
+      testthatsomemore::assert(piece$run(iris))
+    })
+
+    test_that("it can predict on a mungepiece without error", {
+      piece <- make_piece2()
+      piece$run(iris)
+      expect_true(piece$mungebit()$trained())
+    })
+  })
+
+  describe("with unnamed variable arguments", {
+    describe("during training", {
+      test_that("it can train with unnamed variable arguments", {
+        testthatsomemore::assert(make_piece2()$run(iris, "Jim"))
+        testthatsomemore::assert(make_piece2()$run(iris, "Jim", "Hester"))
+      })
+
+      test_that("it captures the expected partial values during train", {
+        expect_contains(make_piece2()$run(iris, "Jim"),
+                        list(train = TRUE, first = "Jim", dots = list("Colbert")))
+      })
+
+      test_that("it captures the expected full values during train", {
+        expect_contains(make_piece2()$run(iris, "Jim", "Hester"),
+                        list(train = TRUE, first = "Jim", dots = list("Hester")))
+      })
+
+      test_that("it captures partial expressions during train", {
+        x <- "Ji"
+        expect_contains(make_piece2()$run(iris, paste0(x, "m")),
+                        list(train = TRUE, first = "Jim", dots = list("Colbert"),
+                             first_expr = quote(paste0(x, "m"))))
+      })
+
+      test_that("it captures full expressions during train", {
+        x <- "Ji"
+        expect_contains(make_piece2()$run(iris, paste0(x, "m"), identity("Hester")),
+                        list(train = TRUE, first = "Jim", dots = list("Hester"),
+                             first_expr = quote(paste0(x, "m")),
+                             dots_expr = list(quote(identity("Hester")))))
+      })
+    })
+
+    describe("during prediction", {
+      test_that("it can predict with unnamed variable arguments", {
+        piece <- make_piece2()
+        piece$run(iris)
+        testthatsomemore::assert(piece$run(iris, "Jim"))
+        piece <- make_piece2()
+        piece$run(iris)
+        testthatsomemore::assert(piece$run(iris, "Jim", "Hester"))
+      })
+
+      test_that("it captures the expected partial values during predict", {
+        piece <- make_piece2()
+        piece$run(iris)
+        expect_contains(piece$run(iris, "Jim"),
+                        list(train = FALSE, first = "Jim", dots = list("Jon")))
+      })
+
+      test_that("it captures the expected full values during predict", {
+        piece <- make_piece2()
+        piece$run(iris)
+        expect_contains(piece$run(iris, "Jim", "Hester"),
+                        list(train = FALSE, first = "Jim", dots = list("Hester")))
+      })
+
+      test_that("it captures partial expressions during predict", {
+        piece <- make_piece2()
+        piece$run(iris)
+        x <- "Ji"
+        expect_contains(piece$run(iris, paste0(x, "m")),
+                        list(train = FALSE, first = "Jim", dots = list("Jon"),
+                             first_expr = quote(paste0(x, "m"))))
+      })
+
+      test_that("it captures full expressions during predict", {
+        piece <- make_piece2()
+        piece$run(iris)
+        x <- "Ji"
+        expect_contains(piece$run(iris, paste0(x, "m"), identity("Hester")),
+                        list(train = FALSE, first = "Jim", dots = list("Hester"),
+                             first_expr = quote(paste0(x, "m")),
+                             dots_expr = list(quote(identity("Hester")))))
+      })
+    })
+  })
+})
+
+
 
