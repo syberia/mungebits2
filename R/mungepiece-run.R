@@ -114,22 +114,29 @@
 #'    application of the underlying mungebit. If \code{data} is a data.frame,
 #'    the transformed data.frame is returned.
 mungepiece_run <- function(data, ..., `_envir` = parent.frame()) {
-  args <- eval(substitute(alist(...)))
-
   if (self$.mungebit$trained()) {
     calling_environment <- self$.predict_args
-    reference_function  <- self$.mungebit$predict_function
+    reference_function  <- self$.mungebit$predict_function()
   } else {
     calling_environment <- self$.train_args
-    reference_function  <- self$.mungebit$train_function
+    reference_function  <- self$.mungebit$train_function()
   }
 
-  args <- two_way_argument_merge(reference_function, calling_environment, args)
+  args <- eval(substitute(alist(...)))
+  args <- two_way_argument_merge(strip_arguments(reference_function, 1),
+                                 calling_environment, args)
 
   parent.env(calling_environment) <- `_envir`
   on.exit(parent.env(calling_environment) <- emptyenv(), add = TRUE)
 
-  do.call(self$run, args, envir = calling_environment)
+  args <- c(list(data = substitute(data)), args)
+
+  do.call(self$.mungebit$run, args, envir = calling_environment)
+}
+
+strip_arguments <- function(fun, n) {
+  formals(fun) <- formals(fun)[setdiff(seq_along(formals(fun)), seq_len(n))]
+  fun
 }
 
 two_way_argument_merge <- function(reference_function, calling_environment, args) {
