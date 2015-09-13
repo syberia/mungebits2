@@ -155,12 +155,19 @@ describe("with unnamed default arguments", {
                         list(train = TRUE, first = "Jim", dots = list("Hester")))
       })
 
-      test_that("it captures expressions during train", {
-        x <- "fo"
-        expect_contains(make_piece2()$run(iris, paste0(x, "o"), identity("bar")),
-                        list(train = TRUE, first = "foo", dots = list("bar"),
-                             first_expr = quote(paste0(x, "o")),
-                             dots_expr = list(quote(identity("bar")))))
+      test_that("it captures partial expressions during train", {
+        x <- "Ji"
+        expect_contains(make_piece2()$run(iris, paste0(x, "m")),
+                        list(train = TRUE, first = "Jim", dots = list("Colbert"),
+                             first_expr = quote(paste0(x, "m"))))
+      })
+
+      test_that("it captures full expressions during train", {
+        x <- "Ji"
+        expect_contains(make_piece2()$run(iris, paste0(x, "m"), identity("Hester")),
+                        list(train = TRUE, first = "Jim", dots = list("Hester"),
+                             first_expr = quote(paste0(x, "m")),
+                             dots_expr = list(quote(identity("Hester")))))
       })
     })
 
