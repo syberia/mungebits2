@@ -6,6 +6,12 @@
 \usage{
 is.mungepiece(x)
 }
+\arguments{
+\item{x}{ANY. An R object to check.}
+}
+\value{
+TRUE or FALSE according as it has class mungepiece
+}
 \description{
 Determine whether an object is a mungepiece.
 }

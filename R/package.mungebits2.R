@@ -28,3 +28,6 @@
 #' @import crayon lazyeval R6 stagerunner
 #' @docType package
 NULL
+
+utils::globalVariables("self")
+

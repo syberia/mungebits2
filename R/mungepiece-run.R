@@ -109,6 +109,9 @@
 #' the predict function of the underlying mungebit.
 #'
 #' @inheritParams mungebit_run
+#' @param _envir environment. The calling environment for the train
+#'    or predict function on the underlying mungebit. This is an internal
+#'    argument and is \code{parent.frame()} by default.
 #' @return If the \code{data} parameter is an environment, the transformed
 #'    environment (i.e., the transformed data in the environment) after 
 #'    application of the underlying mungebit. If \code{data} is a data.frame,
@@ -140,12 +143,12 @@ strip_arguments <- function(fun, n) {
 }
 
 two_way_argument_merge <- function(reference_function, calling_environment, args) {
-  call      <- as.call(c(alist(run), args))
+  call      <- as.call(c(alist(self), args))
   base_args <- as.list(match.call(reference_function, call)[-1L])
 
   default_args <- env2listcall(calling_environment)
   names(default_args) <- attr(calling_environment, "initial_names")
-  call         <- as.call(c(alist(run), default_args))
+  call         <- as.call(c(alist(self), default_args))
   default_args <- as.list(match.call(reference_function, call)[-1L])
 
   if (unnamed_count(default_args) > 0 && unnamed_count(base_args) > 0) {

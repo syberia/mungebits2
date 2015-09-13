@@ -15,6 +15,10 @@ will record any results it must memorize in its \code{input}.}
 
 \item{...}{additional arguments to the mungebit's \code{train_function} or
 \code{predict_function}.}
+
+\item{_envir}{environment. The calling environment for the train
+or predict function on the underlying mungebit. This is an internal
+argument and is \code{parent.frame()} by default.}
 }
 \value{
 If the \code{data} parameter is an environment, the transformed

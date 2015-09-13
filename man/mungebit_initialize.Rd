@@ -48,11 +48,11 @@ mb <- mungebit$new(column_transformation(function(column, scale = NULL) {
 irisp <- list2env(list(data = iris))
 #mb$run(irisp, 'Sepal.Length', 2)
 
-head(mp$data[[1]] / iris[[1]])
+#head(mp$data[[1]] / iris[[1]])
 # > [1] 2 2 2 2 2 2
 #mb$run(mp, 'Sepal.Length')
 # > Column scaled by 2
-head(mp$data[[1]] / iris[[1]])
+#head(mp$data[[1]] / iris[[1]])
 # > [1] 4 4 4 4 4 4
 }
 

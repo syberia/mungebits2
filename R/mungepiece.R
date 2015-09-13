@@ -56,6 +56,8 @@ mungepiece <- R6::R6Class("mungepiece",
 #' Determine whether an object is a mungepiece.
 #'
 #' @keywords typecheck
+#' @param x ANY. An R object to check.
+#' @return TRUE or FALSE according as it has class mungepiece
 #' @export
 is.mungepiece <- function(x) {
   inherits(x, "mungepiece")

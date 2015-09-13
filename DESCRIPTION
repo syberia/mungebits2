@@ -13,7 +13,7 @@ Authors@R: c(person("Robert", "Krzyzanowski",
     email = "technoguyrob@gmail.com", role = c("aut", "cre")))
 Depends:
     R (>= 3.1.0)
-License: MIT
+License: MIT + file LICENSE
 LazyData: true
 Imports:
     crayon,

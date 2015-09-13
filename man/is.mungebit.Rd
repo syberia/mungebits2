@@ -6,6 +6,12 @@
 \usage{
 is.mungebit(x)
 }
+\arguments{
+\item{x}{ANY. An R object to check.}
+}
+\value{
+TRUE or FALSE according as it has class mungebit.
+}
 \description{
 Determine whether an object is a mungebit.
 }
