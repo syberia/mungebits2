@@ -209,6 +209,8 @@ mungebit <- R6::R6Class("mungebit",
 
     debug      = function() { debug(self) },
     undebug    = function() { undebug(self) },
+    train_function   = function() { self$.train_function   },
+    predict_function = function() { self$.predict_function },
     trained    = function() { self$.trained },
     input      = function() { as.list(self$.input) }
   )
