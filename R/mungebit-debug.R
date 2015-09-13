@@ -19,7 +19,9 @@ debug <- function(fun, text = "", condition = NULL) {
 
 ## By default, debugging should preserve the behavior from the base package.
 #' @export
-debug.default <- base::debug
+debug.default <- function(fun, text, condition) {
+  base::debug(fun, text, condition)
+}
 
 #' @export 
 debug.mungebit <- function(fun, text = "", condition = NULL) {
@@ -44,7 +46,9 @@ undebug <- function(fun) {
 }
 
 #' @export
-undebug.default <- base::undebug
+undebug.default <- function(fun) {
+  base::undebug(fun)
+}
 
 #' @export 
 undebug.mungebit <- function(fun) {
