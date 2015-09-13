@@ -48,7 +48,7 @@ mungepiece <- R6::R6Class("mungepiece",
 
     debug      = function() { debug(self$.mungebit) },
     undebug    = function() { undebug(self$.mungebit) },
-    trained    = function() { self$.munged$trained() },
+    trained    = function() { self$.mungebit$trained() },
     mungebit   = function() { self$.mungebit }
   )
 )
