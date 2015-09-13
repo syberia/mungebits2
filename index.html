@@ -284,7 +284,7 @@ isn&#39;t already being debugged.</p>
 #' # > Column scaled by 2
 #' head(mp$data[[1]] / iris[[1]])
 #' # > [1] 4 4 4 4 4 4 
-mungebit_initialize <- function(train_function   = base::identity,
+mungebit_initialize <- function(train_function   = NULL,
                                 predict_function = train_function,
                                 enforce_train    = TRUE) {
 
@@ -415,6 +415,9 @@ mungebit_run <- function(data, ...) {
 #'   object.
 mungebit_train <- function(data, ...) {
   if (self$.enforce_train) {
+    if (isTRUE(self$.trained)) {
+      stop("This mungebit has already been trained, cannot re-train.")
+    }
     on.exit(self$.trained <- TRUE, add = TRUE)
   }
 </span></code>
@@ -473,7 +476,11 @@ munging operation at prediction time.</p>
 #'   or \code{data.frame}. Side effects on the \code{input} local variable
 #'   provided to the \code{predict_function} will be recorded on the mungebit
 #'   object.
-mungebit_predict <- function(data, ...) {</span></code>
+mungebit_predict <- function(data, ...) {
+  if (!isTRUE(self$.trained)) {
+    stop("This mungebit cannot predict because it has not been trained.")
+  }
+</span></code>
             </pre>
           </div>
         </div>
@@ -688,7 +695,7 @@ janitor work and you will get back to the math.</p>
 
           <div class="code">
             <pre>
-              <code class="R"><span class="spacer">#' Mungebits are atomic data transformations that are amenable to productionization.
+              <code class="R"><span class="spacer">#' Construct a new mungebit.
 #'
 #' The majority of data projects are overcome by the burden of excessive
 #' data wrangling. Part of the problem lies in the fact that when new
@@ -780,15 +787,402 @@ mungebit <- R6::R6Class("mungebit",
     .train_function   = NULL, # Function or NULL
     .predict_function = NULL, # Function or NULL
     .input            = NULL, # Environment
-    .trained          = NULL, # Logical
-    .enforce_train    = NULL, # Logical
+    .trained          = FALSE, # Logical
+    .enforce_train    = TRUE, # Logical
 
     initialize = mungebit_initialize,
     run        = mungebit_run,
     train      = mungebit_train,
     predict    = mungebit_predict,
+
     debug      = function() { debug(self) },
-    undebug    = function() { undebug(self) }
+    undebug    = function() { undebug(self) },
+    trained    = function() { self$.trained },
+    input      = function() { as.list(self$.input) }
+  )
+)
+</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <h1>mungepiece-initialize.R</h1>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer"></span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">#' Construct a new mungepiece.
+#'
+#' A mungebit defines an atomic data transformation of an \emph{arbitrary}
+#' data set. In order to specify the parameters that may be relevant for
+#' a \emph{particular} data set (such as restricting its effect to
+#' specific columns, fixing certain parameters such as the imputation
+#' method, or providing information that may contain domain knowledge)
+#' one uses a mungepiece. A mungepiece defined a \emph{domain-specific}
+#' atomic transformation of a data set.
+#'
+#' A mungepiece is defined by the collection of
+#'
+#' \enumerate{
+#'   \item{A mungebit. }{The mungebit determines the qualitative nature
+#'      of the data transformation. The mungebit may represent
+#'      a discretization method, principal component analysis,
+#'      replacement of outliers or special values, and so on.
+#'
+#'      If a training set represents automobile data and there are
+#'      variables like "weight" or "make," these variables should not be
+#'      hardcoded in the mungebit's \code{train} and \code{predict}
+#'      functions. The mungebit should only represent that abstract
+#'      \emph{mathematical} operation performed on the data set.}
+#'   \item{Training arguments. }{While the mungebit represents the code
+#'      necessary for performing some \emph{abstract mathematical operation}
+#'      on the data set, the training arguments record the metadata
+#'      necessary to perform the operation on a \emph{particular}
+#'      data set.
+#'
+#'      For example, if we have an automobile data set and know the
+#'      "weight" column has some missing values, we might pass a vector
+#'      of column names that includes "weight" to an imputation mungebit
+#'      and create an imputation-for-this-automobile-data mungepiece.
+#'
+#'      If we have a medical data set that includes special patient type
+#'      codes and some of the codes were mistyped during data entry or
+#'      are synonyms for the same underlying "type," we could pass a list
+#'      of character vectors to a "grouper" mungebit that would condense
+#'      the categorical feature by grouping like types.
+#'
+#'      If we know that some set of variables is predictive for modeling a
+#'      particular statistical question but are unsure about the remaining
+#'      variables, we could use this intuition to pass the list of known
+#'      variables as exceptions to a "sure independence screening" mungebit.
+#'      The mungebit would run a univariate regression against each variable
+#'      not contained in the exceptions list and drop those totally uncorrelated
+#'      with the dependent variable. This is a typical technique for high
+#'      dimensionality reduction. Knowledge of the exceptions would reduce
+#'      the computation time necessary for recording which variables are
+#'      nonpredictive, an operation that may be very computationally expensive.
+#'
+#'      In short, the mungebit records what we are doing to the data set
+#'      from an abstract level and does not contain any domain knowledge.
+#'      The training arguments, the arguments passed to the mungebit's 
+#'      \code{train_function}, record the details that pinpoint the
+#'      abstract transformation to a \emph{particular} training set intended for
+#'      use with a predictive model.}
+#'   \item{Prediction arguments. }{It is important to understand the 
+#'      train-predict dichotomy of the mungebit. If we are performing an
+#'      imputation, the mungebit will record the means computed from the
+#'      variables in the training set for the purpose of replacing \code{NA}
+#'      values. The training arguments might be used for specifying the columns
+#'      to which the imputation should be restricted.
+#'
+#'      The prediction arguments, by default the same as the training arguments,
+#'      are metadata passed to the mungebit's \code{predict_function}, such as
+#'      again the variables the imputation applies to. Sometimes the prediction
+#'      arguments may differ slightly from the training arguments, such as when
+#'      handling the dependent variable (which will not be present during
+#'      prediction) or when the code used for prediction needs some further
+#'      parametrization to replicate the behavior of the \code{train_function}
+#'      on one-row data sets (i.e., real-time points in a production setting).}
+#' } 
+#'
+#' In short, mungepieces \emph{parametrize} a \emph{single transformation}
+#' of a data set \emph{for that particular data set}. While a mungebit is
+#' abstract and domain-independent and may represent computations like 
+#' imputation, outlier detection, and dimensionality reduction, a mungepiece
+#' records the human touch and domain knowledge that is necessary for
+#' ensuring the mungebits operate on the appropriate features and optimize
+#' space-time tradeoffs (for example, the modeler may know that certain
+#' columns do not contain missing values and avoid passing them to the
+#' imputation mungebit).
+#'
+#' Informally speaking, you can think of a mungebit as the \emph{raw mold}
+#' for a transformation and a mungepiece as the
+#' \emph{cemented product constructed from the mold} that is specific to
+#' a particular data set. A mungepiece affixes a mungebit so it works on
+#' a specific data set, and domain knowledge may be necessary to construct
+#' the mungepiece optimally.
+#'
+#' @param mungebit mungebit. A mungebit \code{\link{mungebit}} representing
+#'    an abstract transformation of a data set, such as type conversion,
+#'    imputation, outlier detection, dimensionality reduction,
+#'    value replacement, and so on.
+#' @param train_args list. Arguments to pass to the mungebit when it is
+#'    run for the first time, i.e., on a \emph{training set} that will be
+#'    fed to a predictive model and may be quite large. These arguments,
+#'    passed directly to the mungebit's \code{train_function}, should 
+#'    contain domain-specific metadata that is necessary to apply the
+#'    mungebit to this specific data set.
+#'
+#'    For example, if the modeler knows certain columns do not contain 
+#'    missing values, they might pass a character vector of column names
+#'    to an imputation mungebit that avoids attempting to impute the
+#'    columns guaranteed to be fully present. Doing this heuristically might
+#'    require an unnecessary pass over the data, potentially expensive if
+#'    the data consists of thousands of features; domain-specific knowledge
+#'    might be used to pinpoint the few features that require imputation.
+#' @param predict_args list. Arguments to pass to the mungebit when it
+#'    is run for the second or subsequent time, i.e., on a \code{prediction set}
+#'    that will usually be coming from model validation code or a real-time
+#'    production environment. After the mungebit has been trained on the
+#'    training set, it should be capable of predicting on
+#'    \emph{single row data sets}, i.e., new "points" coming through in
+#'    a live production setting.
+#'
+#'    Usually, the prediction arguments will be the same as the training
+#'    arguments for the mungepiece.
+#' @examples
+#' \dontrun{
+#'   doubler <- mungebit$new(column_transformation(function(x) x * 2))
+#'   cols    <- c("Sepal.Length", "Petal.Length")
+#'   mp      <- mungepiece$new(doubler, list(cols))
+#'   iris2   <- mp$run(iris)
+#'   stopifnot(identical(iris2[cols], 2 * iris[cols]))
+#' }
+mungepiece_initialize <- function(mungebit     = NULL,
+                                  train_args   = list(),
+                                  predict_args = train_args) {
+
+  if (!is.mungebit(mungebit)) {
+    stop("To create a new mungepiece, please pass a ",
+         sQuote("mungebit"), " as the first argument. I received ",
+         "something of class ", sQuote(crayon::red(class(mungebit)[1L])), ".")
+  }
+
+  if (!is.list(train_args)) {
+    stop("To create a new mungepiece, please pass a list (of training ",
+         "arguments) as the second argument. I received something of ",
+         "class ", sQuote(crayon::red(class(train_args)[1L])), ".")
+  }
+
+  if (!is.list(predict_args)) {
+    stop("To create a new mungepiece, please pass a list (of training ",
+         "arguments) as the second argument. I received something of ",
+         "class ", sQuote(crayon::red(class(train_args)[1L])), ".")
+  }
+
+  self$.mungebit     <- mungebit
+  self$.train_args   <- train_args
+  self$.predict_args <- predict_args
+}
+</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <h1>mungepiece-run.R</h1>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer"></span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>Running a mungepiece respects the same laws as running a mungebit.
+During training, the goal is to record the necessary metadata the
+mungebit needs in order to run during prediction (i.e., on one
+row data sets in a real-time production environment).</p>
+
+<p>The first time <code>mungepiece$run</code> is called, the call is delegated
+to the <code>mungebit</code> attached to the mungepiece with the appropriate
+training arguments. </p>
+
+<p>For example, imagine we have a mungebit that discretizes a variable.</p>
+
+<pre><code class="r">discretizer_train &lt;- function(data, columns, breaks = 5) {
+  # Recall that the first argument to a mungebit&#39;s train function
+  # is *always* the data set. The additional arguments, in this 
+  # case the column names to discretize, will be the list of
+  # training arguments on the mungepiece.
+  stopifnot(is.character(columns), all(columns %in% colnames(data)))
+
+  # We record the columns that were discretized.
+  input$`_columns` &lt;- columns
+
+  for (column in columns) {
+    # Record the values to discretize at, i.e., the bounds of each interval.
+    quantiles &lt;- quantile(data[[column]], breaks = breaks)
+    # `cuts` will be the discretized variable using R&#39;s `base::cut`.
+    cuts &lt;- cut(data[[column]], breaks = quantiles)
+    # We need to remember the cut points and levels to discretize during 
+    # prediction correctly.
+    input[[column]] &lt;- list(cuts = quantiles, levels = levels(cuts)) 
+    # We assume there are no missing values.
+    data[[column]]  &lt;- cuts
+  }
+
+  data
+}
+
+# This function will be pretty slow in R. You can rewrite it in Rcpp.
+# It also suffers from a few bugs on the boundaries due to open/closed
+# interval issues, but a full implementation defeats the illustration.
+discretizer_predict &lt;- function(data, columns, ...) {
+  # We leave the last argument as ... in case the user left the train 
+  # arguments the same as the predict arguments so that we may absorb
+  # the `breaks` argument without error.
+  if (missing(columns)) columns &lt;- input$`_columns`
+
+  # We only allow columns that were discretized during training and are
+  # present in the dataset. A more strict approach would throw an error.
+  columns &lt;- intersect(intersect(columns, input$`_columns`), colnames(data))
+  # Some helper functions.
+  coalesce &lt;- function(x, y) { if (length(x) == 0) y[1L] else x[1L] }
+  min2     &lt;- function(x) { if (length(x) == 0) NULL else min(x) }
+
+  for (column in columns) {
+    cuts &lt;- vapply(data[[column]], function(value) {
+      # Convince yourself that `ix` will be the index of the correct
+      # label. For example, if value is `2.5` and `levels` are [0, 1],
+      # (1, 2], (2, 3], (3, 4], then `ix` will be 3.
+      ix &lt;- max(1, coalesce(
+        min2(which(c(-Inf, input[[column]]$cuts[-1L]) &gt;= value)),
+        length(input[[column]]$levels) + 1
+       ) - 1)
+      input[[column]]$levels[ix]
+    }, character(1))
+    data[[column]] &lt;- factor(cuts, levels = input[[column]]$levels)
+  }
+
+  data   
+}
+
+bit &lt;- mungebit$new(discretizer_train, discretizer_predict)
+</code></pre>
+
+<p>Note that the code to implement discretization during training and 
+prediction is quite different! We can turn this mungebit into a 
+mungepiece that operates on the <code>iris</code> dataset.</p>
+
+<pre><code class="r">piece &lt;- mungepiece$new(bit, list(c(&quot;Sepal.Width&quot;, &quot;Sepal.Length&quot;)))
+iris2 &lt;- mungepiece$run(iris) # Train the mungepiece.
+head(iris2$Sepal.Length)
+# [1] (4.3,5.1] (4.3,5.1] (4.3,5.1] (4.3,5.1] (4.3,5.1] (5.1,5.8]
+# Levels: (4.3,5.1] (5.1,5.8] (5.8,6.4] (6.4,7.9]
+iris3 &lt;- piece$run(iris[1:6, ]) # It has been trained and run live.
+print(iris3$Sepal.Length)
+# [1] (4.3,5.1] (4.3,5.1] (4.3,5.1] (4.3,5.1] (4.3,5.1] (5.1,5.8]
+# Levels: (4.3,5.1] (5.1,5.8] (5.8,6.4] (6.4,7.9] 
+stopifnot(identical(head(iris2$Sepal.Length), iris3$Sepal.Length))
+</code></pre>
+
+<p>The mungepiece also works correctly on outliers.</p>
+
+<pre><code class="r">irisc &lt;- iris; irisc[1:2, 1] &lt;- c(0, 10)
+print(piece$run(irisc[1:2, ])$Sepal.Length)
+# [1] (4.3,5.1] (6.4,7.9]
+# Levels: (4.3,5.1] (5.1,5.8] (5.8,6.4] (6.4,7.9]
+</code></pre>
+
+<p>It is important to handle such cases if new points in a live production
+setting have values that are outside the observed range of the training
+set.</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">mungepiece_run <- NULL
+</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <h1>mungepiece.R</h1>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer"></span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">#' @include mungepiece-initialize.R mungepiece-run.R
+NULL
+</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>Mungebits are intended to record the dichotomy between computations
+that occur at training time, such as computing the means of variables
+during imputation, and prediction time, such as restoring <code>NA</code> values
+with the precomputed means at prediction time.</p>
+
+<p>While a mungebit records the general computation that can apply to 
+arbitrary datasets, a <em>mungepiece</em> records the training and prediction
+arguments applicable to the mungebit. For example, if we used an imputation
+mungebit that looked as follows</p>
+
+<pre><code class="r">imputation_mungebit &lt;- mungebit$new(function(data, columns) {
+  data[columns] &lt;- lapply(columns, function(column) {
+    if (isTRUE(trained)) {
+      input[[column]] &lt;- mean(data[[column]], na.rm = TRUE)
+    }
+    ifelse(is.na(data[[column]]), input[[column]], data[[column]])
+  })
+})
+</code></pre>
+
+<p>then we may wish to record the columns to which the imputation 
+applies. In this case, we can use a <em>mungepiece</em>.</p>
+
+<pre><code class="r">piece &lt;- mungepiece$new(imputation_mungebit, imputed_columns, imputed_columns)
+</code></pre>
+
+<p>To run the mungepiece on our data set we can say <code>piece$run(data, column_names)</code>. 
+The advantage of this approach is that after the mungepiece has been trained,
+it will remember the means and can be used on single row data.frames (i.e.,
+those coming in from production) without a change in syntax or calling
+convention. This means that the typical disproportion of spending the
+majority of one&#39;s time &ldquo;munging data&rdquo; is drastically reduced and no 
+further code has to be written to ensure the transformations run correctly
+in a production setting.</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">mungepiece <- R6::R6Class("mungepiece", 
+  public = list(
+    .mungebit     = NULL, # mungebit
+    .train_args   = NULL, # list
+    .predict_args = NULL,
+
+    initialize = mungepiece_initialize,
+    run        = mungepiece_run,
+
+    debug      = function() { debug(self$.mungebit) },
+    undebug    = function() { undebug(self$.mungebit) },
+    trained    = function() { self$.munged$trained() },
+    mungebit   = function() { self$.mungebit }
   )
 )
 </span></code>
@@ -841,7 +1235,7 @@ mungebit <- R6::R6Class("mungebit",
 #' significantly simplified.
 #'
 #' @name mungebits2
-#' @import stagerunner crayon
+#' @import stagerunner crayon R6
 #' @docType package
 NULL</span></code>
             </pre>
