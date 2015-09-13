@@ -25,6 +25,7 @@ Suggests:
     testthatsomemore
 Roxygen: list(wrap = FALSE)
 Collate:
+    'column_transformation.R'
     'mungebit-debug.R'
     'mungebit-initialize.R'
     'mungebit-run.R'

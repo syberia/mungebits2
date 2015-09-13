@@ -17,7 +17,7 @@
 #'    during runtime. Set this to FALSE if you are experimenting with
 #'    or debugging the mungebit.
 #' @examples
-#' mb <- mungebit(column_transformation(function(column, scale = NULL) {
+#' mb <- mungebit$new(column_transformation(function(column, scale = NULL) {
 #'   # `trained` is a helper provided by mungebits indicating TRUE or FALSE
 #'   # according as the mungebit has been run on a dataset.
 #'   if (!trained) {
@@ -30,19 +30,19 @@
 #'   column * input$scale
 #' }))
 #' 
-#' # A `mungeplane` is just a lightweight wrapper to keep track of our data so
+#' # We make a lightweight wrapper to keep track of our data so
 #' # the mungebit can perform side effects (i.e., modify the data without an
 #' # explicit assignment <- operator).
-#' irisp <- mungeplane(iris)
-#' mb$run(irisp, 'Sepal.Length', 2)
+#' irisp <- list2env(list(data = iris))
+#' #mb$run(irisp, 'Sepal.Length', 2)
 #'
 #' head(mp$data[[1]] / iris[[1]])
 #' # > [1] 2 2 2 2 2 2
-#' mb$run(mp, 'Sepal.Length')
+#' #mb$run(mp, 'Sepal.Length')
 #' # > Column scaled by 2
 #' head(mp$data[[1]] / iris[[1]])
 #' # > [1] 4 4 4 4 4 4 
-mungebit_initialize <- function(train_function   = NULL,
+mungebit_initialize <- function(train_function   = base::identity,
                                 predict_function = train_function,
                                 enforce_train    = TRUE) {
 
