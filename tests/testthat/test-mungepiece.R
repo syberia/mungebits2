@@ -67,6 +67,14 @@ describe("without default arguments", {
       expect_contains(make_piece()$run(iris, "foo", "bar"),
                       list(train = TRUE, first = "foo", dots = list("bar")))
     })
+
+    test_that("it captures expressions during train", {
+      x <- "fo"
+      expect_contains(make_piece()$run(iris, paste0(x, "o"), identity("bar")),
+                      list(train = TRUE, first = "foo", dots = list("bar"),
+                           first_expr = quote(paste0(x, "o")),
+                           dots_expr = list(quote(identity("bar")))))
+    })
   })
 
   describe("with variable arguments", {
