@@ -19,8 +19,8 @@ debug <- function(fun, text = "", condition = NULL) {
 
 ## By default, debugging should preserve the behavior from the base package.
 #' @export
-debug.default <- function(fun, text, condition) {
-  base::debug(fun, text, condition)
+debug.default <- function(fun, text = "", condition = NULL) {
+  base::debug(fun, text = "", condition = NULL)
 }
 
 #' @export 

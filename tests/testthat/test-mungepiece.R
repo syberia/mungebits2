@@ -363,7 +363,7 @@ describe("with unnamed default arguments and named argument calls", {
       expect_contains(make_piece2()$run(iris, paste0(x, "m"), first = identity("Hester")),
                       list(train = TRUE, first = "Hester", dots = list("Jim"),
                            first_expr = quote(identity("Hester")),
-                           dots_expr = list(paste0(x, "m"))))
+                           dots_expr = list(quote(paste0(x, "m")))))
     })
   })
 
@@ -416,9 +416,106 @@ describe("with unnamed default arguments and named argument calls", {
       expect_contains(piece$run(iris, paste0(x, "m"), first = identity("Hester")),
                       list(train = FALSE, first = "Hester", dots = list("Jim"),
                            first_expr = quote(identity("Hester")),
-                           dots_expr = list(paste0(x, "m"))))
+                           dots_expr = list(quote(paste0(x, "m")))))
     })
   })
 })
 
+describe("with named default arguments and named argument calls", {
+  make_piece2 <- function() {
+    make_piece(list(first = "Stephen", "Colbert"), list("Jon", first = "Stewart"))
+  }
+
+  describe("during training", {
+    test_that("it can train with unnamed variable arguments", {
+      testthatsomemore::assert(make_piece2()$run(iris, first = "Jim"))
+      testthatsomemore::assert(make_piece2()$run(iris, first = "Jim", "Hester"))
+      testthatsomemore::assert(make_piece2()$run(iris, "Jim", first = "Hester"))
+    })
+
+    test_that("it captures the expected partial values during train", {
+      expect_contains(make_piece2()$run(iris, first = "Jim"),
+                      list(train = TRUE, first = "Jim", dots = list("Colbert")))
+    })
+
+    test_that("it captures the expected full values during train", {
+      expect_contains(make_piece2()$run(iris, first = "Jim", "Hester"),
+                      list(train = TRUE, first = "Jim", dots = list("Hester")))
+      expect_contains(make_piece2()$run(iris, "Jim", first = "Hester"),
+                      list(train = TRUE, first = "Hester", dots = list("Jim")))
+    })
+
+    test_that("it captures partial expressions during train", {
+      x <- "Ji"
+      expect_contains(make_piece2()$run(iris, first = paste0(x, "m")),
+                      list(train = TRUE, first = "Jim", dots = list("Colbert"),
+                           first_expr = quote(paste0(x, "m"))))
+    })
+
+    test_that("it captures full expressions during train", {
+      x <- "Ji"
+      expect_contains(make_piece2()$run(iris, first = paste0(x, "m"), identity("Hester")),
+                      list(train = TRUE, first = "Jim", dots = list("Hester"),
+                           first_expr = quote(paste0(x, "m")),
+                           dots_expr = list(quote(identity("Hester")))))
+      expect_contains(make_piece2()$run(iris, paste0(x, "m"), first = identity("Hester")),
+                      list(train = TRUE, first = "Hester", dots = list("Jim"),
+                           first_expr = quote(identity("Hester")),
+                           dots_expr = list(quote(paste0(x, "m")))))
+    })
+  })
+
+  describe("during prediction", {
+    test_that("it can predict with unnamed variable arguments", {
+      piece <- make_piece2()
+      piece$run(iris)
+      testthatsomemore::assert(piece$run(iris, first = "Jim"))
+      piece <- make_piece2()
+      piece$run(iris)
+      testthatsomemore::assert(piece$run(iris, first = "Jim", "Hester"))
+      piece <- make_piece2()
+      piece$run(iris)
+      testthatsomemore::assert(piece$run(iris, "Jim", first = "Hester"))
+    })
+
+    test_that("it captures the expected partial values during predict", {
+      piece <- make_piece2()
+      piece$run(iris)
+      expect_contains(piece$run(iris, first = "Jim"),
+                      list(train = FALSE, first = "Jim", dots = list("Jon")))
+    })
+
+    test_that("it captures the expected full values during predict", {
+      piece <- make_piece2()
+      piece$run(iris)
+      expect_contains(piece$run(iris, first = "Jim", "Hester"),
+                      list(train = FALSE, first = "Jim", dots = list("Hester")))
+      expect_contains(piece$run(iris, "Jim", first = "Hester"),
+                      list(train = FALSE, first = "Hester", dots = list("Jim")))
+    })
+
+    test_that("it captures partial expressions during predict", {
+      piece <- make_piece2()
+      piece$run(iris)
+      x <- "Ji"
+      expect_contains(piece$run(iris, first = paste0(x, "m")),
+                      list(train = FALSE, first = "Jim", dots = list("Jon"),
+                           first_expr = quote(paste0(x, "m"))))
+    })
+
+    test_that("it captures full expressions during predict", {
+      piece <- make_piece2()
+      piece$run(iris)
+      x <- "Ji"
+      expect_contains(piece$run(iris, first = paste0(x, "m"), identity("Hester")),
+                      list(train = FALSE, first = "Jim", dots = list("Hester"),
+                           first_expr = quote(paste0(x, "m")),
+                           dots_expr = list(quote(identity("Hester")))))
+      expect_contains(piece$run(iris, paste0(x, "m"), first = identity("Hester")),
+                      list(train = FALSE, first = "Hester", dots = list("Jim"),
+                           first_expr = quote(identity("Hester")),
+                           dots_expr = list(quote(paste0(x, "m")))))
+    })
+  })
+})
 
