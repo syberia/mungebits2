@@ -99,5 +99,19 @@
 ## It is important to handle such cases if new points in a live production
 ## setting have values that are outside the observed range of the training
 ## set.
+#' Run a mungepiece and prepare it for a live production setting.
+#'
+#' Running a mungepiece achieves the same effect as running the mungebit
+#' attached to the mungepiece: the first time it is run, we \emph{train}
+#' the mungebit so it remembers metadata it will need to replicate the
+#' operation in a live production setting on a single row of data. The
+#' second and subsequent times we run the mungepiece, it will execute
+#' the predict function of the underlying mungebit.
+#'
+#' @inheritParams mungebit_run
+#' @return If the \code{data} parameter is an environment, the transformed
+#'    environment (i.e., the transformed data in the environment) after 
+#'    application of the underlying mungebit. If \code{data} is a data.frame,
+#'    the transformed data.frame is returned.
 mungepiece_run <- NULL
 
