@@ -8,5 +8,25 @@ describe("errors", {
     mp <- mungepiece$new(mb)
     expect_error(mp$run(), "is missing, with no default")
   })
+
+  test_that("it cannot initialize a mungepiece with a non-mungebit", {
+    expect_error(mungepiece$new(1), "as the first argument")
+    expect_error(mungepiece$new(NULL), "as the first argument")
+    expect_error(mungepiece$new(identity), "as the first argument")
+  })
+
+  test_that("it cannot initialize mungepiece training args with a non-list", {
+    mb <- mungebit$new()
+    expect_error(mungepiece$new(mb, 1), "as the second argument")
+    expect_error(mungepiece$new(mb, NULL), "as the second argument")
+    expect_error(mungepiece$new(mb, identity), "as the second argument")
+  })
+
+  test_that("it cannot initialize mungepiece training args with a non-list", {
+    mb <- mungebit$new()
+    expect_error(mungepiece$new(mb, list(), 1), "as the third argument")
+    expect_error(mungepiece$new(mb, list(), NULL), "as the third argument")
+    expect_error(mungepiece$new(mb, list(), identity), "as the third argument")
+  })
 })
 

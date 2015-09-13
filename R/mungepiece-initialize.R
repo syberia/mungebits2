@@ -143,7 +143,7 @@ mungepiece_initialize <- function(mungebit     = NULL,
 
   if (!is.list(predict_args)) {
     stop("To create a new mungepiece, please pass a list (of training ",
-         "arguments) as the second argument. I received something of ",
+         "arguments) as the third argument. I received something of ",
          "class ", sQuote(crayon::red(class(train_args)[1L])), ".")
   }
 
