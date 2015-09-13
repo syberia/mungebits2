@@ -43,13 +43,17 @@ env2listcall <- function(env) {
 
 make_env <- function(lst, parent = emptyenv()) {
   initial_names <- names(lst) %||% character(length(lst))
-  names(lst) <- ifelse(unnamed(lst), paste0("_", seq_along(lst)), initial_names)
+  names(lst) <- ifelse(unnamed(lst),
+    paste0("_", seq_along(lst)),
+    paste0("_", initial_names)
+  )
 
   if (length(lst) == 0) {
     env <- new.env(parent = parent)
   } else {
     env <- list2env(lst, parent = parent)
   }
+
   name_order <- match(names(lst), ls(env))
   attr(env, "name_order")    <- name_order
   attr(env, "initial_names") <- initial_names

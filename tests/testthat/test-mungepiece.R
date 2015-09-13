@@ -518,3 +518,15 @@ describe("with named default arguments and named argument calls", {
   })
 })
 
+describe("edge cases", {
+  test_that("it can handle conflicting / mixed expressions", {
+    mb <- mungebit$new(function(data, x, y) {
+      list(x = x, y = y, x_expr = substitute(x), y_expr = substitute(y))
+    })
+    mp <- mungepiece$new(mb, list(x = 2))
+    x <- 3
+    expect_contains(mp$run(iris, y = x),
+                    list(x = 2, y = 3, y_expr = quote(x)))
+  })
+})
+
