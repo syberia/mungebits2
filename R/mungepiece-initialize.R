@@ -148,7 +148,10 @@ mungepiece_initialize <- function(mungebit     = NULL,
   }
 
   self$.mungebit     <- mungebit
-  self$.train_args   <- train_args
-  self$.predict_args <- predict_args
+  self$.train_args   <- make_env(train_args)
+  self$.predict_args <- make_env(predict_args)
+
+  lockEnvironment(self$.train_args,   bindings = TRUE)
+  lockEnvironment(self$.predict_args, bindings = TRUE)
 }
 

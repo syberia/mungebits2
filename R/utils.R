@@ -25,3 +25,15 @@ list_merge <- function(list1, list2) {
 
 `%||%` <- function(x, y) if (is.null(x)) y else x
 
+# If an environment contains variables "a" and "b",
+# create a list (a = quote(a), b = quote(b)).
+env2listcall <- function(env) {
+  names <- ls(env)
+  setNames(lapply(names, as.name), nm = names)
+}
+
+make_env <- function(lst, parent = emptyenv()) {
+  if (length(lst) == 0) new.env(parent = parent)
+  else list2env(lst, parent = parent)
+}
+

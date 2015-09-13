@@ -113,12 +113,21 @@
 #'    environment (i.e., the transformed data in the environment) after 
 #'    application of the underlying mungebit. If \code{data} is a data.frame,
 #'    the transformed data.frame is returned.
-mungepiece_run <- function(data, ...) {
-  dots <- lazyeval::lazy_dots(...)
+mungepiece_run <- function(data, ..., `_envir` = parent.frame()) {
+  args <- eval(substitute(alist(...)))
 
   if (self$.bit$trained()) {
-    
+    calling_environment <- self$.predict_args
+  } else {
+    calling_environment <- self$.train_args
   }
+
+  args <- list_merge(env2listcall(calling_environment), args)
+
+  parent.env(calling_environment) <- `_envir`
+  on.exit(parent.env(calling_environment) <- emptyenv(), add = TRUE)
+
+  do.call(self$run, args, envir = calling_environment)
 }
 
 
