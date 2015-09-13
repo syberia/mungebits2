@@ -4,7 +4,7 @@
 \alias{mungepiece_run}
 \title{Run a mungepiece and prepare it for a live production setting.}
 \usage{
-mungepiece_run(data, ...)
+mungepiece_run(data, ..., `_envir` = parent.frame())
 }
 \arguments{
 \item{data}{environment or data.frame. Essentially an environment

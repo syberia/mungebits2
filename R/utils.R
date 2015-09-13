@@ -29,11 +29,24 @@ list_merge <- function(list1, list2) {
 # create a list (a = quote(a), b = quote(b)).
 env2listcall <- function(env) {
   names <- ls(env)
+  if ("name_order" %in% names(attributes(env))) {
+    names <- names[attr(env, "name_order")]
+  }
   setNames(lapply(names, as.name), nm = names)
 }
 
 make_env <- function(lst, parent = emptyenv()) {
-  if (length(lst) == 0) new.env(parent = parent)
-  else list2env(lst, parent = parent)
+  names   <- names(lst) %||% character(length(lst))
+  unnamed <- names == ""
+  names(lst) <- ifelse(unnamed, paste0("_", seq_along(names)), names)
+
+  if (length(lst) == 0) {
+    env <- new.env(parent = parent)
+  } else {
+    env <- list2env(lst, parent = parent)
+  }
+  name_order <- match(names(lst), ls(env))
+  attr(env, "name_order") <- name_order
+  env
 }
 
