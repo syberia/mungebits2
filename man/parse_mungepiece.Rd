@@ -2,7 +2,7 @@
 % Please edit documentation in R/parse_mungepiece.R
 \name{parse_mungepiece}
 \alias{parse_mungepiece}
-\title{Translate a list of train / predict function and arguments to a mungepiece.}
+\title{Translate a list of train / predict functions and arguments to a mungepiece.}
 \usage{
 parse_mungepiece(args)
 }
@@ -74,6 +74,9 @@ parse_mungepiece(args)
   Note that the above trichotomy is exhaustive: any mungepiece can be
   constructed using this helper, regardless of its mungebit's
   train or predict function or its own train or predict arguments.
+  In the first two formats, the first unnamed list element is always
+  reserved and will never belong to the \code{train_args} or \code{predict_args}
+  of the mungepiece.
 
   Also note that in the first two formats, the first list element must be
   unnamed.}
