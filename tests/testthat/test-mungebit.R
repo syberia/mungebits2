@@ -13,6 +13,18 @@ describe("errors", {
     mb <- mungebit$new()
     expect_error(mb$predict(iris), "not been trained")
   })
+
+  test_that("it needs a function as input", {
+    expect_error(mungebit$new(5), "as the first argument")
+    expect_error(mungebit$new(iris), "as the first argument")
+    expect_error(mungebit$new(new.env()), "as the first argument")
+  })
+
+  test_that("it needs a function as input for predict", {
+    expect_error(mungebit$new(NULL, 5), "as the second argument")
+    expect_error(mungebit$new(NULL, iris), "as the second argument")
+    expect_error(mungebit$new(NULL, new.env()), "as the second argument")
+  })
 })
 
 test_that("it correctly sets the trained flag after the first run", {
