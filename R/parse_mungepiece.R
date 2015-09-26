@@ -4,7 +4,7 @@
 ## later feed to a machine learning classifier (i.e., the train function)
 ## in conjunction with the code that executes on streaming records
 ## coming through in a production system performing the same
-## mathematical operation on the 1-row dataset (i.e., the predict function).
+## mathematical operation on a 1-row dataset (i.e., the predict function).
 ##
 ## Next, we must determine the training and prediction arguments to the
 ## mungebit that specify the difference in how to use the mungebit on
@@ -55,14 +55,14 @@
 ## mungepieces) and increases the readability of munging code.
 ##
 ## ```r
-## The munge function calls out to the parse_mungepiece helper.
-## munge(dataset, list(
+## # The munge function calls out to the parse_mungepiece helper.
+## munged_data <- munge(raw_data, list(
 ##   "Drop useless vars" = list(list(drop_vars, vector_of_variables),
 ##                              list(drop_vars, c(vector_variables, "dep_var"))),
 ##   "Impute variables"  = list(imputer, imputed_vars),
 ##   "Discretize vars"   = list(list(discretize, restore_levels), discretized_vars)
 ## ))
-## ``
+## ```
 ## 
 ## Translated in English, we are saying:
 ##
