@@ -1,4 +1,5 @@
 #' Munge.
 #'
+#' @param ... Stuff.
 #' @export
-munge <- NULL
+munge <- function(...) { }
