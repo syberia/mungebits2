@@ -232,6 +232,41 @@
 #' # The munge function uses the attached "mungepieces" attribute, a list of
 #' # trained mungepieces.
 parse_mungepiece <- function(args) {
+  stopifnot(is.list(args), length(args) > 0)
+
+  if (length(unnamed_count(args)) == 0) {
+    parse_mungepiece_dual(args)
+  } else {
+    parse_mungepiece_single(args)
+  }
+}
+
+parse_mungepiece_dual <- function(args) {
+  if (!setequal(c("train", "predict"), names(args))) {
+    # TODO: (RK) Nice error
+    stop("...")
+  }
+
+
+}
+
+parse_mungepiece_single <- function(args) {
+  unnamed  <- unnamed(args)
+  fn_index <- unnamed[1L]
+  train_function <- args[[fn_index]]
   
+  if (is.function(train_function)) {
+    parse_mungepiece_simple(args[-fn_index], train_function)
+  } else {
+    parse_mungepiece_hybrid(args[-fn_index], train_function)
+  }
+}
+
+parse_mungepiece_simple <- function(args, func) {
+  mungepiece$new(mungebit$new(func), args)
+}
+
+parse_mungepiece_hybrid <- function(args, func) {
+  mungepiece$new(mungebit$new(func[[1]], func[[2]]), args)
 }
 

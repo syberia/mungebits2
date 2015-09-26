@@ -8,7 +8,14 @@ describe("Invalid inputs", {
   })
 })
 
-train_fn   <- function(data, by = 2) { data[[1]] <- by * data[[1]]; input$by <- by; data }
+train_fn   <- function(data, by = 2) {
+  data[[1]] <- by * data[[1]];
+  if (!exists("by", envir = input, inherits = FALSE)) {
+    input$by <- by
+  }
+  data
+}
+
 predict_fn <- function(data, ...) { data[[1]] <- input$by * data[[1]]; data }
 
 describe("First format", {
