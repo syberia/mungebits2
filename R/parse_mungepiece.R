@@ -1,3 +1,95 @@
+## Constructing a mungepiece is not incredibly straightforward. First,
+## we must construct the mungebit, which represents the code that will
+## be executed when running the mungepiece on a training dataset to
+## later feed to a machine learning classifier (i.e., the train function)
+## in conjunction with the code that executes on streaming records
+## coming through in a production system performing the same
+## mathematical operation on the 1-row dataset (i.e., the predict function).
+##
+## Next, we must determine the training and prediction arguments to the
+## mungebit that specify the difference in how to use the mungebit on
+## offline training versus realtime prediction data.
+##
+## Thus, constructing a mungepiece looks something like:
+## 
+## ```r
+## piece <- mungepiece(
+##   mungebit(train_function, predict_function),
+##   train_args, predict_args
+## )
+## ```
+##
+## In particular, we have to invoke the `mungebit` constructor every time
+## we create a mungepiece. Instead the `parse_mungepiece` helper defined in
+## this file provides a more convenient format:
+##
+## ```r
+## # If the train function with train args is the same as the predict function
+## # with predict args.
+## piece <- parse_mungepiece(list(train_fn, train_arg1, train_arg2 = "blah"))
+##
+## # If the train and predict arguments to the mungepiece match, but we
+## # wish to use a different train versus predict function for the mungebit.
+## piece <- parse_mungepiece(list(train_fn, predict_fn), dual_arg1, dual_arg2 = "blah")
+## 
+## # If we wish to only run this mungepiece during training.
+## piece <- parse_mungepiece(list(train_fn, NULL), train_arg1, train_arg2 = "blah")
+## 
+## # If we wish to only run this mungepiece during prediction
+## piece <- parse_mungepiece(list(NULL, predict_fn), predict_arg1, predict_arg2 = "blah")
+##
+## # If we wish to run different arguments but the same function during
+## # training versus prediction.
+## piece <- parse_mungepiece(train = list(train_fn, train_arg1),
+##                           predict = list(train_fn, predict_arg1))
+##
+## # If we wish to run different arguments with different functions during
+## # training versus prediction.
+## piece <- parse_mungepiece(train = list(train_fn, train_arg1),
+##                           predict = list(predict_fn, predict_arg1))
+## ```
+## 
+## This is a full partition of the potential arguments used to initialize a
+## mungebit + mungepiece combo. Using this syntax in conjunction with the
+## `munge` helper function speeds up coding of munge procedures (lists of
+## mungepieces) and increases the readability of munging code.
+##
+## ```r
+## The munge function calls out to the parse_mungepiece helper.
+## munge(dataset, list(
+##   "Drop useless vars" = list(list(drop_vars, vector_of_variables),
+##                              list(drop_vars, c(vector_variables, "dep_var"))),
+##   "Impute variables"  = list(imputer, imputed_vars),
+##   "Discretize vars"   = list(list(discretize, restore_levels), discretized_vars)
+## ))
+## ``
+## 
+## Translated in English, we are saying:
+##
+##   1. Drop a static list of useless variables from the data set.
+##      When the model is trained, drop the dependent variable as well
+##      since we will no longer need it.
+##
+##   2. Impute the variables in the static list of `imputed_vars`.
+##      When the model is trained, the `imputer` will have some logic
+##      to restore the means obtained during training of the mungepiece.
+##
+##   3. Discretize the static list of variables in the `discretized_vars`
+##      character vector. After model training, when new data points come in,
+##      the original training set is no longer available. The `discretize`
+##      method stored the necessary cuts for each variable in the mungebit's
+##      `input`, which the `restore_levels` function uses to bin the
+##      numerical features in the list of `discretized_vars` into factor
+##      (categorical) variables.
+##
+## If one took an initial (training) data set, ran it through the
+## `munge` helper as above, took the resulting list of mungepieces,
+## and ran the original data set through them a second time (so they
+## are running in "predict mode"), we should obtain the same result.
+## 
+## We can use the list of trained mungepieces to replicate the munging
+## on the training set in a production system on single row data sets
+## (i.e., new records being streamed in real-time).
 #' Translate a list of train / predict functions and arguments to a mungepiece.
 #'
 #' Constructing mungepieces and mungebits by hand is a little tedious.
