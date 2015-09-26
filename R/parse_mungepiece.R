@@ -26,7 +26,7 @@
 ## ```r
 ## # If the train function with train args is the same as the predict function
 ## # with predict args.
-## piece <- parse_mungepiece(list(list(train_fn, train_arg1, train_arg2 = "blah")))
+## piece <- parse_mungepiece((list(train_fn, train_arg1, train_arg2 = "blah"))
 ##
 ## # If the train and predict arguments to the mungepiece match, but we
 ## # wish to use a different train versus predict function for the mungebit.
@@ -187,7 +187,7 @@
 #'
 #' # If the train function with train args is the same as the predict function
 #' # with predict args.
-#' piece <- parse_mungepiece(list(list(train_fn, train_arg1, train_arg2 = "blah")))
+#' piece <- parse_mungepiece(list(train_fn, train_arg1, train_arg2 = "blah"))
 #'
 #' # If the train and predict arguments to the mungepiece match, but we
 #' # wish to use a different train versus predict function for the mungebit.
@@ -234,7 +234,7 @@
 parse_mungepiece <- function(args) {
   stopifnot(is.list(args), length(args) > 0)
 
-  if (length(unnamed_count(args)) == 0) {
+  if (unnamed_count(args) == 0) {
     parse_mungepiece_dual(args)
   } else {
     parse_mungepiece_single(args)

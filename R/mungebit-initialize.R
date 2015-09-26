@@ -56,7 +56,7 @@ mungebit_initialize <- function(train_function   = base::identity,
   if (!is.acceptable_function(predict_function)) {
     stop("To create a new mungebit, please pass a ",
          sQuote("function"), " as the second argument. I received ",
-         "something of class ", sQuote(crayon::red(class(second_function)[1L])), ".")
+         "something of class ", sQuote(crayon::red(class(predict_function)[1L])), ".")
   }
 
   self$.train_function   <- train_function
