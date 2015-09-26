@@ -208,6 +208,29 @@
 #' # training versus prediction.
 #' piece <- parse_mungepiece(list(train = list(train_fn, train_arg1),
 #'                                predict = list(predict_fn, predict_arg1)))
+#'
+#' # The munge function uses the format defined in parse_mungepiece to create
+#' # and execute a list of mungepieces on a dataset.
+#' munged_data <- munge(raw_data, list(
+#'   "Drop useless vars" = list(list(drop_vars, vector_of_variables),
+#'                              list(drop_vars, c(vector_variables, "dep_var"))),
+#'   "Impute variables"  = list(imputer, imputed_vars),
+#'   "Discretize vars"   = list(list(discretize, restore_levels), discretized_vars)
+#' ))
+#' 
+#' # Here, we have requested to munge the raw_data by dropping useless variables,
+#' # including the dependent variable dep_var after model training,
+#' # imputing a static list of imputed_vars, discretizing a static list
+#' # of discretized_vars being careful to use separate logic when merely
+#' # using the computed discretization cuts to bin the numeric features into
+#' # categorical features. The end result is a munged_data set with an 
+#' # attribute "mungepieces" that holds the list of mungepieces used for
+#' # munging the data, and can be used to perform the exact same set of
+#' # operations on a single row dataset coming through in a real-time production
+#' # system.
+#' munged_single_row_of_data <- munge(single_row_raw_data, munged_data)
+#' # The munge function uses the attached "mungepieces" attribute, a list of
+#' # trained mungepieces.
 parse_mungepiece <- function(args) {
 
 }
