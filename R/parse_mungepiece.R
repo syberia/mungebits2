@@ -251,8 +251,7 @@ parse_mungepiece_dual <- function(args) {
 }
 
 parse_mungepiece_single <- function(args) {
-  unnamed  <- unnamed(args)
-  fn_index <- unnamed[1L]
+  fn_index <- unnamed(args)[1L]
   train_function <- args[[fn_index]]
   
   if (is.function(train_function)) {
