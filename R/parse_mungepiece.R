@@ -13,8 +13,8 @@
 ## Thus, constructing a mungepiece looks something like:
 ## 
 ## ```r
-## piece <- mungepiece(
-##   mungebit(train_function, predict_function),
+## piece <- mungepiece$new(
+##   mungebit$new(train_function, predict_function),
 ##   train_args, predict_args
 ## )
 ## ```
@@ -232,6 +232,6 @@
 #' # The munge function uses the attached "mungepieces" attribute, a list of
 #' # trained mungepieces.
 parse_mungepiece <- function(args) {
-
+  
 }
 
