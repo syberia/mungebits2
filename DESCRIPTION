@@ -35,5 +35,6 @@ Collate:
     'mungepiece-run.R'
     'mungepiece.R'
     'package.mungebits2.R'
+    'parse_mungepiece.R'
     'utils.R'
     'zzz.R'

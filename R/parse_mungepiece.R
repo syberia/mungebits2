@@ -1,0 +1,90 @@
+#' Translate a list of train / predict function and arguments to a mungepiece.
+#'
+#' Constructing mungepieces and mungebits by hand is a little tedious.
+#' To simplify the process, we introduce a tiny DSL that allows for
+#' easier construction of mungebits. The intention is for this function
+#' to be used in conjuction with a list passed to the \code{\link{munge}}
+#' helper.
+#'
+#' @note To understand the documentation of this helper, please read
+#'   the documentation on \code{\link{mungebit}} and \code{\link{mungepiece}}
+#'   first.
+#' @param args list. A list of arguments. This can be one of the following formats
+#'   
+#'   \enumerate{
+#'     \item{\code{list(train_fn, ...)}}{ -- If the first element of \code{args} is
+#'       a function followed by other arguments, the constructed mungepiece
+#'       will use the \code{train_fn} as both the \emph{train and predict}
+#'       function for the mungebit, and \code{list(...)} (that is, the remaining 
+#'       elements in the list) will be used as both the train and predict
+#'       arguments in the mungepiece. In other words, using this format
+#'       specifies you would like \emph{exactly the same behavior in
+#'       training as in prediction}. This is appropriate for mungebits
+#'       that operate in place and do not need information obtained
+#'       from the training set, such as simple value replacement or
+#'       column removal.
+#'     }
+#'     \item{\code{list(list(train_fn, predict_fn), ...)}}{
+#'       -- If \code{args} consists of a two-element pair in its first
+#'       element, it must be a pair of either \code{NULL}s or functions,
+#'       with not both elements \code{NULL}. If the \code{train_fn}
+#'       or \code{predict_fn}, resp., is \code{NULL}, this will signify to have
+#'       \emph{no effect} during training or prediction, resp.
+#'        
+#'       The remaining arguments, that is \code{list(...)}, will be used
+#'       as both the training and prediction arguments.
+#'   
+#'       This structure is ideal if the behavior during training and prediction
+#'       has an identical parametrization but very different implementation,
+#'       such as imputation, so you can pass two different functions.
+#'
+#'       It is also useful if you wish to have no effect during prediction,
+#'       such as removing faulty rows during training, or no effect during
+#'       training, such as making a few transformations that are only
+#'       necessary on raw production data rather than the training data.
+#'     }
+#'     \item{\code{list(train = list(train_fn, ...), predict = list(predict_fn, ...))}}{
+#'       If \code{args} consists of a list consisting of exactly two named
+#'       elements with names "train" and "predict", then the first format will be
+#'       used for the respective fields. In other words, a mungepiece will
+#'       be constructed consisting of a mungebit with \code{train_fn} as the
+#'       training function, \code{predict_fn} as the predict fuction, and
+#'       the mungepiece train arguments will be the train list of additional
+#'       arguments \code{list(...)}, and similarly the predict arguments will be
+#'       the predict list of additional arguments \code{list(...)}.
+#'  
+#'       Note \code{train_fn} and \code{predict_fn} must \emph{both} be functions
+#'       and not \code{NULL}, since then we could simply use the second format
+#'       described above.
+#'
+#'       This format is ideal when the parametrization differs during training and
+#'       prediction. In this case, \code{train_fn} usually should be the same
+#'       as \code{predict_fn}, but the additional arguments in each list can
+#'       be used to identify the parametrized discrepancies. For example, to
+#'       sanitize a dataset one may wish to drop unnecessary variables. During
+#'       training, this excludes the dependent variable, but during prediction
+#'       we may wish to drop the dependent as well.
+#'
+#'       This format can also be used to perform totally different behavior on
+#'       the dataset during training and prediction (different functions and
+#'       parameters), but mungebits should by definition achieve the same
+#'       operation during training and prediction, so this use case is rare
+#'       and should be handled carefully.
+#'     }
+#'   }
+#'
+#'   Note that the above trichotomy is exhaustive: any mungepiece can be
+#'   constructed using this helper, regardless of its mungebit's
+#'   train or predict function or its own train or predict arguments.
+#'
+#'   Also note that in the first two formats, the first list element must be
+#'   unnamed.
+#' @return The constructed \code{\link{mungepiece}}.
+#' @seealso \code{\link{mungepiece}}, \code{\link{mungebit}}.
+#' @examples
+#' # TODO: (RK) Fill out some examples
+#' TRUE
+parse_mungepiece <- function(args) {
+
+}
+
