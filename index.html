@@ -99,7 +99,33 @@
 
         <div class="section">
           <div class="markdown markdown-body">
-            <h1>mungebit-debug.R</h1>
+            <h1>column_transformation.R</h1>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer"></span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">#' Column transform.
+#' @param ... Random.
+#' @export
+column_transformation <- function(...) identity(...)</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <h1>debug.R</h1>
 
           </div>
 
@@ -157,7 +183,9 @@ debug <- function(fun, text = "", condition = NULL) {</span></code>
           <div class="code">
             <pre>
               <code class="R"><span class="spacer">#' @export
-debug.default <- base::debug
+debug.default <- function(fun, text = "", condition = NULL) {
+  base::debug(fun, text = "", condition = NULL)
+}
 
 #' @export 
 debug.mungebit <- function(fun, text = "", condition = NULL) {</span></code>
@@ -182,6 +210,22 @@ or predict step).</p>
   }
 }
 
+#' @export 
+debug.mungepiece <- function(fun, text = "", condition = NULL) {</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>To debug a mungepiece, we delegate all the work to the mungebit.</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">  debug(fun$mungebit(), text, condition)
+}
+
 #' Generic removal of debugging.
 #'
 #' @inheritParams base::undebug
@@ -192,7 +236,9 @@ undebug <- function(fun) {
 }
 
 #' @export
-undebug.default <- base::undebug
+undebug.default <- function(fun) {
+  base::undebug(fun)
+}
 
 #' @export 
 undebug.mungebit <- function(fun) {</span></code>
@@ -217,7 +263,47 @@ isn&#39;t already being debugged.</p>
     }
   }
 }
+
+#' @export 
+undebug.mungepiece <- function(fun) {</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>To undebug a mungepiece, we delegate all the work to the mungebit.</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">  undebug(fun$mungebit())
+}
 </span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <h1>munge.R</h1>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer"></span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">#' @export
+munge <- NULL</span></code>
             </pre>
           </div>
         </div>
@@ -259,7 +345,7 @@ isn&#39;t already being debugged.</p>
 #'    during runtime. Set this to FALSE if you are experimenting with
 #'    or debugging the mungebit.
 #' @examples
-#' mb <- mungebit(column_transformation(function(column, scale = NULL) {
+#' mb <- mungebit$new(column_transformation(function(column, scale = NULL) {
 #'   # `trained` is a helper provided by mungebits indicating TRUE or FALSE
 #'   # according as the mungebit has been run on a dataset.
 #'   if (!trained) {
@@ -272,23 +358,35 @@ isn&#39;t already being debugged.</p>
 #'   column * input$scale
 #' }))
 #' 
-#' # A `mungeplane` is just a lightweight wrapper to keep track of our data so
+#' # We make a lightweight wrapper to keep track of our data so
 #' # the mungebit can perform side effects (i.e., modify the data without an
 #' # explicit assignment <- operator).
-#' irisp <- mungeplane(iris)
-#' mb$run(irisp, 'Sepal.Length', 2)
+#' irisp <- list2env(list(data = iris))
+#' #mb$run(irisp, 'Sepal.Length', 2)
 #'
-#' head(mp$data[[1]] / iris[[1]])
+#' #head(mp$data[[1]] / iris[[1]])
 #' # > [1] 2 2 2 2 2 2
-#' mb$run(mp, 'Sepal.Length')
+#' #mb$run(mp, 'Sepal.Length')
 #' # > Column scaled by 2
-#' head(mp$data[[1]] / iris[[1]])
+#' #head(mp$data[[1]] / iris[[1]])
 #' # > [1] 4 4 4 4 4 4 
-mungebit_initialize <- function(train_function   = NULL,
+mungebit_initialize <- function(train_function   = base::identity,
                                 predict_function = train_function,
                                 enforce_train    = TRUE) {
+  stopifnot(isTRUE(enforce_train) || identical(enforce_train, FALSE))
 
-  # TODO: (RK) Sanity checks?
+  if (!is.acceptable_function(train_function)) {
+    stop("To create a new mungebit, please pass a ",
+         sQuote("function"), " as the first argument. I received ",
+         "something of class ", sQuote(crayon::red(class(train_function)[1L])), ".")
+  }
+
+  if (!is.acceptable_function(predict_function)) {
+    stop("To create a new mungebit, please pass a ",
+         sQuote("function"), " as the second argument. I received ",
+         "something of class ", sQuote(crayon::red(class(second_function)[1L])), ".")
+  }
+
   self$.train_function   <- train_function
   self$.predict_function <- predict_function
   self$.input            <- new.env(parent = emptyenv())
@@ -797,10 +895,22 @@ mungebit <- R6::R6Class("mungebit",
 
     debug      = function() { debug(self) },
     undebug    = function() { undebug(self) },
+    train_function   = function() { self$.train_function   },
+    predict_function = function() { self$.predict_function },
     trained    = function() { self$.trained },
     input      = function() { as.list(self$.input) }
   )
 )
+
+#' Determine whether an object is a mungebit.
+#'
+#' @keywords typecheck
+#' @param x ANY. An R object to check.
+#' @return TRUE or FALSE according as it has class mungebit.
+#' @export
+is.mungebit <- function(x) {
+  inherits(x, "mungebit")
+}
 </span></code>
             </pre>
           </div>
@@ -968,14 +1078,17 @@ mungepiece_initialize <- function(mungebit     = NULL,
   }
 
   if (!is.list(predict_args)) {
-    stop("To create a new mungepiece, please pass a list (of training ",
-         "arguments) as the second argument. I received something of ",
-         "class ", sQuote(crayon::red(class(train_args)[1L])), ".")
+    stop("To create a new mungepiece, please pass a list (of prediction ",
+         "arguments) as the third argument. I received something of ",
+         "class ", sQuote(crayon::red(class(predict_args)[1L])), ".")
   }
 
   self$.mungebit     <- mungebit
-  self$.train_args   <- train_args
-  self$.predict_args <- predict_args
+  self$.train_args   <- make_env(train_args)
+  self$.predict_args <- make_env(predict_args)
+
+  lockEnvironment(self$.train_args,   bindings = TRUE)
+  lockEnvironment(self$.predict_args, bindings = TRUE)
 }
 </span></code>
             </pre>
@@ -1099,7 +1212,64 @@ set.</p>
 
           <div class="code">
             <pre>
-              <code class="R"><span class="spacer">mungepiece_run <- NULL
+              <code class="R"><span class="spacer">#' Run a mungepiece and prepare it for a live production setting.
+#'
+#' Running a mungepiece achieves the same effect as running the mungebit
+#' attached to the mungepiece: the first time it is run, we \emph{train}
+#' the mungebit so it remembers metadata it will need to replicate the
+#' operation in a live production setting on a single row of data. The
+#' second and subsequent times we run the mungepiece, it will execute
+#' the predict function of the underlying mungebit.
+#'
+#' @inheritParams mungebit_run
+#' @param _envir environment. The calling environment for the train
+#'    or predict function on the underlying mungebit. This is an internal
+#'    argument and is \code{parent.frame()} by default.
+#' @return If the \code{data} parameter is an environment, the transformed
+#'    environment (i.e., the transformed data in the environment) after 
+#'    application of the underlying mungebit. If \code{data} is a data.frame,
+#'    the transformed data.frame is returned.
+mungepiece_run <- function(data, ..., `_envir` = parent.frame()) {
+  if (self$.mungebit$trained()) {
+    calling_environment <- self$.predict_args
+    reference_function  <- self$.mungebit$predict_function()
+  } else {
+    calling_environment <- self$.train_args
+    reference_function  <- self$.mungebit$train_function()
+  }
+
+  args <- eval(substitute(alist(...)))
+  args <- two_way_argument_merge(strip_arguments(reference_function, 1),
+                                 calling_environment, args)
+
+  parent.env(calling_environment) <- `_envir`
+  on.exit(parent.env(calling_environment) <- emptyenv(), add = TRUE)
+
+  args <- c(list(data = substitute(data)), args)
+
+  do.call(self$.mungebit$run, args, envir = calling_environment)
+}
+
+strip_arguments <- function(fun, n) {
+  formals(fun) <- formals(fun)[setdiff(seq_along(formals(fun)), seq_len(n))]
+  fun
+}
+
+two_way_argument_merge <- function(reference_function, calling_environment, args) {
+  call      <- as.call(c(alist(self), args))
+  base_args <- as.list(match.call(reference_function, call)[-1L])
+
+  default_args <- env2listcall(calling_environment)
+  names(default_args) <- attr(calling_environment, "initial_names")
+  call         <- as.call(c(alist(self), default_args))
+  default_args <- as.list(match.call(reference_function, call)[-1L])
+
+  if (unnamed_count(default_args) > 0 && unnamed_count(base_args) > 0) {
+    default_args[unnamed(default_args)] <- NULL
+  }
+
+  list_merge(default_args, base_args)
+}
 </span></code>
             </pre>
           </div>
@@ -1181,10 +1351,20 @@ in a production setting.</p>
 
     debug      = function() { debug(self$.mungebit) },
     undebug    = function() { undebug(self$.mungebit) },
-    trained    = function() { self$.munged$trained() },
+    trained    = function() { self$.mungebit$trained() },
     mungebit   = function() { self$.mungebit }
   )
 )
+
+#' Determine whether an object is a mungepiece.
+#'
+#' @keywords typecheck
+#' @param x ANY. An R object to check.
+#' @return TRUE or FALSE according as it has class mungepiece
+#' @export
+is.mungepiece <- function(x) {
+  inherits(x, "mungepiece")
+}
 </span></code>
             </pre>
           </div>
@@ -1235,9 +1415,309 @@ in a production setting.</p>
 #' significantly simplified.
 #'
 #' @name mungebits2
-#' @import stagerunner crayon R6
+#' @import crayon lazyeval R6 stagerunner
 #' @docType package
-NULL</span></code>
+NULL
+
+utils::globalVariables("self")
+</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <h1>parse_mungepiece.R</h1>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer"></span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>Constructing a mungepiece is not incredibly straightforward. First,
+we must construct the mungebit, which represents the code that will
+be executed when running the mungepiece on a training dataset to
+later feed to a machine learning classifier (i.e., the train function)
+in conjunction with the code that executes on streaming records
+coming through in a production system performing the same
+mathematical operation on the 1-row dataset (i.e., the predict function).</p>
+
+<p>Next, we must determine the training and prediction arguments to the
+mungebit that specify the difference in how to use the mungebit on
+offline training versus realtime prediction data.</p>
+
+<p>Thus, constructing a mungepiece looks something like:</p>
+
+<pre><code class="r">piece &lt;- mungepiece(
+  mungebit(train_function, predict_function),
+  train_args, predict_args
+)
+</code></pre>
+
+<p>In particular, we have to invoke the <code>mungebit</code> constructor every time
+we create a mungepiece. Instead the <code>parse_mungepiece</code> helper defined in
+this file provides a more convenient format:</p>
+
+<pre><code class="r"># If the train function with train args is the same as the predict function
+# with predict args.
+piece &lt;- parse_mungepiece(list(train_fn, train_arg1, train_arg2 = &quot;blah&quot;))
+
+# If the train and predict arguments to the mungepiece match, but we
+# wish to use a different train versus predict function for the mungebit.
+piece &lt;- parse_mungepiece(list(train_fn, predict_fn), dual_arg1, dual_arg2 = &quot;blah&quot;)
+
+# If we wish to only run this mungepiece during training.
+piece &lt;- parse_mungepiece(list(train_fn, NULL), train_arg1, train_arg2 = &quot;blah&quot;)
+
+# If we wish to only run this mungepiece during prediction
+piece &lt;- parse_mungepiece(list(NULL, predict_fn), predict_arg1, predict_arg2 = &quot;blah&quot;)
+
+# If we wish to run different arguments but the same function during
+# training versus prediction.
+piece &lt;- parse_mungepiece(train = list(train_fn, train_arg1),
+                          predict = list(train_fn, predict_arg1))
+
+# If we wish to run different arguments with different functions during
+# training versus prediction.
+piece &lt;- parse_mungepiece(train = list(train_fn, train_arg1),
+                          predict = list(predict_fn, predict_arg1))
+</code></pre>
+
+<p>This is a full partition of the potential arguments used to initialize a
+mungebit + mungepiece combo. Using this syntax in conjunction with the
+<code>munge</code> helper function speeds up coding of munge procedures (lists of
+mungepieces) and increases the readability of munging code.</p>
+
+<pre><code class="r">The munge function calls out to the parse_mungepiece helper.
+munge(dataset, list(
+  &quot;Drop useless vars&quot; = list(list(drop_vars, vector_of_variables),
+                             list(drop_vars, c(vector_variables, &quot;dep_var&quot;))),
+  &quot;Impute variables&quot;  = list(imputer, imputed_vars),
+  &quot;Discretize vars&quot;   = list(list(discretize, restore_levels), discretized_vars)
+))
+``
+
+Translated in English, we are saying:
+
+  1. Drop a static list of useless variables from the data set.
+     When the model is trained, drop the dependent variable as well
+     since we will no longer need it.
+
+  2. Impute the variables in the static list of `imputed_vars`.
+     When the model is trained, the `imputer` will have some logic
+     to restore the means obtained during training of the mungepiece.
+
+  3. Discretize the static list of variables in the `discretized_vars`
+     character vector. After model training, when new data points come in,
+     the original training set is no longer available. The `discretize`
+     method stored the necessary cuts for each variable in the mungebit&#39;s
+     `input`, which the `restore_levels` function uses to bin the
+     numerical features in the list of `discretized_vars` into factor
+     (categorical) variables.
+
+If one took an initial (training) data set, ran it through the
+`munge` helper as above, took the resulting list of mungepieces,
+and ran the original data set through them a second time (so they
+are running in &quot;predict mode&quot;), we should obtain the same result.
+
+We can use the list of trained mungepieces to replicate the munging
+on the training set in a production system on single row data sets
+(i.e., new records being streamed in real-time).
+</code></pre>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">#' Translate a list of train / predict functions and arguments to a mungepiece.
+#'
+#' Constructing mungepieces and mungebits by hand is a little tedious.
+#' To simplify the process, we introduce a tiny DSL that allows for
+#' easier construction of mungebits. The intention is for this function
+#' to be used in conjuction with a list passed to the \code{\link{munge}}
+#' helper.
+#'
+#' @note To understand the documentation of this helper, please read
+#'   the documentation on \code{\link{mungebit}} and \code{\link{mungepiece}}
+#'   first.
+#' @param args list. A list of arguments. This can be one of the following formats
+#'   
+#'   \enumerate{
+#'     \item{\code{list(train_fn, ...)}}{ -- If the first element of \code{args} is
+#'       a function followed by other arguments, the constructed mungepiece
+#'       will use the \code{train_fn} as both the \emph{train and predict}
+#'       function for the mungebit, and \code{list(...)} (that is, the remaining 
+#'       elements in the list) will be used as both the train and predict
+#'       arguments in the mungepiece. In other words, using this format
+#'       specifies you would like \emph{exactly the same behavior in
+#'       training as in prediction}. This is appropriate for mungebits
+#'       that operate in place and do not need information obtained
+#'       from the training set, such as simple value replacement or
+#'       column removal.
+#'     }
+#'     \item{\code{list(list(train_fn, predict_fn), ...)}}{
+#'       -- If \code{args} consists of a two-element pair in its first
+#'       element, it must be a pair of either \code{NULL}s or functions,
+#'       with not both elements \code{NULL}. If the \code{train_fn}
+#'       or \code{predict_fn}, resp., is \code{NULL}, this will signify to have
+#'       \emph{no effect} during training or prediction, resp.
+#'        
+#'       The remaining arguments, that is \code{list(...)}, will be used
+#'       as both the training and prediction arguments.
+#'   
+#'       This structure is ideal if the behavior during training and prediction
+#'       has an identical parametrization but very different implementation,
+#'       such as imputation, so you can pass two different functions.
+#'
+#'       It is also useful if you wish to have no effect during prediction,
+#'       such as removing faulty rows during training, or no effect during
+#'       training, such as making a few transformations that are only
+#'       necessary on raw production data rather than the training data.
+#'     }
+#'     \item{\code{list(train = list(train_fn, ...), predict = list(predict_fn, ...))}}{
+#'       If \code{args} consists of a list consisting of exactly two named
+#'       elements with names "train" and "predict", then the first format will be
+#'       used for the respective fields. In other words, a mungepiece will
+#'       be constructed consisting of a mungebit with \code{train_fn} as the
+#'       training function, \code{predict_fn} as the predict fuction, and
+#'       the mungepiece train arguments will be the train list of additional
+#'       arguments \code{list(...)}, and similarly the predict arguments will be
+#'       the predict list of additional arguments \code{list(...)}.
+#'  
+#'       Note \code{train_fn} and \code{predict_fn} must \emph{both} be functions
+#'       and not \code{NULL}, since then we could simply use the second format
+#'       described above.
+#'
+#'       This format is ideal when the parametrization differs during training and
+#'       prediction. In this case, \code{train_fn} usually should be the same
+#'       as \code{predict_fn}, but the additional arguments in each list can
+#'       be used to identify the parametrized discrepancies. For example, to
+#'       sanitize a dataset one may wish to drop unnecessary variables. During
+#'       training, this excludes the dependent variable, but during prediction
+#'       we may wish to drop the dependent as well.
+#'
+#'       This format can also be used to perform totally different behavior on
+#'       the dataset during training and prediction (different functions and
+#'       parameters), but mungebits should by definition achieve the same
+#'       operation during training and prediction, so this use case is rare
+#'       and should be handled carefully.
+#'     }
+#'   }
+#'
+#'   Note that the above trichotomy is exhaustive: any mungepiece can be
+#'   constructed using this helper, regardless of its mungebit's
+#'   train or predict function or its own train or predict arguments.
+#'   In the first two formats, the first unnamed list element is always
+#'   reserved and will never belong to the \code{train_args} or \code{predict_args}
+#'   of the mungepiece.
+#'
+#'   Also note that in the first two formats, the first list element must be
+#'   unnamed.
+#' @return The constructed \code{\link{mungepiece}}.
+#' @seealso \code{\link{mungepiece}}, \code{\link{mungebit}}.
+#' @examples
+#' # TODO: (RK) Fill out some examples
+#' TRUE
+parse_mungepiece <- function(args) {
+
+}
+</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <h1>utils.R</h1>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer"></span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">#' Merge two lists and overwrite latter entries with former entries
+#' if names are the same.
+#'
+#' For example, \code{list_merge(list(a = 1, b = 2), list(b = 3, c = 4))}
+#' will be \code{list(a = 1, b = 3, c = 4)}.
+#' @param list1 list
+#' @param list2 list
+#' @return the merged list.
+#' @export
+#' @examples
+#' stopifnot(identical(list_merge(list(a = 1, b = 2), list(b = 3, c = 4)),
+#'                     list(a = 1, b = 3, c = 4)))
+#' stopifnot(identical(list_merge(NULL, list(a = 1)), list(a = 1)))
+list_merge <- function(list1, list2) {
+  list1 <- list1 %||% list()
+  # Pre-allocate memory to make this slightly faster.
+  list1[Filter(function(x) nchar(x) > 0, names(list2) %||% c())] <- NULL
+  for (i in seq_along(list2)) {
+    name <- names(list2)[i]
+    if (!identical(name, NULL) && !identical(name, "")) list1[[name]] <- list2[[i]]
+    else list1 <- append(list1, list(list2[[i]]))
+  }
+  list1
+}
+
+`%||%` <- function(x, y) if (is.null(x)) y else x
+
+is.acceptable_function <- function(x) {
+  is.function(x) || 
+  is.null(x)     ||
+  is.mungebit(x)
+}
+
+# If an environment contains variables "a" and "b",
+# create a list (a = quote(a), b = quote(b)).
+env2listcall <- function(env) {
+  names <- ls(env)
+  if ("name_order" %in% names(attributes(env))) {
+    names <- names[attr(env, "name_order")]
+  }
+  setNames(lapply(names, as.name), nm = names)
+}
+
+make_env <- function(lst, parent = emptyenv()) {
+  initial_names <- names(lst) %||% character(length(lst))
+  names(lst) <- ifelse(unnamed(lst),
+    paste0("_", seq_along(lst)),
+    paste0("_", initial_names)
+  )
+
+  if (length(lst) == 0) {
+    env <- new.env(parent = parent)
+  } else {
+    env <- list2env(lst, parent = parent)
+  }
+
+  name_order <- match(names(lst), ls(env))
+  attr(env, "name_order")    <- name_order
+  attr(env, "initial_names") <- initial_names
+  env
+}
+
+unnamed <- function(el) {
+  "" == (names(el) %||% character(length(el)))
+}
+
+unnamed_count <- function(el) {
+  sum(unnamed(el))
+}
+</span></code>
             </pre>
           </div>
         </div>
@@ -1265,7 +1745,7 @@ NULL</span></code>
 
 .onLoad <- function(libPath, pkg) {
   if (as.package_version(R.version) < as.package_version("3.1.0")) {
-    warning(crayon::red(paste0(
+    packageStartupMessage(crayon::red(paste0(
       "Using mungebits2 with R version < 3.1 will result ",
       "in dramatic performance slowdowns."
     )))

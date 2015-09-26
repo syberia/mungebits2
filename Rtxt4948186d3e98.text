@@ -1,0 +1,47 @@
+parse_mungepiece          package:mungebits2           R Documentation
+
+_T_r_a_n_s_l_a_t_e _a _l_i_s_t _o_f _t_r_a_i_n / _p_r_e_d_i_c_t _f_u_n_c_t_i_o_n _a_n_d _a_r_g_u_m_e_n_t_s _t_o _a
+_m_u_n_g_e_p_i_e_c_e.
+
+_D_e_s_c_r_i_p_t_i_o_n:
+
+     Constructing mungepieces and mungebits by hand is a little
+     tedious. To simplify the process, we introduce a tiny DSL that
+     allows for easier construction of mungebits. The intention is for
+     this function to be used in conjuction with a list passed to the
+     ‘munge’ helper.
+
+_U_s_a_g_e:
+
+     parse_mungepiece()
+     
+_A_r_g_u_m_e_n_t_s:
+
+    args: list. A list of arguments. This can be of the formats
+
+           1. ‘list(train_fn, ...)’ If ‘args’ is a function followed by
+              other arguments, the constructed mungepiece will use the
+              ‘train_fn’ as both the _train and predict_ function for
+              the mungebit, and ‘list(...)’ (that is, the remaining
+              elements in the list) will be used as both the train and
+              predict arguments in the mungepiece.
+
+          ‘list(train_fn, ...)’, ‘list(list(train_fn, predict_fn),
+          ...)’, and ‘list(list(train_fn, ...), list(predict_fn,
+          ...))’. In the first example, the train and predict function
+          are assumed to be identical. In the first two examples, the
+          arguments to these functions are assumed to be identical (for
+          example, if the same kind of filter needs to be applied to a
+          data set that is about to be trained as to one about to be
+          predicted). Finally, the last example is the most flexible
+          and allows different parameters for the training and
+          prediction function, respectively. The given training and
+          prediction functions are used to construct a ‘mungebit’, and
+          the resulting ‘mungebit’ and the remaining arguments are
+          stored in a ‘mungepiece’.
+
+_N_o_t_e:
+
+     To understand the documentation of this helper, please read the
+     documentation on ‘mungebit’ and ‘mungepiece’ first.
+

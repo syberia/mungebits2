@@ -1,0 +1,115 @@
+parse_mungepiece          package:mungebits2           R Documentation
+
+_T_r_a_n_s_l_a_t_e _a _l_i_s_t _o_f _t_r_a_i_n / _p_r_e_d_i_c_t _f_u_n_c_t_i_o_n _a_n_d _a_r_g_u_m_e_n_t_s _t_o _a
+_m_u_n_g_e_p_i_e_c_e.
+
+_D_e_s_c_r_i_p_t_i_o_n:
+
+     Constructing mungepieces and mungebits by hand is a little
+     tedious. To simplify the process, we introduce a tiny DSL that
+     allows for easier construction of mungebits. The intention is for
+     this function to be used in conjuction with a list passed to the
+     ‘munge’ helper.
+
+_U_s_a_g_e:
+
+     parse_mungepiece(args)
+     
+_A_r_g_u_m_e_n_t_s:
+
+    args: list. A list of arguments. This can be one of the following
+          formats
+
+           1. ‘list(train_fn, ...)’ - If the first element of ‘args’ is
+              a function followed by other arguments, the constructed
+              mungepiece will use the ‘train_fn’ as both the _train and
+              predict_ function for the mungebit, and ‘list(...)’ (that
+              is, the remaining elements in the list) will be used as
+              both the train and predict arguments in the mungepiece.
+              In other words, using this format specifies you would
+              like _exactly the same behavior in training as in
+              prediction_. This is appropriate for mungebits that
+              operate in place and do not need information obtained
+              from the training set, such as simple value replacement
+              or column removal.
+
+           2. ‘list(list(train_fn, predict_fn), ...)’ - If ‘args’
+              consists of a two-element pair in its first element, it
+              must be a pair of either ‘NULL’s or functions, with not
+              both elements ‘NULL’. If the ‘train_fn’ or ‘predict_fn’,
+              resp., is ‘NULL’, this will signify to have _no effect_
+              during training or prediction, resp.
+
+              The remaining arguments, that is ‘list(...)’, will be
+              used as both the training and prediction arguments.
+
+              This structure is ideal if the behavior during training
+              and prediction has an identical parametrization but very
+              different implementation, such as imputation, so you can
+              pass two different functions.
+
+              It is also useful if you wish to have no effect during
+              prediction, such as removing faulty rows during training,
+              or no effect during training, such as making a few
+              transformations that are only necessary on raw production
+              data rather than the training data.
+
+           3. ‘list(train = list(train_fn, ...), predict =
+              list(predict_fn, ...))’ If ‘args’ consists of a list
+              consisting of exactly two named elements with names
+              "train" and "predict", then the first format will be used
+              for the respective fields. In other words, a mungepiece
+              will be constructed consisting of a mungebit with
+              ‘train_fn’ as the training function, ‘predict_fn’ as the
+              predict fuction, and the mungepiece train arguments will
+              be the train list of additional arguments ‘list(...)’,
+              and similarly the predict arguments will be the predict
+              list of additional arguments ‘list(...)’.
+
+              Note ‘train_fn’ and ‘predict_fn’ must _both_ be functions
+              and not ‘NULL’, since then we could simply use the second
+              format described above.
+
+              This format is ideal when the parametrization differs
+              during training and prediction. In this case, ‘train_fn’
+              usually should be the same as ‘predict_fn’, but the
+              additional arguments in each list can be used to identify
+              the parametrized discrepancies. For example, to sanitize
+              a dataset one may wish to drop unnecessary variables.
+              During training, this excludes the dependent variable,
+              but during prediction we may wish to drop the dependent
+              as well.
+
+              This format can also be used to perform totally different
+              behavior on the dataset during training and prediction
+              (different functions and parameters), but mungebits
+              should by definition achieve the same operation during
+              training and prediction, so this use case is rare and
+              should be handled carefully.
+
+          Note that the above trichotomy is exhaustive: any mungepiece
+          can be constructed using this helper, regardless of its
+          mungebit's train or predict function or its own train or
+          predict arguments.
+
+          Also note that in the first two formats, the first list
+          element must be unnamed.
+
+_V_a_l_u_e:
+
+     The constructed ‘mungepiece’.
+
+_N_o_t_e:
+
+     To understand the documentation of this helper, please read the
+     documentation on ‘mungebit’ and ‘mungepiece’ first.
+
+_S_e_e _A_l_s_o:
+
+     ‘mungepiece’, ‘mungebit’.
+
+_E_x_a_m_p_l_e_s:
+
+     # TODO: (RK) Fill out some examples
+     TRUE
+     
