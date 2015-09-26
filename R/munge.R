@@ -1,2 +1,4 @@
+#' Munge.
+#'
 #' @export
 munge <- NULL

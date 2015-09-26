@@ -26,27 +26,27 @@
 ## ```r
 ## # If the train function with train args is the same as the predict function
 ## # with predict args.
-## piece <- parse_mungepiece(list(train_fn, train_arg1, train_arg2 = "blah"))
+## piece <- parse_mungepiece(list(list(train_fn, train_arg1, train_arg2 = "blah")))
 ##
 ## # If the train and predict arguments to the mungepiece match, but we
 ## # wish to use a different train versus predict function for the mungebit.
-## piece <- parse_mungepiece(list(train_fn, predict_fn), dual_arg1, dual_arg2 = "blah")
+## piece <- parse_mungepiece(list(list(train_fn, predict_fn), dual_arg1, dual_arg2 = "blah"))
 ## 
 ## # If we wish to only run this mungepiece during training.
-## piece <- parse_mungepiece(list(train_fn, NULL), train_arg1, train_arg2 = "blah")
+## piece <- parse_mungepiece(list(list(train_fn, NULL), train_arg1, train_arg2 = "blah"))
 ## 
 ## # If we wish to only run this mungepiece during prediction
-## piece <- parse_mungepiece(list(NULL, predict_fn), predict_arg1, predict_arg2 = "blah")
+## piece <- parse_mungepiece(list(list(NULL, predict_fn), predict_arg1, predict_arg2 = "blah"))
 ##
 ## # If we wish to run different arguments but the same function during
 ## # training versus prediction.
-## piece <- parse_mungepiece(train = list(train_fn, train_arg1),
-##                           predict = list(train_fn, predict_arg1))
+## piece <- parse_mungepiece(list(train = list(train_fn, train_arg1),
+##                                predict = list(train_fn, predict_arg1)))
 ##
 ## # If we wish to run different arguments with different functions during
 ## # training versus prediction.
-## piece <- parse_mungepiece(train = list(train_fn, train_arg1),
-##                           predict = list(predict_fn, predict_arg1))
+## piece <- parse_mungepiece(list(train = list(train_fn, train_arg1),
+##                                predict = list(predict_fn, predict_arg1)))
 ## ```
 ## 
 ## This is a full partition of the potential arguments used to initialize a
@@ -72,7 +72,8 @@
 ##
 ##   2. Impute the variables in the static list of `imputed_vars`.
 ##      When the model is trained, the `imputer` will have some logic
-##      to restore the means obtained during training of the mungepiece.
+##      to restore the means obtained during training of the mungepiece
+##      (assuming we are using mean imputation).
 ##
 ##   3. Discretize the static list of variables in the `discretized_vars`
 ##      character vector. After model training, when new data points come in,
@@ -176,9 +177,37 @@
 #'   unnamed.
 #' @return The constructed \code{\link{mungepiece}}.
 #' @seealso \code{\link{mungepiece}}, \code{\link{mungebit}}.
+#' @export
 #' @examples
-#' # TODO: (RK) Fill out some examples
-#' TRUE
+#' # First, we show off the various formats that the parse_mungepiece
+#' # helper accepts. For this exercise, we can use dummy train and
+#' # predict functions and arguments.
+#' train_fn   <- predict_fn   <- base::identity
+#' train_arg1 <- predict_arg1 <- dual_arg1 <- TRUE # Can be any parameter value.
+#'
+#' # If the train function with train args is the same as the predict function
+#' # with predict args.
+#' piece <- parse_mungepiece(list(list(train_fn, train_arg1, train_arg2 = "blah")))
+#'
+#' # If the train and predict arguments to the mungepiece match, but we
+#' # wish to use a different train versus predict function for the mungebit.
+#' piece <- parse_mungepiece(list(list(train_fn, predict_fn), dual_arg1, dual_arg2 = "blah"))
+#' 
+#' # If we wish to only run this mungepiece during training.
+#' piece <- parse_mungepiece(list(list(train_fn, NULL), train_arg1, train_arg2 = "blah"))
+#' 
+#' # If we wish to only run this mungepiece during prediction
+#' piece <- parse_mungepiece(list(list(NULL, predict_fn), predict_arg1, predict_arg2 = "blah"))
+#'
+#' # If we wish to run different arguments but the same function during
+#' # training versus prediction.
+#' piece <- parse_mungepiece(list(train = list(train_fn, train_arg1),
+#'                                predict = list(train_fn, predict_arg1)))
+#'
+#' # If we wish to run different arguments with different functions during
+#' # training versus prediction.
+#' piece <- parse_mungepiece(list(train = list(train_fn, train_arg1),
+#'                                predict = list(predict_fn, predict_arg1)))
 parse_mungepiece <- function(args) {
 
 }

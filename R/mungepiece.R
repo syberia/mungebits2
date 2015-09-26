@@ -37,6 +37,11 @@ NULL
 ## majority of one's time "munging data" is drastically reduced and no 
 ## further code has to be written to ensure the transformations run correctly
 ## in a production setting.
+#' Mungepiece.
+#'
+#' @name mungepiece
+#' @docType class
+#' @export
 mungepiece <- R6::R6Class("mungepiece", 
   public = list(
     .mungebit     = NULL, # mungebit
