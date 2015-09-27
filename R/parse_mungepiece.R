@@ -249,16 +249,17 @@ parse_mungepiece_dual <- function(args) {
   ## This check ensures the list has names exactly equal to
   ## "train" and "predict".
   if (!setequal(c("train", "predict"), names(args))) {
-    # TODO: (RK) Nice error
-    if (length(args) != 2) {
-      error <- paste0("Instead, you provided a list of length ", length(args))
-    } else {
+    if (length(args) == 2) {
       error <- paste("Instead, you provided a list with keys",
         paste(sapply(names(args), sQuote), collapse = " and "))
+    } else {
+      error <- paste0("Instead, you provided a list of length ", length(args))
     }
 
     stop(m("parse_mungepiece_dual_error", error = error))
   }
+
+
 }
 
 parse_mungepiece_single <- function(args) {
