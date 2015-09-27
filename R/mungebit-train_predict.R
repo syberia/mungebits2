@@ -40,7 +40,8 @@ mungebit_train <- function(data, ...) {
   ## We inject the `input` helper so that the mungebit
   ## can remember necessary metadata for replicating the
   ## munging operation at prediction time.
-  inject_metadata(self$.train_function, self$.input, self$.trained)(data, ...)
+  fn <- inject_metadata(self$.train_function, self$.input, self$.trained)
+  fn(data, ...)
 }
 
 #' Run the predict function on a mungebit.
@@ -72,7 +73,8 @@ mungebit_predict <- function(data, ...) {
 
   ## We inject the `input` helper so that the mungebit
   ## can use the metadata that was compute during training time.
-  inject_metadata(self$.predict_function, self$.input, self$.trained)(data, ...)
+  fn <- inject_metadata(self$.predict_function, self$.input, self$.trained)
+  fn(data, ...)
 }
 
 inject_metadata <- function(func, input, trained) {
