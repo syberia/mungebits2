@@ -6,6 +6,10 @@ describe("Invalid inputs", {
     expect_error(parse_mungepiece(identity))
     expect_error(parse_mungepiece(iris))
   })
+
+  test_that("it breaks when you pass a list of length 0", {
+    expect_error(parse_mungepiece(list()), "is not TRUE")
+  })
 })
 
 train_fn   <- function(data, by = 2) {
@@ -23,6 +27,21 @@ describe("First format", {
     piece  <- parse_mungepiece(list(train_fn, 2))
     piece2 <- mungepiece$new(mungebit$new(train_fn), list(2))
     expect_same_piece(piece, piece2)
+  })
+})
+
+describe("Third format", {
+  describe("Invalid inputs", {
+    test_that("it errors if you provide less or more than 2 keys", {
+      expect_error(parse_mungepiece(list(a = 1), "of length 1"))
+      expect_error(parse_mungepiece(list(a = 1, b = 2, c = 3), "of length 3"))
+    })
+
+    test_that("it errors if you provide invalid keys", {
+      expect_error(parse_mungepiece(list(train = 1, predic = 2), "a list with keys"))
+      expect_error(parse_mungepiece(list(trai = 1, predict = 2), "a list with keys"))
+      expect_error(parse_mungepiece(list(bar = 1, foo = 2), "a list with keys"))
+    })
   })
 })
 

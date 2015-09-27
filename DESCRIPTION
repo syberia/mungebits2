@@ -19,7 +19,8 @@ Imports:
     crayon,
     lazyeval,
     R6,
-    stagerunner
+    stagerunner,
+    whisker
 Suggests:
     testthat,
     testthatsomemore
@@ -27,6 +28,7 @@ Roxygen: list(wrap = FALSE)
 Collate:
     'column_transformation.R'
     'debug.R'
+    'messages.R'
     'munge.R'
     'mungebit-initialize.R'
     'mungebit-run.R'

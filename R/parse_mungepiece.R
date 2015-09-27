@@ -234,17 +234,30 @@
 parse_mungepiece <- function(args) {
   stopifnot(is.list(args), length(args) > 0)
 
+  ## The third permissible format requires no unnamed arguments, since it
+  ## must be a list consisting of a "train" and "predict" key.
   if (unnamed_count(args) == 0) {
+    ## For this case, we delegate the work to `parse_mungepiece_dual`.
     parse_mungepiece_dual(args)
   } else {
+    ## Otherwise, the training and prediction arguments are the same.
     parse_mungepiece_single(args)
   }
 }
 
 parse_mungepiece_dual <- function(args) {
+  ## This check ensures the list has names exactly equal to
+  ## "train" and "predict".
   if (!setequal(c("train", "predict"), names(args))) {
     # TODO: (RK) Nice error
-    stop("...")
+    if (length(args) != 2) {
+      error <- paste0("Instead, you provided a list of length ", length(args))
+    } else {
+      error <- paste("Instead, you provided a list with keys",
+        paste(sapply(names(args), sQuote), collapse = " and "))
+    }
+
+    stop(m("parse_mungepiece_dual_error", error = error))
   }
 
 
