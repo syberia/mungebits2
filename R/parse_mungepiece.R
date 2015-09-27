@@ -248,8 +248,10 @@ parse_mungepiece <- function(args) {
 ## This is used for the third format.
 ##
 ## ```r
-## piece <- parse_mungepiece(list(train = list(train_fn, train_arg1),
-##                                predict = list(train_fn, predict_arg1)))
+## piece <- parse_mungepiece(list(
+##   train = list(train_fn, train_arg1),
+##   predict = list(train_fn, predict_arg1))
+## )
 ## ```
 parse_mungepiece_dual <- function(args) {
   if (!setequal(c("train", "predict"), names(args))) {
@@ -262,7 +264,7 @@ parse_mungepiece_dual <- function(args) {
       error <- paste0("Instead, you provided a list of length ", length(args))
     }
 
-    ## We use the `m` helper defines in the messages.R file to provide a
+    ## We use the `m` helper defined in the messages.R file to provide a
     ## descriptive error.
     stop(m("parse_mungepiece_dual_error", error = error))
   }
@@ -305,7 +307,7 @@ parse_mungepiece_dual_chunk.function <- function(args, type) {
 ## In the above example, the `predict` side would be parsed through
 ## this route.
 parse_mungepiece_dual_chunk.list <- function(args, type) {
-  ## If there are no unnamed argument, it violates our convention,
+  ## If there are no unnamed arguments, it violates our convention,
   ## since we are unable to determine the train/predict function.
   if (unnamed_count(args) == 0) {
     stop(m("parse_mungepiece_dual_error_unnamed", type = type))
@@ -346,7 +348,7 @@ parse_mungepiece_dual_chunk.default <- function(args, type) {
 parse_mungepiece_single <- function(args) {
   fn_index  <- unnamed(args)[1L]
   ## Extract the first unnamed element and use it as the train/predict function.
-  fn        <- args[[fn_index]]
+  fn <- args[[fn_index]]
   
   if (is.function(fn)) {
     parse_mungepiece_simple(args[-fn_index], fn)
@@ -367,7 +369,7 @@ parse_mungepiece_hybrid <- function(args, funcs) {
   ## It must consist of two functions, one of which (but not both)
   ## may be NULL. The functions could also be substituted with mungebits,
   ## in which the train or predict function (depending on whether the mungebit
-  ## is on the left or rigt hand side) will be extracted. This is not an
+  ## is on the left or right hand side) will be extracted. This is not an
   ## encouraged format but is implemented for convenience.
   if (!is.acceptable_hybrid_pair(funcs)) {
     stop(m("parse_mungepiece_hybrid_error"))

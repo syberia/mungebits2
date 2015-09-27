@@ -1,5 +1,5 @@
 ## A dictionary of messages used by the package.
-## We separate these into a separate file to avoid cluttering
+## We separate these into its own file to avoid cluttering
 ## the R code with a multitude of strings.
 messages <- list(
   parse_mungepiece_dual_error = c(
