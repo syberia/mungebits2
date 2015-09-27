@@ -48,6 +48,19 @@ messages <- list(
     crayon::green(paste("list(list(discretize, restore_levels), variables)")),
     "\n\nThe first function will be used for training and the second for ",
     "prediction. Please double check your syntax."
+  ),
+
+  munge_type_error = c(
+    "The second parameter to ", sQuote("munge"),
+    " must be a list; instead I got a ",
+    crayon::red("{{{class}}}")
+  ),
+
+  munge_lack_of_mungepieces_attribute = c(
+    "If the second parameter to ", sQuote("munge"),
+    " is a data.frame, it must have a ", sQuote("mungepieces"),
+    " attribute (usually created automatically during a previous ",
+    "run through ", sQuote("munge"), ")"
   )
 )
 

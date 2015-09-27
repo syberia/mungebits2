@@ -233,5 +233,38 @@
 #' # The munge function uses the attached "mungepieces" attribute, a list of
 #' # trained mungepieces.
 munge <- function(data, mungelist, stagerunner = FALSE) {
+  stopifnot(isTRUE(stagerunner) || identical(stagerunner, FALSE))
+  stopifnot(is.data.frame(data))
+
+  if (length(mungelist) == 0L) {
+    return(data)
+  }
+
+  if (!is.list(mungelist)) {
+    stop(m("munge_type_error", class = class(mungelist)[1L]))
+  }
+
+  if (is.data.frame(mungelist)) {
+    if (!is.element("mungepieces", names(attributes(mungelist)))) {
+      stop(m("munge_lack_of_mungepieces_attribute"))
+    }
+    Recall(data, attr(mungelist, "mungepieces"), stagerunner)
+  } else if (is(mungelist, "tundraContainer")) {
+    # An optional interaction effect with the tundra package.
+    Recall(data, mungelist$munge_procedure, stagerunner)
+  } else {
+    munge_(data, mungelist, stagerunner)
+  }
+}
+
+# Assume proper arguments.
+munge_ <- function(data, mungelist, stagerunner) {
+  if (is.environment(data)) {
+    context <- data
+  } else {
+    context <- list2env(list(data = data), parent = emptyenv())
+  }
+
+  data
 }
 
