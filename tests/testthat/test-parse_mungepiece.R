@@ -52,6 +52,16 @@ describe("Third format", {
       expect_error(parse_mungepiece(list(train = identity, predict = list(a = 2))),
                                     "at least one unnamed element on the predict")
     })
+
+    test_that("it errors if there is no function on the train side", {
+      expect_error(parse_mungepiece(list(train = list(1), predict = list(2))),
+                                    "must be a function")
+    })
+
+    test_that("it errors if there is no function on the predict side", {
+      expect_error(parse_mungepiece(list(train = list(identity), predict = list(2))),
+                                    "must be a function")
+    })
   })
 
 
