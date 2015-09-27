@@ -278,7 +278,7 @@ parse_mungepiece_dual_chunk.list <- function(args, type) {
   }
 
   fn_index <- unnamed(args)[1L]
-  fn       <- args[[fn_index]]
+  fn       <- to_function(args[[fn_index]], type)
   
   if (!is.function(fn)) {
     stop(m("parse_mungepiece_dual_error_nonfunction", type = type,
@@ -294,7 +294,7 @@ parse_mungepiece_dual_chunk.default <- function(args, type) {
 }
 
 parse_mungepiece_single <- function(args) {
-  fn_index <- unnamed(args)[1L]
+  fn_index       <- unnamed(args)[1L]
   train_function <- args[[fn_index]]
   
   if (is.function(train_function)) {
@@ -331,12 +331,8 @@ to_function.mungebit <- function(func, type) {
   else func$predict_function()
 }
 
-to_function.function <- function(func, type) {
+to_function.default <- function(func, type) {
   func
-}
-
-to_function.NULL <- function(func, type) {
-  NULL
 }
 
 is.acceptable_hybrid_pair <- function(funcs) {
