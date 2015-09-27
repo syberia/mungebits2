@@ -51,6 +51,21 @@ describe("Second format", {
     piece$run(iris)
     expect_output(piece$run(iris), "Foo 2")
   })
+
+  test_that("it correctly creates a mungepiece using the second format with a mungebit", {
+    predict_fn2 <- function(data, by) { data[[1]] <- by * data[[1]]; data }
+    bit <- mungebit$new(NULL, predict_fn2)
+    piece  <- parse_mungepiece(list(list(train_fn, bit), 2))
+    piece2 <- mungepiece$new(mungebit$new(train_fn, predict_fn2), list(2))
+    expect_same_piece(piece, piece2)
+  })
+
+  test_that("it correctly runs a mungepiece using the second format with an additional argument", {
+    predict_fn2 <- function(data, by) { cat("Foo", by); data[[1]] <- by * data[[1]]; data }
+    piece  <- parse_mungepiece(list(list(train_fn, predict_fn2), 2))
+    piece$run(iris)
+    expect_output(piece$run(iris), "Foo 2")
+  })
 })
 
 describe("Third format", {
