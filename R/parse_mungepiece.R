@@ -416,7 +416,7 @@ to_function <- function(func, type) {
 }
 
 to_function.mungepiece <- function(func, type) {
-  to_function(func$mungebit())
+  to_function(func$mungebit(), type)
 }
 
 to_function.mungebit <- function(func, type) {
@@ -428,16 +428,17 @@ to_function.default <- function(func, type) {
   func
 }
 
-is.convertible_to_function <- function(obj) {
-  is.function(obj) || is.mungebit(obj) || is.mungepiece(obj)
+is.convertible_to_function <- function(obj, null_ok = FALSE) {
+  is.function(obj) || is.mungebit(obj) || is.mungepiece(obj) ||
+  (isTRUE(null_ok) && is.null(obj))
 }
 
 is.acceptable_hybrid_pair <- function(funcs) {
   ## `funcs` must consist of two functions, one of which (but not both)
   ## may be NULL.
   is.list(funcs) && length(funcs) == 2 &&
-  is.acceptable_function(funcs[[1L]]) && 
-  is.acceptable_function(funcs[[2L]]) && 
+  is.convertible_to_function(funcs[[1L]], null_ok = TRUE) && 
+  is.convertible_to_function(funcs[[2L]], null_ok = TRUE) && 
   !(is.null(funcs[[1L]]) && is.null(funcs[[2L]]))
 }
 
