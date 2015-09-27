@@ -232,11 +232,18 @@
 #' # The munge function uses the attached "mungepieces" attribute, a list of
 #' # trained mungepieces.
 parse_mungepiece <- function(args) {
-  stopifnot(is.list(args), length(args) > 0)
+  stopifnot(is.list(args), length(args) > 0L)
 
-  ## The third permissible format requires no unnamed arguments, since it
-  ## must be a list consisting of a "train" and "predict" key.
-  if (unnamed_count(args) == 0) {
+  if (length(args) == 1L && is.mungepiece(args[[1L]])) {
+    ## We duplicate the mungepiece to avoid training it.
+    duplicate_mungepiece(args[[1L]])
+  } else if (length(args) == 1L && is.mungebit(args[[1L]])) {
+    ## This case is technically handled already in parse_mungepiece_single,
+    ## but we make it explicit here.
+    mungepiece$new(duplicate_mungebit(args[[1L]]))
+    ## The third permissible format requires no unnamed arguments, since it
+    ## must be a list consisting of a "train" and "predict" key.
+  } else if (unnamed_count(args) == 0L) {
     ## For this case, we delegate the work to `parse_mungepiece_dual`.
     parse_mungepiece_dual(args)
   } else {
@@ -350,7 +357,7 @@ parse_mungepiece_single <- function(args) {
   ## Extract the first unnamed element and use it as the train/predict function.
   fn <- args[[fn_index]]
   
-  if (is.function(fn)) {
+  if (is.function(fn) || is.mungebit(fn)) {
     parse_mungepiece_simple(args[-fn_index], fn)
   } else {
     parse_mungepiece_hybrid(args[-fn_index], fn)
@@ -360,6 +367,7 @@ parse_mungepiece_single <- function(args) {
 parse_mungepiece_simple <- function(args, func) {
   ## There is no real work to be done in the simple case
   ## when we call `parse_mungepiece(list(train_fn, ...))`.
+  func <- to_function(func, "train") %||% to_function(func, "predict")
   mungepiece$new(mungebit$new(func), args)
 }
 
@@ -391,6 +399,10 @@ parse_mungepiece_hybrid <- function(args, funcs) {
 
 to_function <- function(func, type) {
   UseMethod("to_function")
+}
+
+to_function.mungepiece <- function(func, type) {
+  to_function(func$mungebit())
 }
 
 to_function.mungebit <- function(func, type) {

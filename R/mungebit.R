@@ -216,6 +216,12 @@ mungebit <- R6::R6Class("mungebit",
   )
 )
 
+## A helper used to make a fresh untrained replica of an
+## existing mungebit
+duplicate_mungebit <- function(bit) {
+  mungebit$new(bit$train_function(), bit$predict_function())
+}
+
 #' Determine whether an object is a mungebit.
 #'
 #' @keywords typecheck

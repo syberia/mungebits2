@@ -28,6 +28,13 @@ describe("First format", {
     piece2 <- mungepiece$new(mungebit$new(train_fn), list(2))
     expect_same_piece(piece, piece2)
   })
+  
+  test_that("it can extract the train function from a mungebit with the first format", {
+    mb <- mungebit$new(train_fn)
+    piece  <- parse_mungepiece(list(mb, 2))
+    piece2 <- mungepiece$new(mungebit$new(train_fn), list(2))
+    expect_same_piece(piece, piece2)
+  })
 })
 
 describe("Second format", {
@@ -86,6 +93,14 @@ describe("Third format", {
     expect_same_piece(actual, reference)
   })
 
+})
+
+describe("Passing existing mungebit or mungepiece", {
+  test_that("it accepts a mungepiece", {
+    piece <- mungepiece$new(mungebit$new(train_fn, predict_fn), list(by = 3), list(by = 1))
+    expect_equal(parse_mungepiece(list(piece)), piece)
+    expect_same_piece(parse_mungepiece(list(piece)), piece)
+  })
 })
 
 

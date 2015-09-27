@@ -41,6 +41,18 @@ env2listcall <- function(env) {
   setNames(lapply(names, as.name), nm = names)
 }
 
+# Revert the operation in mungepiece initialization that turns a list
+# into an environment.
+env2list <- function(env) {
+  if (length(ls(env)) == 0L) {
+    list()
+  } else {
+    lst <- as.list(env)[attr(env, "name_order")]
+    names(lst) <- attr(env, "initial_names")
+    lst
+  }
+}
+
 make_env <- function(lst, parent = emptyenv()) {
   initial_names <- names(lst) %||% character(length(lst))
   names(lst) <- ifelse(unnamed(lst),
