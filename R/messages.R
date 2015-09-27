@@ -39,6 +39,15 @@ messages <- list(
     "When using the explicit train/predict syntax to construct a mungepiece, ",
     "the first unnamed element on the {{{type}}} side must be a function. ",
     "Instead, I got a ", crayon::red("{{{class}}}"), "."
+  ),
+
+  parse_mungepiece_hybrid_error = c(
+    "When using a non-function as the first argument when constructing a ",
+    "mungepiece, the only accepted format is a pair of two functions, ",
+    "with either one but not both NULL.\n\n",
+    crayon::green(paste("list(list(discretize, restore_levels), variables)")),
+    "\n\nThe first function will be used for training and the second for ",
+    "prediction. Please double check your syntax."
   )
 )
 

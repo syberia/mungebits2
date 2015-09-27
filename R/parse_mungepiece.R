@@ -312,7 +312,41 @@ parse_mungepiece_simple <- function(args, func) {
   mungepiece$new(mungebit$new(func), args)
 }
 
-parse_mungepiece_hybrid <- function(args, func) {
-  mungepiece$new(mungebit$new(func[[1]], func[[2]]), args)
+parse_mungepiece_hybrid <- function(args, funcs) {
+  if (!is.acceptable_hybrid_pair(funcs)) {
+    stop(m("parse_mungepiece_hybrid_error"))
+  }
+
+  dual_args <- list(if (!is.null(funcs[[1L]])) args, 
+                    if (!is.null(funcs[[2L]])) args)
+
+  funcs <- list(to_function(funcs[[1L]], "train"),
+                to_function(funcs[[2L]], "predict"))
+
+  do.call(mungepiece$new, c(list(mungebit$new(funcs[[1]], funcs[[2]])), dual_args))
+}
+
+to_function <- function(func, type) {
+  UseMethod("to_function")
+}
+
+to_function.mungebit <- function(func, type) {
+  if (type == "train") func$train_function()
+  else func$predict_function()
+}
+
+to_function.function <- function(func, type) {
+  func
+}
+
+to_function.NULL <- function(func, type) {
+  NULL
+}
+
+is.acceptable_hybrid_pair <- function(funcs) {
+  is.list(funcs) && length(funcs) == 2 &&
+  is.acceptable_function(funcs[[1L]]) && 
+  is.acceptable_function(funcs[[2L]]) && 
+  !(is.null(funcs[[1L]]) && is.null(funcs[[2L]]))
 }
 
