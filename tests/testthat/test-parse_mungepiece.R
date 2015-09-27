@@ -64,8 +64,11 @@ describe("Third format", {
     })
   })
 
-
-
+  test_that("the third format passes for a simple example", {
+    reference <- mungepiece$new(mungebit$new(train_fn, predict_fn), list(by = 3), list(by = 1))
+    actual    <- parse_mungepiece(list(train = list(train_fn, by = 3), predict = list(predict_fn, by = 1)))
+    expect_same_piece(actual, reference)
+  })
 })
 
 
