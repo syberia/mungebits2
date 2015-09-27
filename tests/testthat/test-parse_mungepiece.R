@@ -96,32 +96,36 @@ describe("Third format", {
 })
 
 describe("Passing existing mungebit or mungepiece", {
-  test_that("it accepts a mungepiece", {
-    piece <- mungepiece$new(mungebit$new(train_fn, predict_fn), list(by = 3), list(by = 1))
-    expect_equal(parse_mungepiece(list(piece)), piece)
-    expect_same_piece(parse_mungepiece(list(piece)), piece)
+  describe("Passing a mungepiece", {
+    test_that("it accepts a mungepiece", {
+      piece <- mungepiece$new(mungebit$new(train_fn, predict_fn), list(by = 3), list(by = 1))
+      expect_equal(parse_mungepiece(list(piece)), piece)
+      expect_same_piece(parse_mungepiece(list(piece)), piece)
+    })
+
+    test_that("it accepts a mungepiece and untrains it", {
+      predict_fn2 <- function(data, by) { data[[1]] <- by * data[[1]]; data }
+      piece <- mungepiece$new(mungebit$new(train_fn, predict_fn2), list(by = 3), list(by = 1))
+      piece$run(iris)
+      expect_not_same_piece(parse_mungepiece(list(piece)), piece, predict = FALSE)
+    })
   })
 
-  test_that("it accepts a mungepiece and untrains it", {
-    predict_fn2 <- function(data, by) { data[[1]] <- by * data[[1]]; data }
-    piece <- mungepiece$new(mungebit$new(train_fn, predict_fn2), list(by = 3), list(by = 1))
-    piece$run(iris)
-    expect_not_same_piece(parse_mungepiece(list(piece)), piece, predict = FALSE)
-  })
+  describe("Passing a mungebit", {
+    test_that("it accepts a mungebit", {
+      bit <- mungebit$new(train_fn, predict_fn)
+      piece <- mungepiece$new(mungebit$new(train_fn, predict_fn))
+      expect_equal(parse_mungepiece(list(bit)), piece)
+      expect_same_piece(parse_mungepiece(list(bit)), piece)
+    })
 
-  test_that("it accepts a mungebit", {
-    bit <- mungebit$new(train_fn, predict_fn)
-    piece <- mungepiece$new(mungebit$new(train_fn, predict_fn))
-    expect_equal(parse_mungepiece(list(bit)), piece)
-    expect_same_piece(parse_mungepiece(list(bit)), piece)
-  })
-
-  test_that("it accepts a mungebit and untrains it", {
-    predict_fn2 <- function(data, by = 5) { data[[1]] <- by * data[[1]]; data }
-    bit <- mungebit$new(train_fn, predict_fn2)
-    bit$run(iris, by = 3)
-    piece <- mungepiece$new(mungebit$new(train_fn, predict_fn2))
-    expect_same_piece(parse_mungepiece(list(bit)), piece)
+    test_that("it accepts a mungebit and untrains it", {
+      predict_fn2 <- function(data, by = 5) { data[[1]] <- by * data[[1]]; data }
+      bit <- mungebit$new(train_fn, predict_fn2)
+      bit$run(iris, by = 3)
+      piece <- mungepiece$new(mungebit$new(train_fn, predict_fn2))
+      expect_same_piece(parse_mungepiece(list(bit)), piece)
+    })
   })
 })
 
