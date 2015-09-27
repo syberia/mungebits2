@@ -101,6 +101,13 @@ describe("Passing existing mungebit or mungepiece", {
     expect_equal(parse_mungepiece(list(piece)), piece)
     expect_same_piece(parse_mungepiece(list(piece)), piece)
   })
+
+  test_that("it accepts a mungepiece and untrains it", {
+    predict_fn2 <- function(data, by) { data[[1]] <- by * data[[1]]; data }
+    piece <- mungepiece$new(mungebit$new(train_fn, predict_fn2), list(by = 3), list(by = 1))
+    piece$run(iris)
+    expect_not_same_piece(parse_mungepiece(list(piece)), piece, predict = FALSE)
+  })
 })
 
 
