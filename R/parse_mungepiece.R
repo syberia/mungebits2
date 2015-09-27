@@ -311,6 +311,15 @@ parse_mungepiece_dual_chunk.function <- function(args, type) {
   list(args, list())
 }
 
+parse_mungepiece_dual_chunk.mungebit <- function(args, type) {
+  list(to_function(args, type), list())
+}
+
+parse_mungepiece_dual_chunk.mungepiece <- function(args, type) {
+  list(to_function(args, type),
+       if (type == "train") args$train_args() else args$predict_args())
+}
+
 ## In the above example, the `predict` side would be parsed through
 ## this route.
 parse_mungepiece_dual_chunk.list <- function(args, type) {
@@ -321,12 +330,13 @@ parse_mungepiece_dual_chunk.list <- function(args, type) {
   }
 
   fn_index <- unnamed(args)[1L]
-  fn       <- to_function(args[[fn_index]], type)
+  fn       <- args[[fn_index]]
   
-  if (!is.function(fn)) {
+  if (!is.convertible_to_function(fn)) {
     stop(m("parse_mungepiece_dual_error_nonfunction", type = type,
            class = class(fn)[1L]))
   }
+  fn <- to_function(fn, type)
 
   ## Otherwise, we extract a list of function and additional arguments,
   ## whether for train or for predict.
@@ -357,7 +367,7 @@ parse_mungepiece_single <- function(args) {
   ## Extract the first unnamed element and use it as the train/predict function.
   fn <- args[[fn_index]]
   
-  if (is.function(fn) || is.mungebit(fn) || is.mungepiece(fn)) {
+  if (is.convertible_to_function(fn)) {
     parse_mungepiece_simple(args[-fn_index], fn)
   } else {
     parse_mungepiece_hybrid(args[-fn_index], fn)
@@ -416,6 +426,10 @@ to_function.mungebit <- function(func, type) {
 
 to_function.default <- function(func, type) {
   func
+}
+
+is.convertible_to_function <- function(obj) {
+  is.function(obj) || is.mungebit(obj) || is.mungepiece(obj)
 }
 
 is.acceptable_hybrid_pair <- function(funcs) {

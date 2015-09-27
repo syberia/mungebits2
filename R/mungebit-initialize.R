@@ -59,8 +59,8 @@ mungebit_initialize <- function(train_function   = base::identity,
          "something of class ", sQuote(crayon::red(class(predict_function)[1L])), ".")
   }
 
-  self$.train_function   <- train_function
-  self$.predict_function <- predict_function
+  self$.train_function   <- to_function(train_function, "train")
+  self$.predict_function <- to_function(predict_function, "predict")
   self$.input            <- new.env(parent = emptyenv())
   self$.trained          <- FALSE
   self$.enforce_train    <- enforce_train
