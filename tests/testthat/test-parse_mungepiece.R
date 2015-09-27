@@ -42,7 +42,15 @@ describe("Third format", {
       expect_error(parse_mungepiece(list(trai = 1, predict = 2), "a list with keys"))
       expect_error(parse_mungepiece(list(bar = 1, foo = 2), "a list with keys"))
     })
+
+    test_that("it errors if there are no unnamed arguments on the train side", {
+      expect_error(parse_mungepiece(list(train = list(a = 1), predict = list(2))),
+                                    "at least one unnamed element on the train")
+    })
   })
+
+
+
 })
 
 
