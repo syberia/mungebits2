@@ -30,6 +30,15 @@ describe("First format", {
   })
 })
 
+describe("Second format", {
+  test_that("it correctly creates a mungepiece using the second format with an additional argument", {
+    predict_fn2 <- function(data, by) { data[[1]] <- by * data[[1]]; data }
+    piece  <- parse_mungepiece(list(list(train_fn, predict_fn2), 2))
+    piece2 <- mungepiece$new(mungebit$new(train_fn, predict_fn2), list(2))
+    expect_same_piece(piece, piece2)
+  })
+})
+
 describe("Third format", {
   describe("Invalid inputs", {
     test_that("it errors if you provide less or more than 2 keys", {
@@ -69,6 +78,7 @@ describe("Third format", {
     actual    <- parse_mungepiece(list(train = list(train_fn, by = 3), predict = list(predict_fn, by = 1)))
     expect_same_piece(actual, reference)
   })
+
 })
 
 
