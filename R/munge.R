@@ -147,6 +147,11 @@
 #' @param mungelist list. A list of lists which will be translated to a
 #'    list of mungepieces. It is also possible to pass a list of mungepieces,
 #'    but often the special syntax is more convenient. See the examples section.
+#' @param stagerunner logical. Either \code{TRUE} or \code{FALSE}, by default
+#'    the latter. If \code{TRUE}, a \code{\link[stagerunner]{stagerunner}}
+#'    object will be returned whose context will contain a key \code{data}
+#'    after being ran, namely the munged data set (with a "mungepieces"
+#'    attribute).
 #' @return A cleaned \code{data.frame}, the result of applying each
 #'    \code{\link{mungepiece}} constructed from the \code{mungelist}.
 #' @seealso \code{\link{mungebit}}, \code{\link{mungepiece}},
@@ -227,7 +232,6 @@
 #' munged_single_row_of_data <- munge(single_row_raw_data, munged_data)
 #' # The munge function uses the attached "mungepieces" attribute, a list of
 #' # trained mungepieces.
-munge <- function(data, mungelist) {
-
+munge <- function(data, mungelist, stagerunner = FALSE) {
 }
 

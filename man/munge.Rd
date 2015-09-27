@@ -4,7 +4,7 @@
 \alias{munge}
 \title{Apply a list of mungepieces to data.}
 \usage{
-munge(data, mungelist)
+munge(data, mungelist, stagerunner = FALSE)
 }
 \arguments{
 \item{data}{data.frame. Raw, uncleaned data.}
@@ -12,6 +12,12 @@ munge(data, mungelist)
 \item{mungelist}{list. A list of lists which will be translated to a
 list of mungepieces. It is also possible to pass a list of mungepieces,
 but often the special syntax is more convenient. See the examples section.}
+
+\item{stagerunner}{logical. Either \code{TRUE} or \code{FALSE}, by default
+the latter. If \code{TRUE}, a \code{\link[stagerunner]{stagerunner}}
+object will be returned whose context will contain a key \code{data}
+after being ran, namely the munged data set (with a "mungepieces"
+attribute).}
 }
 \value{
 A cleaned \code{data.frame}, the result of applying each
