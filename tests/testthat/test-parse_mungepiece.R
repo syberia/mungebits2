@@ -47,6 +47,11 @@ describe("Third format", {
       expect_error(parse_mungepiece(list(train = list(a = 1), predict = list(2))),
                                     "at least one unnamed element on the train")
     })
+
+    test_that("it errors if there are no unnamed arguments on the predict side", {
+      expect_error(parse_mungepiece(list(train = identity, predict = list(a = 2))),
+                                    "at least one unnamed element on the predict")
+    })
   })
 
 
