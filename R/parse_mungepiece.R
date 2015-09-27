@@ -293,10 +293,6 @@ parse_mungepiece_dual_chunk.default <- function(args, type) {
          class = class(args)[1L]))
 }
 
-parse_mungepiece_dual_predict <- function(args) {
-  list(identity, list())
-}
-
 parse_mungepiece_single <- function(args) {
   fn_index <- unnamed(args)[1L]
   train_function <- args[[fn_index]]
