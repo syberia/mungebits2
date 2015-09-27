@@ -245,10 +245,16 @@ parse_mungepiece <- function(args) {
   }
 }
 
+## This is used for the third format.
+##
+## ```r
+## piece <- parse_mungepiece(list(train = list(train_fn, train_arg1),
+##                                predict = list(train_fn, predict_arg1)))
+## ```
 parse_mungepiece_dual <- function(args) {
-  ## This check ensures the list has names exactly equal to
-  ## "train" and "predict".
   if (!setequal(c("train", "predict"), names(args))) {
+    ## This check ensures the list has names exactly equal to
+    ## "train" and "predict".
     if (length(args) == 2) {
       error <- paste("Instead, you provided a list with keys",
         paste(sapply(names(args), sQuote), collapse = " and "))
@@ -256,23 +262,51 @@ parse_mungepiece_dual <- function(args) {
       error <- paste0("Instead, you provided a list of length ", length(args))
     }
 
+    ## We use the `m` helper defines in the messages.R file to provide a
+    ## descriptive error.
     stop(m("parse_mungepiece_dual_error", error = error))
   }
 
+  ## We use the [`Map`](https://stat.ethz.ch/R-manual/R-devel/library/base/html/funprog.html)
+  ## built-in to perform a [`zip`](https://docs.python.org/3/library/functions.html#zip)
+  ## operation and translate a pair of `list(train_function, train_args)`
+  ## and `list(predict_function, predict_args)` to a pair
+  ## `list(train_function, predict_function)` and
+  ## `list(train_args, predict_args)`.
   args <- Map(list, parse_mungepiece_dual_chunk(args$train,   type = "train"),
                     parse_mungepiece_dual_chunk(args$predict, type = "predict"))
+
+  ## This is the format we need to use the `mungebit` and `mungepiece`
+  ## constructors.
   do.call(mungepiece$new, c(list(do.call(mungebit$new, args[[1L]])), args[[2L]]))
 }
 
+## We perform [type dispatch](http://adv-r.had.co.nz/OO-essentials.html#s3) to
+## support accepting both a function and a 
+## `list(train_or_predict_function, ...)` when we need a non-zero
+## number of train or predict arguments.
 parse_mungepiece_dual_chunk <- function(args, type) {
   UseMethod("parse_mungepiece_dual_chunk")
 }
 
+## This route would have been called for the "train" side if we had done
+##
+## ```r
+## parse_mungepiece(list(train = identity, predict = list(foo, "1")))
+## ```
+##
+## We interpret `train = identity` to mean `train = list(identity)`,
+## (i.e. run a mungebit with `identity` as its train function and no
+## `train_args` on the mungepiece).
 parse_mungepiece_dual_chunk.function <- function(args, type) {
   list(args, list())
 }
 
+## In the above example, the `predict` side would be parsed through
+## this route.
 parse_mungepiece_dual_chunk.list <- function(args, type) {
+  ## If there are no unnamed argument, it violates our convention,
+  ## since we are unable to determine the train/predict function.
   if (unnamed_count(args) == 0) {
     stop(m("parse_mungepiece_dual_error_unnamed", type = type))
   }
@@ -285,37 +319,68 @@ parse_mungepiece_dual_chunk.list <- function(args, type) {
            class = class(fn)[1L]))
   }
 
+  ## Otherwise, we extract a list of function and additional arguments,
+  ## whether for train or for predict.
   list(fn, args[-fn_index])
 }
 
+## If none of the below two formats were passed, we error.
+##
+## ```r
+## parse_mungepiece(list(train = identity, predict = list(foo, "1")))
+## ```
 parse_mungepiece_dual_chunk.default <- function(args, type) {
   stop(m("parse_mungepiece_dual_error_type", type = type, 
          class = class(args)[1L]))
 }
 
+## We will use this parsing strategy if we have an unnamed element, as in:
+##
+## ```r
+## # Using parse_mungepiece_simple
+## parse_mungepiece(list(train_fn, ...))
+##
+## # Using parse_mungepiece_hybrid
+## parse_mungepiece(list(list(train_fn, predict_fn), ...))
+## ```
 parse_mungepiece_single <- function(args) {
-  fn_index       <- unnamed(args)[1L]
-  train_function <- args[[fn_index]]
+  fn_index  <- unnamed(args)[1L]
+  ## Extract the first unnamed element and use it as the train/predict function.
+  fn        <- args[[fn_index]]
   
-  if (is.function(train_function)) {
-    parse_mungepiece_simple(args[-fn_index], train_function)
+  if (is.function(fn)) {
+    parse_mungepiece_simple(args[-fn_index], fn)
   } else {
-    parse_mungepiece_hybrid(args[-fn_index], train_function)
+    parse_mungepiece_hybrid(args[-fn_index], fn)
   }
 }
 
 parse_mungepiece_simple <- function(args, func) {
+  ## There is no real work to be done in the simple case
+  ## when we call `parse_mungepiece(list(train_fn, ...))`.
   mungepiece$new(mungebit$new(func), args)
 }
 
 parse_mungepiece_hybrid <- function(args, funcs) {
+  ## If we called `parse_mungepiece(list(list(train_fn, predict_fn), ...))`,
+  ## we have to check that the pair in the first element is valid.
+  ## It must consist of two functions, one of which (but not both)
+  ## may be NULL. The functions could also be substituted with mungebits,
+  ## in which the train or predict function (depending on whether the mungebit
+  ## is on the left or rigt hand side) will be extracted. This is not an
+  ## encouraged format but is implemented for convenience.
   if (!is.acceptable_hybrid_pair(funcs)) {
     stop(m("parse_mungepiece_hybrid_error"))
   }
 
+  ## We will avoid passing train or predict arguments, respectively,
+  ## to the mungepiece constructor if there is no train or predict function,
+  ## respectively, to avoid bloating the mungepiece object.
   dual_args <- list(if (!is.null(funcs[[1L]])) args else list(), 
                     if (!is.null(funcs[[2L]])) args else list())
 
+  ## We use the `to_function` helper to extract the train / predict function
+  ## in case the user passed a mungebit.
   funcs <- list(to_function(funcs[[1L]], "train"),
                 to_function(funcs[[2L]], "predict"))
 
@@ -336,6 +401,8 @@ to_function.default <- function(func, type) {
 }
 
 is.acceptable_hybrid_pair <- function(funcs) {
+  ## `funcs` must consist of two functions, one of which (but not both)
+  ## may be NULL.
   is.list(funcs) && length(funcs) == 2 &&
   is.acceptable_function(funcs[[1L]]) && 
   is.acceptable_function(funcs[[2L]]) && 
