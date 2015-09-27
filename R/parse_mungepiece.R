@@ -259,8 +259,6 @@ parse_mungepiece_dual <- function(args) {
 
     stop(m("parse_mungepiece_dual_error", error = error))
   }
-
-
 }
 
 parse_mungepiece_single <- function(args) {
