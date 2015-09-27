@@ -259,7 +259,44 @@ parse_mungepiece_dual <- function(args) {
     stop(m("parse_mungepiece_dual_error", error = error))
   }
 
+  args <- Map(list, parse_mungepiece_dual_chunk(args$train,   type = "train"),
+                    parse_mungepiece_dual_chunk(args$predict, type = "predict"))
+  do.call(mungepiece$new, c(list(do.call(mungebit$new, args[[1L]])), args[[2L]]))
+}
 
+parse_mungepiece_dual_chunk <- function(args, type) {
+  UseMethod("parse_mungepiece_dual_chunk")
+}
+
+parse_mungepiece_dual_chunk.function <- function(args, type) {
+  list(args, list())
+}
+
+parse_mungepiece_dual_chunk.list <- function(args, type) {
+  if (!is.list(args)) {
+    stop(m("parse_mungepiece_dual_error_list", type = type))
+  } else if (unnamed_count(args) == 0) {
+    stop(m("parse_mungepiece_dual_error_unnamed", type = type))
+  }
+
+  fn_index <- unnamed(args)[1L]
+  fn       <- args[[fn_index]]
+  
+  if (!is.function(fn)) {
+    stop(m("parse_mungepiece_dual_error_nonfunction", type = type,
+           class = class(fn)[1L]))
+  }
+
+  list(fn, args[-fn_index])
+}
+
+parse_mungepiece_dual_chunk.default <- function(args, type) {
+  stop(m("parse_mungepiece_dual_error_type", type = type, 
+         class = class(args)[1L]))
+}
+
+parse_mungepiece_dual_predict <- function(args) {
+  list(identity, list())
 }
 
 parse_mungepiece_single <- function(args) {
