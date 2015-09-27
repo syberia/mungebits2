@@ -357,7 +357,7 @@ parse_mungepiece_single <- function(args) {
   ## Extract the first unnamed element and use it as the train/predict function.
   fn <- args[[fn_index]]
   
-  if (is.function(fn) || is.mungebit(fn)) {
+  if (is.function(fn) || is.mungebit(fn) || is.mungepiece(fn)) {
     parse_mungepiece_simple(args[-fn_index], fn)
   } else {
     parse_mungepiece_hybrid(args[-fn_index], fn)
@@ -367,8 +367,12 @@ parse_mungepiece_single <- function(args) {
 parse_mungepiece_simple <- function(args, func) {
   ## There is no real work to be done in the simple case
   ## when we call `parse_mungepiece(list(train_fn, ...))`.
-  func <- to_function(func, "train") %||% to_function(func, "predict")
-  mungepiece$new(mungebit$new(func), args)
+  if (is.mungebit(func) || is.mungepiece(func)) {
+    mungepiece$new(mungebit$new(to_function(func, "train"),
+                                to_function(func, "predict")), args)
+  } else {
+    mungepiece$new(mungebit$new(func), args)
+  }
 }
 
 parse_mungepiece_hybrid <- function(args, funcs) {

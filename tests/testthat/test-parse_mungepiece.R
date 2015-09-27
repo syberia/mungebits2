@@ -127,6 +127,23 @@ describe("Passing existing mungebit or mungepiece", {
       expect_same_piece(parse_mungepiece(list(bit)), piece)
     })
   })
+
+  describe("Passing a mungebit with arguments", {
+    test_that("it accepts a mungebit", {
+      bit <- mungebit$new(train_fn, predict_fn)
+      piece <- mungepiece$new(mungebit$new(train_fn, predict_fn), list(by = 3))
+      expect_equal(parse_mungepiece(list(bit, by = 3)), piece)
+      expect_same_piece(parse_mungepiece(list(bit, by = 3)), piece)
+    })
+
+    test_that("it accepts a mungebit and untrains it", {
+      predict_fn2 <- function(data, by = 5) { data[[1]] <- by * data[[1]]; data }
+      bit <- mungebit$new(train_fn, predict_fn2)
+      bit$run(iris, by = 3)
+      piece <- mungepiece$new(mungebit$new(train_fn, predict_fn2), list(by = 3))
+      expect_same_piece(parse_mungepiece(list(bit, by = 3)), piece)
+    })
+  })
 })
 
 
