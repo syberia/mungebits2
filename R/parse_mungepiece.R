@@ -313,8 +313,8 @@ parse_mungepiece_hybrid <- function(args, funcs) {
     stop(m("parse_mungepiece_hybrid_error"))
   }
 
-  dual_args <- list(if (!is.null(funcs[[1L]])) args, 
-                    if (!is.null(funcs[[2L]])) args)
+  dual_args <- list(if (!is.null(funcs[[1L]])) args else list(), 
+                    if (!is.null(funcs[[2L]])) args else list())
 
   funcs <- list(to_function(funcs[[1L]], "train"),
                 to_function(funcs[[2L]], "predict"))
