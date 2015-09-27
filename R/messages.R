@@ -18,6 +18,27 @@ messages <- list(
     sQuote("cuts"), " equal to 5, while the ",
     sQuote("restore_levels"), " function will be used without ",
     "arguments during prediction.\n"
+  ),
+
+  parse_mungepiece_dual_error_type = c(
+    "When using the explicit train/predict syntax to construct a mungepiece ",
+    "you must pass a list on both sides:\n\n",
+    crayon::green(paste("list(train = list(discretize, cuts = 5),",
+                        "predict = list(restore_levels))")),
+    "\n\nInstead, I got a ", crayon::red("{{{class}}}"), " on the ",
+    "{{{type}}} side."
+  ),
+
+  parse_mungepiece_dual_error_unnamed = c(
+    "When using the explicit train/predict syntax to construct a mungepiece ",
+    "you must have at least one unnamed element on the {{{type}}} side ",
+    "which will be used for the {{{type}}} function."
+  ),
+
+  parse_mungepiece_dual_error_nonfunction = c(
+    "When using the explicit train/predict syntax to construct a mungepiece, ",
+    "the first unnamed element on the {{{type}}} side must be a function. ",
+    "Instead, I got a ", crayon::red("{{{class}}}"), "."
   )
 )
 

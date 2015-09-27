@@ -273,9 +273,7 @@ parse_mungepiece_dual_chunk.function <- function(args, type) {
 }
 
 parse_mungepiece_dual_chunk.list <- function(args, type) {
-  if (!is.list(args)) {
-    stop(m("parse_mungepiece_dual_error_list", type = type))
-  } else if (unnamed_count(args) == 0) {
+  if (unnamed_count(args) == 0) {
     stop(m("parse_mungepiece_dual_error_unnamed", type = type))
   }
 
