@@ -367,6 +367,8 @@ parse_mungepiece_single <- function(args) {
   ## Extract the first unnamed element and use it as the train/predict function.
   fn <- args[[fn_index]]
   
+  ## We can substitute a function with a mungebit or mungepiece, since
+  ## its underlying train or predict function can be extracted.
   if (is.convertible_to_function(fn)) {
     parse_mungepiece_simple(args[-fn_index], fn)
   } else {
