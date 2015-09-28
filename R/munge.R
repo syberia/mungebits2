@@ -147,11 +147,15 @@
 #' @param mungelist list. A list of lists which will be translated to a
 #'    list of mungepieces. It is also possible to pass a list of mungepieces,
 #'    but often the special syntax is more convenient. See the examples section.
-#' @param stagerunner logical. Either \code{TRUE} or \code{FALSE}, by default
+#' @param stagerunner logical or list. Either \code{TRUE} or \code{FALSE}, by default
 #'    the latter. If \code{TRUE}, a \code{\link[stagerunner]{stagerunner}}
 #'    object will be returned whose context will contain a key \code{data}
 #'    after being ran, namely the munged data set (with a "mungepieces"
 #'    attribute).
+#'
+#'    One can also provide a list with a \code{remember} parameter,
+#'    which will be used to construct a stagerunner with the same value
+#'    for its \code{remember} parameter.
 #' @return A cleaned \code{data.frame}, the result of applying each
 #'    \code{\link{mungepiece}} constructed from the \code{mungelist}.
 #' @seealso \code{\link{mungebit}}, \code{\link{mungepiece}},
