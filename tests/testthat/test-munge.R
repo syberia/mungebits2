@@ -4,7 +4,7 @@ describe("Invalid inputs", {
   test_that("the munge list must be a list", {
     expect_error(munge(iris, 5), "must be a list")
     expect_error(munge(iris, identity), "must be a list")
-    expect_error(munge(iris, globalenv()), "must be a list")
+    expect_error(munge(iris, list2env(list(a = 1))), "must be a list")
   })
 
   test_that("when munging against a data.frame it must have a mungepieces attribute", {
