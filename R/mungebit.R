@@ -211,15 +211,27 @@ mungebit <- R6::R6Class("mungebit",
     undebug    = function() { undebug(self) },
     train_function   = function() { self$.train_function   },
     predict_function = function() { self$.predict_function },
-    trained    = function() { self$.trained },
-    input      = function() { as.list(self$.input) }
+    trained    = function(val) {
+      if (missing(val)) self$.trained
+      else self$.trained <- isTRUE(val)
+    },
+    input      = function(val) {
+      if (missing(val)) as.list(self$.input)
+      else self$.input <- list2env(val, parent = parent.env(self$.input))
+    },
+    duplicate  = function(...) { duplicate_mungebit(self, ...) }
   )
 )
 
 ## A helper used to make a fresh untrained replica of an
 ## existing mungebit
-duplicate_mungebit <- function(bit) {
-  mungebit$new(bit$train_function(), bit$predict_function())
+duplicate_mungebit <- function(bit, private = FALSE) {
+  newbit <- mungebit$new(bit$train_function(), bit$predict_function())
+  if (isTRUE(private)) {
+    newbit$input(as.list(bit$input()))
+    newbit$trained(bit$trained())
+  }
+  newbit
 }
 
 #' Determine whether an object is a mungebit.

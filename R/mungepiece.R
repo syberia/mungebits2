@@ -57,14 +57,16 @@ mungepiece <- R6::R6Class("mungepiece",
     mungebit   = function() { self$.mungebit },
 
     train_args   = function() { env2list(self$.train_args) },
-    predict_args = function() { env2list(self$.predict_args) }
+    predict_args = function() { env2list(self$.predict_args) },
+
+    duplicate  = function(...) { duplicate_mungepiece(self, ...) }
   )
 )
 
 ## A helper used to make a fresh untrained replica of an
 ## existing mungepiece.
-duplicate_mungepiece <- function(piece) {
-  mungepiece$new(duplicate_mungebit(piece$mungebit()),
+duplicate_mungepiece <- function(piece, ...) {
+  mungepiece$new(piece$mungebit()$duplicate(...),
                  piece$train_args(), piece$predict_args())
 }
 

@@ -233,7 +233,6 @@
 #' # The munge function uses the attached "mungepieces" attribute, a list of
 #' # trained mungepieces.
 munge <- function(data, mungelist, stagerunner = FALSE) {
-  stopifnot(isTRUE(stagerunner) || identical(stagerunner, FALSE))
   stopifnot(is.data.frame(data))
 
   if (length(mungelist) == 0L) {
@@ -259,12 +258,64 @@ munge <- function(data, mungelist, stagerunner = FALSE) {
 
 # Assume proper arguments.
 munge_ <- function(data, mungelist, stagerunner) {
+  runners <- vapply(mungelist, is, logical(1), "stageRunner")
+  mungelist[!runners] <- lapply(mungelist[!runners], parse_mungepiece)
+  stages <- mungepiece_stages(mungelist)
+
   if (is.environment(data)) {
     context <- data
   } else {
     context <- list2env(list(data = data), parent = emptyenv())
   }
 
-  data
+  remember <- is.list(stagerunner) && isTRUE(stagerunner$remember)
+  runner <- stagerunner::stageRunner$new(context, stages, remember = remember)
+
+  if (identical(stagerunner, FALSE)) {
+    runner$run()
+    context$data
+  } else {
+    runner
+  }
+}
+
+mungepiece_stages <- function(mungelist, contiguous = FALSE) {
+  if (!isTRUE(contiguous)) {
+    singles <- which(vapply(mungelist, Negate(is), logical(1), "stageRunner"))
+    groups  <- cumsum(diff(c(singles[1L] - 1, singles)) != 1)
+    split(mungelist[singles], groups) <- lapply(
+      split(mungelist[singles], groups), mungepiece_stages, contiguous = TRUE
+    )
+    mungelist
+  } else {
+    mungepiece_stages_contiguous(mungelist)
+  }
+}
+
+mungepiece_stages_contiguous <- function(mungelist) {
+  shared_context <- list2env(parent = globalenv(),
+    list(size = length(mungelist), mungepieces = mungelist,
+         newpieces = list())
+  )
+
+  lapply(seq_along(mungelist), mungepiece_stage, shared_context)
+}
+
+mungepiece_stage <- function(mungepiece_index, context) {
+  stage <- function(env) {
+    # Make a fresh copy to avoid shared stage problems.
+    piece <- mungepieces[[mungepiece_index]]$duplicate(private = TRUE)
+    piece$run(env)
+    newpieces[[mungepiece_index]] <<- piece
+
+    if (mungepiece_index == size) {
+      attr(env$data, "mungepieces") <-
+        append(attr(env$data, "mungepieces"), newpieces)
+    }
+  }
+  environment(stage) <- list2env(parent = context,
+    list(mungepiece_index = mungepiece_index)
+  )
+  stage
 }
 
