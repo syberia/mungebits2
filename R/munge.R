@@ -265,6 +265,7 @@ munge <- function(data, mungelist, stagerunner = FALSE) {
 # Assume proper arguments.
 munge_ <- function(data, mungelist, stagerunner) {
   runners <- vapply(mungelist, is, logical(1), "stageRunner")
+  # TODO: (RK) Intercept errors and inject with name for helpfulness!
   mungelist[!runners] <- lapply(mungelist[!runners], parse_mungepiece)
   stages <- mungepiece_stages(mungelist)
 
