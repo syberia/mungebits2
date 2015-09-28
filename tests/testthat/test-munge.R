@@ -8,7 +8,7 @@ describe("Invalid inputs", {
   })
 
   test_that("when munging against a data.frame it must have a mungepieces attribute", {
-    expect_error(munge(iris, iris), "must have a ")
+    expect_error(munge(iris, beaver2), "must have a ")
   })
 })
 
