@@ -116,7 +116,7 @@ This format can also be used to perform totally different behavior on
 # First, we show off the various formats that the parse_mungepiece
 # helper accepts. For this exercise, we can use dummy train and
 # predict functions and arguments.
-train_fn   <- predict_fn   <- base::identity
+train_fn   <- predict_fn   <- function(x, ...) { x }
 train_arg1 <- predict_arg1 <- dual_arg1 <- TRUE # Can be any parameter value.
 
 # The typical way to construct mungepieces would be using the constructor.
@@ -168,6 +168,7 @@ munged_data <- munge(raw_data, list(
 # derived from the above syntax.
 
 # A slightly more real-life example.
+\dontrun{
 munged_data <- munge(raw_data, list(
   "Drop useless vars" = list(list(drop_vars, vector_of_variables),
                              list(drop_vars, c(vector_variables, "dep_var"))),
@@ -186,6 +187,7 @@ munged_data <- munge(raw_data, list(
 # operations on a single row dataset coming through in a real-time production
 # system.
 munged_single_row_of_data <- munge(single_row_raw_data, munged_data)
+}
 # The munge function uses the attached "mungepieces" attribute, a list of
 # trained mungepieces.
 }
