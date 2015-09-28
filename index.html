@@ -285,6 +285,171 @@ undebug.mungepiece <- function(fun) {</span></code>
         </div>
         <div class="section">
           <div class="markdown markdown-body">
+            <h1>messages.R</h1>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer"></span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>A dictionary of messages used by the package.
+We separate these into its own file to avoid cluttering
+the R code with a multitude of strings.</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">messages <- list(
+  parse_mungepiece_dual_error = c(
+    "When using a fully named list to construct a mungepiece, ",
+    "it must consist solely of ", sQuote("train"), " and ",
+    sQuote("predict"), " elements giving a list with the ",
+    "respective train or predict function and any additional ",</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>Note the use of <code>{{{error}}}</code> in conjuction with
+<a href="https://github.com/edwindj/whisker">whisker</a> below.</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">    "train or predict arguments. ", crayon::red("{{{error}}}."),
+    " For example,\n\n",
+    crayon::green(paste("list(train = list(discretize, cuts = 5),",
+                        "predict = list(restore_levels))")),
+    "\n\nwill specify to use the ", sQuote("discretize"),
+    " function in training with the argument ",
+    sQuote("cuts"), " equal to 5, while the ",
+    sQuote("restore_levels"), " function will be used without ",
+    "arguments during prediction.\n"
+  ),
+
+  parse_mungepiece_dual_error_type = c(
+    "When using the explicit train/predict syntax to construct a mungepiece ",
+    "you must pass a list on both sides:\n\n",
+    crayon::green(paste("list(train = list(discretize, cuts = 5),",
+                        "predict = list(restore_levels))")),
+    "\n\nInstead, I got a ", crayon::red("{{{class}}}"), " on the ",
+    "{{{type}}} side."
+  ),
+
+  parse_mungepiece_dual_error_unnamed = c(
+    "When using the explicit train/predict syntax to construct a mungepiece ",
+    "you must have at least one unnamed element on the {{{type}}} side ",
+    "which will be used for the {{{type}}} function."
+  ),
+
+  parse_mungepiece_dual_error_nonfunction = c(
+    "When using the explicit train/predict syntax to construct a mungepiece, ",
+    "the first unnamed element on the {{{type}}} side must be a function. ",
+    "Instead, I got a ", crayon::red("{{{class}}}"), "."
+  ),
+
+  parse_mungepiece_hybrid_error = c(
+    "When using a non-function as the first argument when constructing a ",
+    "mungepiece, the only accepted format is a pair of two functions, ",
+    "with either one but not both NULL.\n\n",
+    crayon::green(paste("list(list(discretize, restore_levels), variables)")),
+    "\n\nThe first function will be used for training and the second for ",
+    "prediction. Please double check your syntax."
+  ),
+
+  munge_type_error = c(
+    "The second parameter to ", sQuote("munge"),
+    " must be a list; instead I got a ",
+    crayon::red("{{{class}}}")
+  ),
+
+  munge_lack_of_mungepieces_attribute = c(
+    "If the second parameter to ", sQuote("munge"),
+    " is a data.frame, it must have a ", sQuote("mungepieces"),
+    " attribute (usually created automatically during a previous ",
+    "run through ", sQuote("munge"), ")"
+  )
+)
+</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>Cleanse the message a little after fetching it from the <code>messages</code> list.</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">msg <- function(name) {
+  stopifnot(name %in% names(messages))
+</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>The <code>gsub</code> will squish multiple spaces into a single space,
+while the <code>paste(collapse = &quot;&quot;, ...)</code> usage will ensure we
+can take vectors of characters in the above <code>messages</code> list.</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">  paste(collapse = "", gsub("[ ]+", " ", messages[[name]]))
+}
+</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>We use the <a href="https://github.com/edwindj/whisker">whisker</a> templating
+engine to inject any additional values into the message string.
+For example,</p>
+
+<pre><code class="r">m(&quot;parse_mungepiece_dual_error&quot;, error = &quot;Bloop&quot;)
+</code></pre>
+
+<p>would return the appropriate error with the string &ldquo;Bloop&rdquo; injected
+in the appropriate place.</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">m <- function(name, ...) {</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>Note the use of <a href="http://www.inside-r.org/r-doc/base/do.call"><code>do.call</code></a>,
+a very handy R metaprogramming tool when we do not know exactly which 
+arguments we will pass.</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">  do.call(whisker::whisker.render, list(msg(name), list(...)))
+}
+
+</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
             <h1>munge.R</h1>
 
           </div>
@@ -297,13 +462,336 @@ undebug.mungepiece <- function(fun) {</span></code>
         </div>
         <div class="section">
           <div class="markdown markdown-body">
-            
+            <p>Usually, we wish to perform more than one cleaning operation on a dataset
+before it is ready to be fed to a machine learning classifier.</p>
+
+<p>The <code>munge</code> function defined in this file allows for a quick way to
+apply a list of mungepieces to a dataframe. </p>
+
+<pre><code class="r">munged_data &lt;- munge(raw_data, list(
+  &quot;Drop useless vars&quot; = list(list(drop_vars, vector_of_variables),
+                             list(drop_vars, c(vector_variables, &quot;dep_var&quot;))),
+  &quot;Impute variables&quot;  = list(imputer, imputed_vars),
+  &quot;Discretize vars&quot;   = list(list(discretize, restore_levels), discretized_vars)
+))
+</code></pre>
+
+<p>Translated in English, we are saying:</p>
+
+<ol>
+<li><p>Drop a static list of useless variables from the data set.
+ When the model is trained, drop the dependent variable as well
+ since we will no longer need it.</p></li>
+<li><p>Impute the variables in the static list of <code>imputed_vars</code>.
+ When the model is trained, the <code>imputer</code> will have some logic
+ to restore the means obtained during training of the mungepiece
+ (assuming we are using mean imputation).</p></li>
+<li><p>Discretize the static list of variables in the <code>discretized_vars</code>
+ character vector. After model training, when new data points come in,
+ the original training set is no longer available. The <code>discretize</code>
+ method stored the necessary cuts for each variable in the mungebit&#39;s
+ <code>input</code>, which the <code>restore_levels</code> function uses to bin the
+ numerical features in the list of <code>discretized_vars</code> into factor
+ (categorical) variables.</p></li>
+</ol>
+
+<p>Instead of building the mungepieces and bits by hand by calling the
+<code>mungepiece$new</code> and <code>mungebit$new</code> constructors (which is another 
+alternative), we use this convenient format to construct and apply
+the mungepieces on-the-fly.</p>
+
+<p>The end result is the <code>munged_data</code>,
+which is the final cleaned and ready-to-model data, together with
+an <a href="https://stat.ethz.ch/R-manual/R-devel/library/base/html/attributes.html">attribute</a>
+&ldquo;mungepieces&rdquo; which stores the list of trained mungepieces.
+In other words, the munged data <em>remembers</em> how it was obtained
+from the raw data. The list of trained mungepieces, informally called a
+<strong>munge procedure</strong>, can be used to replicate the munging in a real-time
+streaming production system without remember the full training set:</p>
+
+<pre><code class="r">munged_single_row &lt;- munge(single_row, attr(munged_data, &quot;mungepieces&quot;))
+
+# A syntactic shortcut enabled by the munge helper. It knows to look for
+# the mungepieces attribute.
+munged_single_row &lt;- munge(single_row, munged_data)
+</code></pre>
+
+<p>We can feed single rows of data (i.e., streaming records coming through
+in a production system) to the trained munge procedure and it will
+correctly replicate the same munging it performed during model training.</p>
+
           </div>
 
           <div class="code">
             <pre>
-              <code class="R"><span class="spacer">#' @export
-munge <- NULL</span></code>
+              <code class="R"><span class="spacer">#' Apply a list of mungepieces to data.
+#'
+#' The \code{munge} function allows a convenient format for applying a 
+#' sequence of \code{\link{mungepiece}} objects to a dataset. 
+#' 
+#' The \code{munge} helper accepts a raw, pre-munged (pre-cleaned)
+#' dataset and a list of lists. Each sublist represents the code
+#' and hyperparameters necessary to clean the dataset. For example,
+#' the first row could consist of an imputation function and a list
+#' of variables to apply the imputation to. It is important to
+#' understand what a \code{\link{mungebit}} and \code{\link{mungepiece}}
+#' does before using the \code{munge} helper, as it constructs these
+#' objects on-the-fly for its operation.
+#'
+#' The end result of calling \code{munge} is a fully cleaned data set
+#' (i.e., one to whom all the mungepieces have been applied and trained)
+#' adjoined with a \code{"mungepieces"} attribute: the list of trained
+#' mungepieces.
+#'
+#' For each sublist in the list of pre-mungepieces passed to \code{munge},
+#' the following format is available. See the examples for a more hands-on
+#' example.
+#'   
+#' \enumerate{
+#'   \item{\code{list(train_fn, ...)}}{ -- If the first element of \code{args} is
+#'     a function followed by other arguments, the constructed mungepiece
+#'     will use the \code{train_fn} as both the \emph{train and predict}
+#'     function for the mungebit, and \code{list(...)} (that is, the remaining 
+#'     elements in the list) will be used as both the train and predict
+#'     arguments in the mungepiece. In other words, using this format
+#'     specifies you would like \emph{exactly the same behavior in
+#'     training as in prediction}. This is appropriate for mungebits
+#'     that operate in place and do not need information obtained
+#'     from the training set, such as simple value replacement or
+#'     column removal.
+#'   }
+#'   \item{\code{list(list(train_fn, predict_fn), ...)}}{
+#'     -- If \code{args} consists of a two-element pair in its first
+#'     element, it must be a pair of either \code{NULL}s or functions,
+#'     with not both elements \code{NULL}. If the \code{train_fn}
+#'     or \code{predict_fn}, resp., is \code{NULL}, this will signify to have
+#'     \emph{no effect} during training or prediction, resp.
+#'      
+#'     The remaining arguments, that is \code{list(...)}, will be used
+#'     as both the training and prediction arguments.
+#' 
+#'     This structure is ideal if the behavior during training and prediction
+#'     has an identical parametrization but very different implementation,
+#'     such as imputation, so you can pass two different functions.
+#'
+#'     It is also useful if you wish to have no effect during prediction,
+#'     such as removing faulty rows during training, or no effect during
+#'     training, such as making a few transformations that are only
+#'     necessary on raw production data rather than the training data.
+#'   }
+#'   \item{\code{list(train = list(train_fn, ...), predict = list(predict_fn, ...))}}{
+#'     If \code{args} consists of a list consisting of exactly two named
+#'     elements with names "train" and "predict", then the first format will be
+#'     used for the respective fields. In other words, a mungepiece will
+#'     be constructed consisting of a mungebit with \code{train_fn} as the
+#'     training function, \code{predict_fn} as the predict fuction, and
+#'     the mungepiece train arguments will be the train list of additional
+#'     arguments \code{list(...)}, and similarly the predict arguments will be
+#'     the predict list of additional arguments \code{list(...)}.
+#'
+#'     Note \code{train_fn} and \code{predict_fn} must \emph{both} be functions
+#'     and not \code{NULL}, since then we could simply use the second format
+#'     described above.
+#'
+#'     This format is ideal when the parametrization differs during training and
+#'     prediction. In this case, \code{train_fn} usually should be the same
+#'     as \code{predict_fn}, but the additional arguments in each list can
+#'     be used to identify the parametrized discrepancies. For example, to
+#'     sanitize a dataset one may wish to drop unnecessary variables. During
+#'     training, this excludes the dependent variable, but during prediction
+#'     we may wish to drop the dependent as well.
+#'
+#'     This format can also be used to perform totally different behavior on
+#'     the dataset during training and prediction (different functions and
+#'     parameters), but mungebits should by definition achieve the same
+#'     operation during training and prediction, so this use case is rare
+#'     and should be handled carefully.
+#'   }
+#' }
+#'
+#' @export
+#' @param data data.frame. Raw, uncleaned data.
+#' @param mungelist list. A list of lists which will be translated to a
+#'    list of mungepieces. It is also possible to pass a list of mungepieces,
+#'    but often the special syntax is more convenient. See the examples section.
+#' @param stagerunner logical or list. Either \code{TRUE} or \code{FALSE}, by default
+#'    the latter. If \code{TRUE}, a \code{\link[stagerunner]{stagerunner}}
+#'    object will be returned whose context will contain a key \code{data}
+#'    after being ran, namely the munged data set (with a "mungepieces"
+#'    attribute).
+#'
+#'    One can also provide a list with a \code{remember} parameter,
+#'    which will be used to construct a stagerunner with the same value
+#'    for its \code{remember} parameter.
+#' @return A cleaned \code{data.frame}, the result of applying each
+#'    \code{\link{mungepiece}} constructed from the \code{mungelist}.
+#' @seealso \code{\link{mungebit}}, \code{\link{mungepiece}},
+#'    \code{\link{parse_mungepiece}}
+#' @examples
+#' # First, we show off the various formats that the parse_mungepiece
+#' # helper accepts. For this exercise, we can use dummy train and
+#' # predict functions and arguments.
+#' train_fn   <- predict_fn   <- function(x, ...) { x }
+#' train_arg1 <- predict_arg1 <- dual_arg1 <- TRUE # Can be any parameter value.
+#' 
+#' # The typical way to construct mungepieces would be using the constructor.
+#' piece <- mungepiece$new(
+#'   mungebit$new(train_fn, predict_fn),
+#'   list(train_arg1), list(predict_arg1)
+#' )
+#'
+#' # This is tedious and can be simplified with the munge syntax, which
+#' # allows one to specify a nested list that defines all the mungebits
+#' # and enclosing mungepieces at once.
+#' 
+#' raw_data <- iris
+#' munged_data <- munge(raw_data, list(
+#'   # If the train function with train args is the same as the predict function
+#'   # with predict args, we use this syntax. The first element should be
+#'   # the funtion we use for both training and prediction. The remaining
+#'   # arguments will be used as both the `train_args` and `predict_args`
+#'   # for the resulting mungepiece.
+#'   "Same train and predict" = list(train_fn, train_arg1, train_arg2 = "blah"),
+#'  
+#'   # If the train and predict arguments to the mungepiece match, but we
+#'   # wish to use a different train versus predict function for the mungebit.
+#'   "Different functions, same args" =
+#'     list(list(train_fn, predict_fn), dual_arg1, dual_arg2 = "blah"),
+#'   
+#'   # If we wish to only run this mungepiece during training.
+#'   "Only run in train" = list(list(train_fn, NULL), train_arg1, train_arg2 = "blah"),
+#'   
+#'   # If we wish to only run this mungepiece during prediction.
+#'   "Only run in predict" = list(list(NULL, predict_fn), predict_arg1, predict_arg2 = "blah"),
+#'  
+#'   # If we wish to run different arguments but the same function during
+#'   # training versus prediction.
+#'   "Totally different train and predict args, but same functions" = 
+#'      list(train = list(train_fn, train_arg1),
+#'           predict = list(train_fn, predict_arg1)),
+#'  
+#'   # If we wish to run different arguments with different functions during
+#'   # training versus prediction.
+#'   "Totally different train and predict function and args" = 
+#'     list(train = list(train_fn, train_arg1),
+#'                       predict = list(predict_fn, predict_arg1))
+#' )) # End the call to munge()
+#'
+#' # This is an abstract example that was purely meant to illustrate syntax
+#' # The munged_data variable will have the transformed data set along
+#' # with a "mungepieces" attribute recording a list of trained mungepieces
+#' # derived from the above syntax.
+#'  
+#' # A slightly more real-life example.
+#' \dontrun{
+#' munged_data <- munge(raw_data, list(
+#'   "Drop useless vars" = list(list(drop_vars, vector_of_variables),
+#'                              list(drop_vars, c(vector_variables, "dep_var"))),
+#'   "Impute variables"  = list(imputer, imputed_vars),
+#'   "Discretize vars"   = list(list(discretize, restore_levels), discretized_vars)
+#' ))
+#' 
+#' # Here, we have requested to munge the raw_data by dropping useless variables,
+#' # including the dependent variable dep_var after model training,
+#' # imputing a static list of imputed_vars, discretizing a static list
+#' # of discretized_vars being careful to use separate logic when merely
+#' # using the computed discretization cuts to bin the numeric features into
+#' # categorical features. The end result is a munged_data set with an 
+#' # attribute "mungepieces" that holds the list of mungepieces used for
+#' # munging the data, and can be used to perform the exact same set of
+#' # operations on a single row dataset coming through in a real-time production
+#' # system.
+#' munged_single_row_of_data <- munge(single_row_raw_data, munged_data)
+#' }
+#' # The munge function uses the attached "mungepieces" attribute, a list of
+#' # trained mungepieces.
+munge <- function(data, mungelist, stagerunner = FALSE) {
+  stopifnot(is.data.frame(data))
+
+  if (length(mungelist) == 0L) {
+    return(data)
+  }
+
+  if (!is.list(mungelist)) {
+    stop(m("munge_type_error", class = class(mungelist)[1L]))
+  }
+
+  if (is.data.frame(mungelist)) {
+    if (!is.element("mungepieces", names(attributes(mungelist)))) {
+      stop(m("munge_lack_of_mungepieces_attribute"))
+    }
+    Recall(data, attr(mungelist, "mungepieces"), stagerunner)
+  } else if (is(mungelist, "tundraContainer")) {
+    # An optional interaction effect with the tundra package.
+    Recall(data, mungelist$munge_procedure, stagerunner)
+  } else {
+    munge_(data, mungelist, stagerunner)
+  }
+}
+
+# Assume proper arguments.
+munge_ <- function(data, mungelist, stagerunner) {
+  runners <- vapply(mungelist, is, logical(1), "stageRunner")
+  mungelist[!runners] <- lapply(mungelist[!runners], parse_mungepiece)
+  stages <- mungepiece_stages(mungelist)
+
+  if (is.environment(data)) {
+    context <- data
+  } else {
+    context <- list2env(list(data = data), parent = emptyenv())
+  }
+
+  remember <- is.list(stagerunner) && isTRUE(stagerunner$remember)
+  runner <- stagerunner::stageRunner$new(context, stages, remember = remember)
+
+  if (identical(stagerunner, FALSE)) {
+    runner$run()
+    context$data
+  } else {
+    runner
+  }
+}
+
+mungepiece_stages <- function(mungelist, contiguous = FALSE) {
+  if (!isTRUE(contiguous)) {
+    singles <- which(vapply(mungelist, Negate(is), logical(1), "stageRunner"))
+    groups  <- cumsum(diff(c(singles[1L] - 1, singles)) != 1)
+    split(mungelist[singles], groups) <- lapply(
+      split(mungelist[singles], groups), mungepiece_stages, contiguous = TRUE
+    )
+    mungelist
+  } else {
+    mungepiece_stages_contiguous(mungelist)
+  }
+}
+
+mungepiece_stages_contiguous <- function(mungelist) {
+  shared_context <- list2env(parent = globalenv(),
+    list(size = length(mungelist), mungepieces = mungelist,
+         newpieces = list())
+  )
+
+  lapply(seq_along(mungelist), mungepiece_stage, shared_context)
+}
+
+mungepiece_stage <- function(mungepiece_index, context) {
+  stage <- function(env) {
+    # Make a fresh copy to avoid shared stage problems.
+    piece <- mungepieces[[mungepiece_index]]$duplicate(private = TRUE)
+    piece$run(env)
+    newpieces[[mungepiece_index]] <<- piece
+
+    if (mungepiece_index == size) {
+      attr(env$data, "mungepieces") <-
+        append(attr(env$data, "mungepieces"), newpieces)
+    }
+  }
+  environment(stage) <- list2env(parent = context,
+    list(mungepiece_index = mungepiece_index)
+  )
+  stage
+}
+</span></code>
             </pre>
           </div>
         </div>
@@ -384,11 +872,11 @@ mungebit_initialize <- function(train_function   = base::identity,
   if (!is.acceptable_function(predict_function)) {
     stop("To create a new mungebit, please pass a ",
          sQuote("function"), " as the second argument. I received ",
-         "something of class ", sQuote(crayon::red(class(second_function)[1L])), ".")
+         "something of class ", sQuote(crayon::red(class(predict_function)[1L])), ".")
   }
 
-  self$.train_function   <- train_function
-  self$.predict_function <- predict_function
+  self$.train_function   <- to_function(train_function, "train")
+  self$.predict_function <- to_function(predict_function, "predict")
   self$.input            <- new.env(parent = emptyenv())
   self$.trained          <- FALSE
   self$.enforce_train    <- enforce_train
@@ -549,7 +1037,8 @@ munging operation at prediction time.</p>
 
           <div class="code">
             <pre>
-              <code class="R"><span class="spacer">  inject_metadata(self$.train_function, self$.input, self$.trained)(data, ...)
+              <code class="R"><span class="spacer">  fn <- inject_metadata(self$.train_function, self$.input, self$.trained)
+  fn(data, ...)
 }
 
 #' Run the predict function on a mungebit.
@@ -591,7 +1080,8 @@ can use the metadata that was compute during training time.</p>
 
           <div class="code">
             <pre>
-              <code class="R"><span class="spacer">  inject_metadata(self$.predict_function, self$.input, self$.trained)(data, ...)
+              <code class="R"><span class="spacer">  fn <- inject_metadata(self$.predict_function, self$.input, self$.trained)
+  fn(data, ...)
 }
 
 inject_metadata <- function(func, input, trained) {</span></code>
@@ -897,10 +1387,38 @@ mungebit <- R6::R6Class("mungebit",
     undebug    = function() { undebug(self) },
     train_function   = function() { self$.train_function   },
     predict_function = function() { self$.predict_function },
-    trained    = function() { self$.trained },
-    input      = function() { as.list(self$.input) }
+    trained    = function(val) {
+      if (missing(val)) self$.trained
+      else self$.trained <- isTRUE(val)
+    },
+    input      = function(val) {
+      if (missing(val)) as.list(self$.input)
+      else self$.input <- list2env(val, parent = parent.env(self$.input))
+    },
+    duplicate  = function(...) { duplicate_mungebit(self, ...) }
   )
 )
+</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>A helper used to make a fresh untrained replica of an
+existing mungebit</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">duplicate_mungebit <- function(bit, private = FALSE) {
+  newbit <- mungebit$new(bit$train_function(), bit$predict_function())
+  if (isTRUE(private)) {
+    newbit$input(as.list(bit$input()))
+    newbit$trained(bit$trained())
+  }
+  newbit
+}
 
 #' Determine whether an object is a mungebit.
 #'
@@ -1340,7 +1858,12 @@ in a production setting.</p>
 
           <div class="code">
             <pre>
-              <code class="R"><span class="spacer">mungepiece <- R6::R6Class("mungepiece", 
+              <code class="R"><span class="spacer">#' Mungepiece.
+#'
+#' @name mungepiece
+#' @docType class
+#' @export
+mungepiece <- R6::R6Class("mungepiece", 
   public = list(
     .mungebit     = NULL, # mungebit
     .train_args   = NULL, # list
@@ -1352,9 +1875,31 @@ in a production setting.</p>
     debug      = function() { debug(self$.mungebit) },
     undebug    = function() { undebug(self$.mungebit) },
     trained    = function() { self$.mungebit$trained() },
-    mungebit   = function() { self$.mungebit }
+    mungebit   = function() { self$.mungebit },
+
+    train_args   = function() { env2list(self$.train_args) },
+    predict_args = function() { env2list(self$.predict_args) },
+
+    duplicate  = function(...) { duplicate_mungepiece(self, ...) }
   )
 )
+</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>A helper used to make a fresh untrained replica of an
+existing mungepiece.</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">duplicate_mungepiece <- function(piece, ...) {
+  mungepiece$new(piece$mungebit()$duplicate(...),
+                 piece$train_args(), piece$predict_args())
+}
 
 #' Determine whether an object is a mungepiece.
 #'
@@ -1415,7 +1960,7 @@ is.mungepiece <- function(x) {
 #' significantly simplified.
 #'
 #' @name mungebits2
-#' @import crayon lazyeval R6 stagerunner
+#' @import crayon lazyeval R6 stagerunner whisker
 #' @docType package
 NULL
 
@@ -1452,8 +1997,8 @@ offline training versus realtime prediction data.</p>
 
 <p>Thus, constructing a mungepiece looks something like:</p>
 
-<pre><code class="r">piece &lt;- mungepiece(
-  mungebit(train_function, predict_function),
+<pre><code class="r">piece &lt;- mungepiece$new(
+  mungebit$new(train_function, predict_function),
   train_args, predict_args
 )
 </code></pre>
@@ -1464,27 +2009,27 @@ this file provides a more convenient format:</p>
 
 <pre><code class="r"># If the train function with train args is the same as the predict function
 # with predict args.
-piece &lt;- parse_mungepiece(list(train_fn, train_arg1, train_arg2 = &quot;blah&quot;))
+piece &lt;- parse_mungepiece((list(train_fn, train_arg1, train_arg2 = &quot;blah&quot;))
 
 # If the train and predict arguments to the mungepiece match, but we
 # wish to use a different train versus predict function for the mungebit.
-piece &lt;- parse_mungepiece(list(train_fn, predict_fn), dual_arg1, dual_arg2 = &quot;blah&quot;)
+piece &lt;- parse_mungepiece(list(list(train_fn, predict_fn), dual_arg1, dual_arg2 = &quot;blah&quot;))
 
 # If we wish to only run this mungepiece during training.
-piece &lt;- parse_mungepiece(list(train_fn, NULL), train_arg1, train_arg2 = &quot;blah&quot;)
+piece &lt;- parse_mungepiece(list(list(train_fn, NULL), train_arg1, train_arg2 = &quot;blah&quot;))
 
 # If we wish to only run this mungepiece during prediction
-piece &lt;- parse_mungepiece(list(NULL, predict_fn), predict_arg1, predict_arg2 = &quot;blah&quot;)
+piece &lt;- parse_mungepiece(list(list(NULL, predict_fn), predict_arg1, predict_arg2 = &quot;blah&quot;))
 
 # If we wish to run different arguments but the same function during
 # training versus prediction.
-piece &lt;- parse_mungepiece(train = list(train_fn, train_arg1),
-                          predict = list(train_fn, predict_arg1))
+piece &lt;- parse_mungepiece(list(train = list(train_fn, train_arg1),
+                               predict = list(train_fn, predict_arg1)))
 
 # If we wish to run different arguments with different functions during
 # training versus prediction.
-piece &lt;- parse_mungepiece(train = list(train_fn, train_arg1),
-                          predict = list(predict_fn, predict_arg1))
+piece &lt;- parse_mungepiece(list(train = list(train_fn, train_arg1),
+                               predict = list(predict_fn, predict_arg1)))
 </code></pre>
 
 <p>This is a full partition of the potential arguments used to initialize a
@@ -1509,7 +2054,8 @@ munged_data &lt;- munge(raw_data, list(
  since we will no longer need it.</p></li>
 <li><p>Impute the variables in the static list of <code>imputed_vars</code>.
  When the model is trained, the <code>imputer</code> will have some logic
- to restore the means obtained during training of the mungepiece.</p></li>
+ to restore the means obtained during training of the mungepiece
+ (assuming we are using mean imputation).</p></li>
 <li><p>Discretize the static list of variables in the <code>discretized_vars</code>
  character vector. After model training, when new data points come in,
  the original training set is no longer available. The <code>discretize</code>
@@ -1618,11 +2164,510 @@ on the training set in a production system on single row data sets
 #'   unnamed.
 #' @return The constructed \code{\link{mungepiece}}.
 #' @seealso \code{\link{mungepiece}}, \code{\link{mungebit}}.
+#' @export
 #' @examples
-#' # TODO: (RK) Fill out some examples
-#' TRUE
+#' # First, we show off the various formats that the parse_mungepiece
+#' # helper accepts. For this exercise, we can use dummy train and
+#' # predict functions and arguments.
+#' train_fn   <- predict_fn   <- function(x, ...) { x }
+#' train_arg1 <- predict_arg1 <- dual_arg1 <- TRUE # Can be any parameter value.
+#'
+#' # If the train function with train args is the same as the predict function
+#' # with predict args.
+#' piece <- parse_mungepiece(list(train_fn, train_arg1, train_arg2 = "blah"))
+#'
+#' # If the train and predict arguments to the mungepiece match, but we
+#' # wish to use a different train versus predict function for the mungebit.
+#' piece <- parse_mungepiece(list(list(train_fn, predict_fn), dual_arg1, dual_arg2 = "blah"))
+#' 
+#' # If we wish to only run this mungepiece during training.
+#' piece <- parse_mungepiece(list(list(train_fn, NULL), train_arg1, train_arg2 = "blah"))
+#' 
+#' # If we wish to only run this mungepiece during prediction
+#' piece <- parse_mungepiece(list(list(NULL, predict_fn), predict_arg1, predict_arg2 = "blah"))
+#'
+#' # If we wish to run different arguments but the same function during
+#' # training versus prediction.
+#' piece <- parse_mungepiece(list(train = list(train_fn, train_arg1),
+#'                                predict = list(train_fn, predict_arg1)))
+#'
+#' # If we wish to run different arguments with different functions during
+#' # training versus prediction.
+#' piece <- parse_mungepiece(list(train = list(train_fn, train_arg1),
+#'                                predict = list(predict_fn, predict_arg1)))
+#'
+#' # The munge function uses the format defined in parse_mungepiece to create
+#' # and execute a list of mungepieces on a dataset.
+#' \dontrun{
+#' munged_data <- munge(raw_data, list(
+#'   "Drop useless vars" = list(list(drop_vars, vector_of_variables),
+#'                              list(drop_vars, c(vector_variables, "dep_var"))),
+#'   "Impute variables"  = list(imputer, imputed_vars),
+#'   "Discretize vars"   = list(list(discretize, restore_levels), discretized_vars)
+#' ))
+#' 
+#' 
+#' # Here, we have requested to munge the raw_data by dropping useless variables,
+#' # including the dependent variable dep_var after model training,
+#' # imputing a static list of imputed_vars, discretizing a static list
+#' # of discretized_vars being careful to use separate logic when merely
+#' # using the computed discretization cuts to bin the numeric features into
+#' # categorical features. The end result is a munged_data set with an 
+#' # attribute "mungepieces" that holds the list of mungepieces used for
+#' # munging the data, and can be used to perform the exact same set of
+#' # operations on a single row dataset coming through in a real-time production
+#' # system.
+#' munged_single_row_of_data <- munge(single_row_raw_data, munged_data)
+#' }
+#' # The munge function uses the attached "mungepieces" attribute, a list of
+#' # trained mungepieces.
 parse_mungepiece <- function(args) {
+  stopifnot(is.list(args), length(args) > 0L)
 
+  if (length(args) == 1L && is.mungepiece(args[[1L]])) {</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>We duplicate the mungepiece to avoid training it.</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">    duplicate_mungepiece(args[[1L]])
+  } else if (length(args) == 1L && is.mungebit(args[[1L]])) {</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>This case is technically handled already in parse_mungepiece_single,
+but we make it explicit here.</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">    mungepiece$new(duplicate_mungebit(args[[1L]]))</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>The third permissible format requires no unnamed arguments, since it
+must be a list consisting of a &ldquo;train&rdquo; and &ldquo;predict&rdquo; key.</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">  } else if (unnamed_count(args) == 0L) {</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>For this case, we delegate the work to <code>parse_mungepiece_dual</code>.</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">    parse_mungepiece_dual(args)
+  } else {</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>Otherwise, the training and prediction arguments are the same.</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">    parse_mungepiece_single(args)
+  }
+}
+</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>This is used for the third format.</p>
+
+<pre><code class="r">piece &lt;- parse_mungepiece(list(
+  train = list(train_fn, train_arg1),
+  predict = list(train_fn, predict_arg1))
+)
+</code></pre>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">parse_mungepiece_dual <- function(args) {
+  if (!setequal(c("train", "predict"), names(args))) {</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>This check ensures the list has names exactly equal to
+&ldquo;train&rdquo; and &ldquo;predict&rdquo;.</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">    if (length(args) == 2) {
+      error <- paste("Instead, you provided a list with keys",
+        paste(sapply(names(args), sQuote), collapse = " and "))
+    } else {
+      error <- paste0("Instead, you provided a list of length ", length(args))
+    }
+</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>We use the <code>m</code> helper defined in the messages.R file to provide a
+descriptive error.</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">    stop(m("parse_mungepiece_dual_error", error = error))
+  }
+</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>We use the <a href="https://stat.ethz.ch/R-manual/R-devel/library/base/html/funprog.html"><code>Map</code></a>
+built-in to perform a <a href="https://docs.python.org/3/library/functions.html#zip"><code>zip</code></a>
+operation and translate a pair of <code>list(train_function, train_args)</code>
+and <code>list(predict_function, predict_args)</code> to a pair
+<code>list(train_function, predict_function)</code> and
+<code>list(train_args, predict_args)</code>.</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">  args <- Map(list, parse_mungepiece_dual_chunk(args$train,   type = "train"),
+                    parse_mungepiece_dual_chunk(args$predict, type = "predict"))
+</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>This is the format we need to use the <code>mungebit</code> and <code>mungepiece</code>
+constructors.</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">  do.call(mungepiece$new, c(list(do.call(mungebit$new, args[[1L]])), args[[2L]]))
+}
+</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>We perform <a href="http://adv-r.had.co.nz/OO-essentials.html#s3">type dispatch</a> to
+support accepting both a function and a 
+<code>list(train_or_predict_function, ...)</code> when we need a non-zero
+number of train or predict arguments.</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">parse_mungepiece_dual_chunk <- function(args, type) {
+  UseMethod("parse_mungepiece_dual_chunk")
+}
+</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>This route would have been called for the &ldquo;train&rdquo; side if we had done</p>
+
+<pre><code class="r">parse_mungepiece(list(train = identity, predict = list(foo, &quot;1&quot;)))
+</code></pre>
+
+<p>We interpret <code>train = identity</code> to mean <code>train = list(identity)</code>,
+(i.e. run a mungebit with <code>identity</code> as its train function and no
+<code>train_args</code> on the mungepiece).</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">parse_mungepiece_dual_chunk.function <- function(args, type) {
+  list(args, list())
+}
+
+parse_mungepiece_dual_chunk.mungebit <- function(args, type) {
+  list(to_function(args, type), list())
+}
+
+parse_mungepiece_dual_chunk.mungepiece <- function(args, type) {
+  list(to_function(args, type),
+       if (type == "train") args$train_args() else args$predict_args())
+}
+</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>In the above example, the <code>predict</code> side would be parsed through
+this route.</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">parse_mungepiece_dual_chunk.list <- function(args, type) {</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>If there are no unnamed arguments, it violates our convention,
+since we are unable to determine the train/predict function.</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">  if (unnamed_count(args) == 0) {
+    stop(m("parse_mungepiece_dual_error_unnamed", type = type))
+  }
+
+  fn_index <- unnamed(args)[1L]
+  fn       <- args[[fn_index]]
+  
+  if (!is.convertible_to_function(fn)) {
+    stop(m("parse_mungepiece_dual_error_nonfunction", type = type,
+           class = class(fn)[1L]))
+  }
+  fn <- to_function(fn, type)
+</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>Otherwise, we extract a list of function and additional arguments,
+whether for train or for predict.</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">  list(fn, args[-fn_index])
+}
+</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>If none of the below two formats were passed, we error.</p>
+
+<pre><code class="r">parse_mungepiece(list(train = identity, predict = list(foo, &quot;1&quot;)))
+</code></pre>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">parse_mungepiece_dual_chunk.default <- function(args, type) {
+  stop(m("parse_mungepiece_dual_error_type", type = type, 
+         class = class(args)[1L]))
+}
+</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>We will use this parsing strategy if we have an unnamed element, as in:</p>
+
+<pre><code class="r"># Using parse_mungepiece_simple
+parse_mungepiece(list(train_fn, ...))
+
+# Using parse_mungepiece_hybrid
+parse_mungepiece(list(list(train_fn, predict_fn), ...))
+</code></pre>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">parse_mungepiece_single <- function(args) {
+  fn_index  <- unnamed(args)[1L]</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>Extract the first unnamed element and use it as the train/predict function.</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">  fn <- args[[fn_index]]
+  </span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>We can substitute a function with a mungebit or mungepiece, since
+its underlying train or predict function can be extracted.</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">  if (is.convertible_to_function(fn)) {
+    parse_mungepiece_simple(args[-fn_index], fn)
+  } else {
+    parse_mungepiece_hybrid(args[-fn_index], fn)
+  }
+}
+
+parse_mungepiece_simple <- function(args, func) {</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>There is no real work to be done in the simple case
+when we call <code>parse_mungepiece(list(train_fn, ...))</code>.</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">  if (is.mungebit(func) || is.mungepiece(func)) {
+    mungepiece$new(mungebit$new(to_function(func, "train"),
+                                to_function(func, "predict")), args)
+  } else {
+    mungepiece$new(mungebit$new(func), args)
+  }
+}
+
+parse_mungepiece_hybrid <- function(args, funcs) {</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>If we called <code>parse_mungepiece(list(list(train_fn, predict_fn), ...))</code>,
+we have to check that the pair in the first element is valid.
+It must consist of two functions, one of which (but not both)
+may be NULL. The functions could also be substituted with mungebits,
+in which the train or predict function (depending on whether the mungebit
+is on the left or right hand side) will be extracted. This is not an
+encouraged format but is implemented for convenience.</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">  if (!is.acceptable_hybrid_pair(funcs)) {
+    stop(m("parse_mungepiece_hybrid_error"))
+  }
+</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>We will avoid passing train or predict arguments, respectively,
+to the mungepiece constructor if there is no train or predict function,
+respectively, to avoid bloating the mungepiece object.</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">  dual_args <- list(if (!is.null(funcs[[1L]])) args else list(), 
+                    if (!is.null(funcs[[2L]])) args else list())
+</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>We use the <code>to_function</code> helper to extract the train / predict function
+in case the user passed a mungebit.</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">  funcs <- list(to_function(funcs[[1L]], "train"),
+                to_function(funcs[[2L]], "predict"))
+
+  do.call(mungepiece$new, c(list(mungebit$new(funcs[[1]], funcs[[2]])), dual_args))
+}
+
+to_function <- function(func, type) {
+  UseMethod("to_function")
+}
+
+to_function.mungepiece <- function(func, type) {
+  to_function(func$mungebit(), type)
+}
+
+to_function.mungebit <- function(func, type) {
+  if (type == "train") func$train_function()
+  else func$predict_function()
+}
+
+to_function.default <- function(func, type) {
+  func
+}
+
+is.convertible_to_function <- function(obj, null_ok = FALSE) {
+  is.function(obj) || is.mungebit(obj) || is.mungepiece(obj) ||
+  (isTRUE(null_ok) && is.null(obj))
+}
+
+is.acceptable_hybrid_pair <- function(funcs) {</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p><code>funcs</code> must consist of two functions, one of which (but not both)
+may be NULL.</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">  is.list(funcs) && length(funcs) == 2 &&
+  is.convertible_to_function(funcs[[1L]], null_ok = TRUE) && 
+  is.convertible_to_function(funcs[[2L]], null_ok = TRUE) && 
+  !(is.null(funcs[[1L]]) && is.null(funcs[[2L]]))
 }
 </span></code>
             </pre>
@@ -1688,6 +2733,18 @@ env2listcall <- function(env) {
     names <- names[attr(env, "name_order")]
   }
   setNames(lapply(names, as.name), nm = names)
+}
+
+# Revert the operation in mungepiece initialization that turns a list
+# into an environment.
+env2list <- function(env) {
+  if (length(ls(env)) == 0L) {
+    list()
+  } else {
+    lst <- as.list(env)[attr(env, "name_order")]
+    names(lst) <- attr(env, "initial_names")
+    lst
+  }
 }
 
 make_env <- function(lst, parent = emptyenv()) {
