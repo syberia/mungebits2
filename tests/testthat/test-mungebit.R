@@ -133,3 +133,14 @@ describe("debugging", {
   })
 })
 
+describe("the trained lexical", {
+  test_that("the trained lexical is injected", {
+    env <- new.env()
+    mb  <- mungebit$new(function(data) { env$trained <- trained; data })
+    mb$run(iris)
+    expect_false(env$trained)
+    mb$run(iris)
+    expect_true(env$trained)
+  })
+})
+
