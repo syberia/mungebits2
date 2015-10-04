@@ -8,7 +8,7 @@ describe("Invalid inputs", {
   })
 
   test_that("it breaks when you pass a list of length 0", {
-    expect_error(parse_mungepiece(list()), "is not TRUE")
+    expect_error(parse_mungepiece(list()), "Invalid format passed")
   })
 })
 

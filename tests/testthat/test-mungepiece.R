@@ -528,5 +528,10 @@ describe("edge cases", {
     expect_contains(mp$run(iris, y = x),
                     list(x = 2, y = 3, y_expr = quote(x)))
   })
+
+  test_that("it can run builtin train functions", {
+    mp <- mungepiece$new(mungebit$new(`[`), list("Sepal.Width", drop = FALSE))
+    expect_equal(mp$run(iris), iris["Sepal.Width"])
+  })
 })
 
