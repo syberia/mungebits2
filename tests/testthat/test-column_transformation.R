@@ -78,5 +78,17 @@ describe("Simplest examples", {
     expect_equal(iris2, transform(iris, Sepal.Length = c(mean(Sepal.Length[-1L]), Sepal.Length[-1L])),
                  info = paste("column_transformation must impute NAs with mean"))
   })
+
+})
+
+describe("Passing arguments", {
+
+  test_that("it correctly passes dots arguments", {
+    scaler <- mungebit$new(column_transformation(function(x, v) { v * x }))
+    iris2  <- scaler$run(iris[1:4], , 2)
+    expect_equal(iris2[1:4], 2 * iris[1:4],
+                 info = "column_transformation must double first column of iris2")
+  })
+
 })
 
