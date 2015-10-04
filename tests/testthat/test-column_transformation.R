@@ -20,5 +20,13 @@ describe("Simplest examples", {
                               "2 columns of iris2"))
   })
 
+  test_that("correctly transforms one column by converting to character", {
+    stringer <- mungebit$new(column_transformation(as.character))
+    iris2    <- stringer$run(iris, "Sepal.Length")
+    expect_equal(iris2, transform(iris, Sepal.Length = as.character(Sepal.Length)),
+                 info = paste("column_transformation must convert to character",
+                              "first column of iris2"))
+  })
+
 })
 

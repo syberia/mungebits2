@@ -134,7 +134,7 @@ column_transformation_body <- quote({
 
     environment(new_transformation) <- list2env(
       list(input = mock_input, trained = trained),
-      parent = environment(transformation)
+      parent = environment(transformation) %||% baseenv()
     )
     if (isdebugged(transformation)) debug(new_transformation)
 
