@@ -58,5 +58,15 @@ describe("using mungepieces with inputs", {
     expect_equal(iris2[1, 1], mean(iris$Sepal.Length[-1]))
   })
 
+  test_that("it munges in predict mode a sequence of mungepieces with inputs", {
+    imputer <- simple_imputer("Sepal.Length")
+    iris[1, 1] <- NA
+    
+    iris2 <- munge(iris, list("Impute first column" = imputer, 
+                              "Drop species"        = list(drop_variables, "Species")))
+    iris3 <- munge(iris, iris2)
+    expect_equal(iris3, iris2)
+  })
+
 })
 
