@@ -66,5 +66,17 @@ describe("Simplest examples", {
                               "columns using numeric indices",
                               "(e.g., doubler(iris, c(F,T,F,F,F))"))
   })
+
+  test_that("it correctly imputes means", {
+    mean_imputer <- column_transformation(function(x) {
+      x[is.na(x)] <- mean(x, na.rm = TRUE); x
+    })
+    iris2       <- iris
+    iris2[1, 1] <- NA
+    iris2       <- mungebit$new(mean_imputer)$run(iris2, 1)
+    
+    expect_equal(iris2, transform(iris, Sepal.Length = c(mean(Sepal.Length[-1L]), Sepal.Length[-1L])),
+                 info = paste("column_transformation must impute NAs with mean"))
+  })
 })
 
