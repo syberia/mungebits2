@@ -79,6 +79,12 @@ describe("Simplest examples", {
                  info = paste("column_transformation must impute NAs with mean"))
   })
 
+  test_that("it correctly runs column transformations using a function as column name specifier", {
+    doubler <- mungebit$new(column_transformation(function(x) { 2 * x }))
+    iris2   <- doubler$run(iris, is.numeric)
+    expect_equal(iris2[, 1:4], iris[, 1:4] * 2)
+  })
+
 })
 
 describe("Passing arguments", {
