@@ -10,7 +10,7 @@
 ##      cannot be expressed as a column or row transformation: for example,
 ##      a transposition or multiple imputation.
 ##
-## The `column_transformation` function is a helper that takes a 
+## The `column_transformation` function is a helper that tak 
 ## a function with at least one argument--the atomic vector (column)
 ## being operated on, with additional arguments acting as further
 ## parametrization--and turns that function into a function suitable
@@ -26,7 +26,7 @@
 ##
 ## The function produced, `stripper`, accepts a data.frame as its
 ## first argument and as its second argument a vector of column names
-## (or several other formats; ## see the `standard_column_format` helper).
+## (or several other formats; see the `standard_column_format` helper).
 ##
 ## The argument `name` is reserved, and if you create a column transformation
 ## from a function that includes this argument, its value will be set
@@ -66,9 +66,28 @@
 #' iris2 <- doubler(iris, c("Sepal.Length")) 
 column_transformation <- function(transformation) {
   ## We will construct a function *from scratch*. Since R is almost
-  ## [LISP](https://en.wikipedia.org/wiki/Lisp_(programming_language))
+  ## [LISP](https://en.wikipedia.org/wiki/Lisp_(programming_language\))
   ## under the hood, it is possible to construct a function piece-by-piece.
   ##
+  ## In general, an R function [consists of three components](http://adv-r.had.co.nz/Functions.html):
+  ##
+  ##  * **Formals**. The arguments to the function. You can access these
+  ##    for any function using the [`formals`](https://stat.ethz.ch/R-manual/R-patched/library/base/html/formals.html)
+  ##    helper. This is a named list of expressions, with the values being
+  ##    the defaults for each argument.
+  ##  * **Body**. The body of the function. In R, a block of code can be 
+  ##    represented within R itself as a `language` object. Specifically,
+  ##    using [`quote`](https://stat.ethz.ch/R-manual/R-devel/library/base/html/substitute.html)
+  ##    can be used to construct the *body* of a function, as in
+  ##    `quote({ a <- 1; print(a); return(a) })`. This is a form of
+  ##    [reflection](https://en.wikipedia.org/wiki/Reflection_(computer_programming\)).
+  ##  * **Environment**. The R environment the function has access to
+  ##    when looking for local variables. In other words, its lexical
+  ##    environment [as a closure](https://en.wikipedia.org/wiki/Closure_(computer_programming\)).
+  ## 
+  ## For a `column_transformation`, its derived transformation will be
+  ## a new function that takes a `data` argument and a vector of `columns`,
+  ## and executes the `transformation` on each column.
   full_transformation <- function(data, columns = colnames(data)) { }
   environment(full_transformation) <- list2env(
     list(transformation = transformation),
