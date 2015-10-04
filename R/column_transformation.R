@@ -59,6 +59,9 @@
 #'    names (or several other formats, see \code{\link{standard_column_format}})
 #'    and applies the \code{transformation}.
 #' @seealso \code{\link{multi_column_transformation}}, \code{\link{standard_column_format}}
+#' @note The function produced by calling \code{column_transformation} will
+#'    not run independently. It must be used a train or predict function for
+#'    a \code{\link{mungebit}}.
 #' @export
 #' @examples
 #' doubler <- column_transformation(function(x) { 2 * x })
