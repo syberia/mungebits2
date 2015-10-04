@@ -83,6 +83,11 @@ describe("Second format", {
     piece$run(iris)
     expect_output(piece$run(iris), "Foo 2")
   })
+
+  test_that("it can correctly take two train arguments in the right order", {
+    piece  <- parse_mungepiece(list(list(train_fn, identity), "Yay", 5))
+    expect_equal(piece$train_args(), list("Yay", 5))
+  })
 })
 
 describe("Third format", {

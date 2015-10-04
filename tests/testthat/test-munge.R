@@ -58,6 +58,20 @@ describe("using mungepieces with inputs", {
     data
   }
 
+  simple_discretize <- function(data, variable, cutoff) {
+    input$cutoff <- cutoff
+    browser()
+    data[[variable]] <- factor(ifelse(data[[variable]] > cutoff, "Right", "Left"),
+                               levels = c("Left", "Right"))
+    data
+  }
+
+  simple_restore_levels <- function(data, variable, ...) {
+    data[[variable]] <- factor(ifelse(data[[variable]] > input$cutoff, "Right", "Left"),
+                               levels = c("Left", "Right"))
+    data
+  }
+
   test_that("it munges a sequence of mungepieces with inputs", {
     imputer    <- simple_imputer("Sepal.Length")
     iris[1, 1] <- NA
@@ -86,6 +100,26 @@ describe("using mungepieces with inputs", {
       "Select training var" = list(train = list(`[`, colnames(irisprime)),
                                    predict = list(`[`, colnames(iris))),
       "Impute first column" = imputer, 
+      "Drop species"        = list(drop_variables, "Species")
+    ))
+
+    iris3 <- munge(iris, iris2)
+    # Use TRUE to induce a copy and drop attributes.
+    expect_equal(iris3[TRUE], iris2[colnames(iris3)]) 
+  })
+
+  test_that("it munges in conjunction with separate train and predict functions", {
+    imputer    <- simple_imputer("Sepal.Length")
+    iris[1, 1] <- NA
+    irisprime  <- transform(iris, dependent_variable = c(0L, 1L))
+    
+    debug(munge)
+    iris2 <- munge(irisprime, list(
+      "Select training var" = list(train = list(`[`, colnames(irisprime)),
+                                   predict = list(`[`, colnames(iris))),
+      "Impute first column" = imputer, 
+      "Dumb discretize"     = list(list(simple_discretize, simple_restore_levels),
+                                   "Sepal.Width", 3),
       "Drop species"        = list(drop_variables, "Species")
     ))
 
