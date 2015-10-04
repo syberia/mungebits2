@@ -54,8 +54,17 @@ describe("Simplest examples", {
     expect_equal(iris2, transform(iris, Sepal.Width = 2 * Sepal.Width),
                  info = paste("column_transformation must be able to reference",
                               "columns using numeric indices",
-                              "(e.g., doubler(iris2,2)"))
+                              "(e.g., doubler(iris,2)"))
   })
 
+  test_that("correctly transforms using logical column indices", {
+    doubler <- column_transformation(function(x) 2 * x)
+    iris2   <- mungebit$new(doubler)$run(iris, "Sepal.Width" == colnames(iris))
+    
+    expect_equal(iris2, transform(iris, Sepal.Width = 2 * Sepal.Width),
+                 info = paste("column_transformation must be able to reference",
+                              "columns using numeric indices",
+                              "(e.g., doubler(iris, c(F,T,F,F,F))"))
+  })
 })
 
