@@ -81,16 +81,17 @@ describe("using mungepieces with inputs", {
     imputer    <- simple_imputer("Sepal.Length")
     iris[1, 1] <- NA
     irisprime  <- transform(iris, dependent_variable = c(0L, 1L))
-    skip("for now")
     
-    iris2 <- munge(list = TRUE, irisprime, list(
-      "Select training var" = list(train = list(`[`, colnames(irisprime)), predict = list(`[`, colnames(iris))),
+    iris2 <- munge(irisprime, list(
+      "Select training var" = list(train = list(`[`, colnames(irisprime)),
+                                   predict = list(`[`, colnames(iris))),
       "Impute first column" = imputer, 
       "Drop species"        = list(drop_variables, "Species")
     ))
 
     iris3 <- munge(iris, iris2)
-    expect_equal(iris3, iris2)
+    # Use TRUE to induce a copy and drop attributes.
+    expect_equal(iris3[TRUE], iris2[colnames(iris3)]) 
   })
 
 })

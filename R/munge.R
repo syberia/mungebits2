@@ -158,6 +158,10 @@
 #'    for its \code{remember} parameter.
 #' @param list logical. Whether or not to return the list of mungepieces
 #'    instead of executing them on the \code{data}. By default \code{FALSE}.
+#' @param parse logical. Whether or not to pre-parse the \code{mungelist}
+#'    using \code{\link{parse_mungepiece}}. Note that if this is \code{TRUE},
+#'    any trained mungepieces will be duplicated and marked as untrained.
+#'    By default, \code{TRUE}.
 #' @return A cleaned \code{data.frame}, the result of applying each
 #'    \code{\link{mungepiece}} constructed from the \code{mungelist}.
 #' @seealso \code{\link{mungebit}}, \code{\link{mungepiece}},
@@ -240,7 +244,7 @@
 #' }
 #' # The munge function uses the attached "mungepieces" attribute, a list of
 #' # trained mungepieces.
-munge <- function(data, mungelist, stagerunner = FALSE, list = FALSE) {
+munge <- function(data, mungelist, stagerunner = FALSE, list = FALSE, parse = TRUE) {
   stopifnot(is.data.frame(data))
 
   if (length(mungelist) == 0L) {
@@ -255,20 +259,24 @@ munge <- function(data, mungelist, stagerunner = FALSE, list = FALSE) {
     if (!is.element("mungepieces", names(attributes(mungelist)))) {
       stop(m("munge_lack_of_mungepieces_attribute"))
     }
-    Recall(data, attr(mungelist, "mungepieces"), stagerunner)
+    Recall(data, attr(mungelist, "mungepieces"), stagerunner = stagerunner,
+           list = list, parse = FALSE)
   } else if (is(mungelist, "tundraContainer")) {
     # An optional interaction effect with the tundra package.
-    Recall(data, mungelist$munge_procedure, stagerunner)
+    Recall(data, mungelist$munge_procedure, stagerunner = stagerunner,
+           list = list, parse = FALSE)
   } else {
-    munge_(data, mungelist, stagerunner, list)
+    munge_(data, mungelist, stagerunner, list, parse)
   }
 }
 
 # Assume proper arguments.
-munge_ <- function(data, mungelist, stagerunner, list_output) {
-  runners <- vapply(mungelist, is, logical(1), "stageRunner")
-  # TODO: (RK) Intercept errors and inject with name for helpfulness!
-  mungelist[!runners] <- lapply(mungelist[!runners], parse_mungepiece)
+munge_ <- function(data, mungelist, stagerunner, list_output, parse) {
+  if (isTRUE(parse)) {
+    runners <- vapply(mungelist, is, logical(1), "stageRunner")
+    # TODO: (RK) Intercept errors and inject with name for helpfulness!
+    mungelist[!runners] <- lapply(mungelist[!runners], parse_mungepiece)
+  }
 
   if (isTRUE(list_output)) {
     return(mungelist)
