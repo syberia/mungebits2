@@ -28,7 +28,7 @@ describe("Simplest examples", {
                               "first column of iris"))
   })
 
-  test_that('correctly transforms multiple columns by converting to character', {
+  test_that("correctly transforms multiple columns by converting to character", {
     stringer <- column_transformation(as.character)
     iris2    <- mungebit$new(stringer)$run(iris, colnames(iris))
     char_dataframe <- data.frame(vapply(iris, as.character, character(NROW(iris))),
@@ -38,5 +38,13 @@ describe("Simplest examples", {
                               "all columns of iris"))
   })
 
+  test_that("correctly transforms a column into rounded factors", {
+    round_and_factor <- column_transformation(function(x) factor(round(x)))
+    iris2 <- mungebit$new(round_and_factor)$run(iris, "Sepal.Length")
+    
+    expect_equal(iris2, transform(iris, Sepal.Length = factor(round(Sepal.Length))),
+                 info = paste("column_transformation must convert to factor",
+                              "after rounding first column of iris"))
+  })
 })
 
