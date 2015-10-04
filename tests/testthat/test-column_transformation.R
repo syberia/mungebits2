@@ -90,6 +90,13 @@ describe("Passing arguments", {
                  info = "column_transformation must double first column of iris")
   })
 
+  test_that('accepts transformation calls with missing arguments', {
+    doubler <- mungebit$new(column_transformation(function(x) { 2 * x }))
+    iris2   <- doubler$run(iris[1: 4])
+    expect_equal(iris2, 2 * iris[, 1:4],
+                 info = "column_transformation must double first column of iris")
+  })
+
   describe("The name argument for named column transformations", {
 
     test_that("the name argument is respected", {
