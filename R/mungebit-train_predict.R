@@ -18,6 +18,9 @@
 #'
 #' @rdname mungebit
 #' @inheritParams mungebit_run
+#' @param _envir environment. Internal argument used for determining
+#'   the execution context of the invoked \code{train_function} or
+#'   \code{predict_function}.
 #' @return The modified \code{data}, whether it is an \code{environment}
 #'   or \code{data.frame}. Side effects on the \code{input} local variable
 #'   provided to the \code{train_function} will be recorded on the mungebit

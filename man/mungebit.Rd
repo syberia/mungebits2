@@ -25,6 +25,10 @@ will record any results it must memorize in its \code{input}.}
 
 \item{...}{additional arguments to the mungebit's \code{train_function} or
 \code{predict_function}.}
+
+\item{_envir}{environment. Internal argument used for determining
+the execution context of the invoked \code{train_function} or
+\code{predict_function}.}
 }
 \value{
 The modified \code{data}, whether it is an \code{environment}
