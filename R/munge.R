@@ -252,9 +252,16 @@ munge <- function(data, mungelist, stagerunner = FALSE, list = FALSE, parse = TR
   }
 
   if (!is.list(mungelist)) {
+    ## This error is grabbed from the `messages.R` file.
     stop(m("munge_type_error", class = class(mungelist)[1L]))
   }
 
+  ## We allow munging in prediction mode using an existing *trained* data.frame.
+  ## For example, if we had ran `iris2 <- munge(iris, some_list_of_mungepieces)`,
+  ## an attributes would be created on `iris2` with the name `"mungepieces"`.
+  ## The `munge` function is capable of re-using this attribute, a list of 
+  ## trained mungepieces, and apply it to a new dataset. In English, it is
+  ## asking to "perform the exact same munging that was done on `iris2`".
   if (is.data.frame(mungelist)) {
     if (!is.element("mungepieces", names(attributes(mungelist)))) {
       stop(m("munge_lack_of_mungepieces_attribute"))
@@ -273,6 +280,9 @@ munge <- function(data, mungelist, stagerunner = FALSE, list = FALSE, parse = TR
 # Assume proper arguments.
 munge_ <- function(data, mungelist, stagerunner, list_output, parse) {
   if (isTRUE(parse)) {
+    ## It is possible to have nested stagerunners of mungeprocedures,
+    ## but this is a more advanced feature. We skip stagerunners
+    ## when parsing the munge procedure using `parse_mungepiece`.
     runners <- vapply(mungelist, is, logical(1), "stageRunner")
     # TODO: (RK) Intercept errors and inject with name for helpfulness!
     mungelist[!runners] <- lapply(mungelist[!runners], parse_mungepiece)
@@ -282,8 +292,12 @@ munge_ <- function(data, mungelist, stagerunner, list_output, parse) {
     return(mungelist)
   }
 
+  ## We will construct a [stagerunner](https://github.com/robertzk/stagerunner)
+  ## and execute it on a context (environment) containing just a `data` key.
+  ##
+  ## The stages of the stagerunner will be one for each mungepiece, defined
+  ## by the `mungepiece_stages` helper.
   stages <- mungepiece_stages(mungelist)
-
   if (is.environment(data)) {
     context <- data
   } else {
@@ -302,6 +316,13 @@ munge_ <- function(data, mungelist, stagerunner, list_output, parse) {
 }
 
 mungepiece_stages <- function(mungelist, contiguous = FALSE) {
+  ## As before, remember that a munge procedure can consist of mungepieces
+  ## but also stagerunners earlier produced by `munge`. If we have a
+  ## mungelist that looks like `list(mungepiece, runner, mungepiece, mungepiece, runner, ...)`
+  ## then each *contiguous* block of mungepieces needs to be transformed
+  ## into a sequence of stages. We will see later why this is necessary: we 
+  ## have to append the `mungepieces` to the data.frame after the last 
+  ## mungepiece has been executed. 
   if (!isTRUE(contiguous)) {
     singles <- which(vapply(mungelist, Negate(is), logical(1), "stageRunner"))
     groups  <- cumsum(diff(c(singles[1L] - 1, singles)) != 1)
@@ -325,11 +346,22 @@ mungepiece_stages_contiguous <- function(mungelist) {
 
 mungepiece_stage <- function(mungepiece_index, context) {
   stage <- function(env) {
+    ## Each mungepiece will correspond to one stage in a stagerunner.
+    ## We will construct a *new* mungepiece on-the-fly to avoid
+    ## sharing state with other mungepiece objects, run that
+    ## mungepiece, and then modify the `newpieces` to store
+    ## the trained mungepiece.
     # Make a fresh copy to avoid shared stage problems.
     piece <- mungepieces[[mungepiece_index]]$duplicate(private = TRUE)
     piece$run(env)
     newpieces[[mungepiece_index]] <<- piece
 
+    ## When we are out of mungepieces, that is, when the current index equals
+    ## the number of mungepieces in the actively processed contiguous chain 
+    ## of mungepieces, we append the mungepieces to the dataframe's
+    ## `"mungepieces"` attribute. This is what allows us to later replay
+    ## the munging actions on new data by passing the dataframe as the second 
+    ## argument to the `munge` function.
     if (mungepiece_index == size) {
       attr(env$data, "mungepieces") <-
         append(attr(env$data, "mungepieces"), newpieces)

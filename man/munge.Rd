@@ -4,7 +4,7 @@
 \alias{munge}
 \title{Apply a list of mungepieces to data.}
 \usage{
-munge(data, mungelist, stagerunner = FALSE, list = FALSE)
+munge(data, mungelist, stagerunner = FALSE, list = FALSE, parse = TRUE)
 }
 \arguments{
 \item{data}{data.frame. Raw, uncleaned data.}
@@ -25,6 +25,11 @@ but often the special syntax is more convenient. See the examples section.}
 
 \item{list}{logical. Whether or not to return the list of mungepieces
 instead of executing them on the \code{data}. By default \code{FALSE}.}
+
+\item{parse}{logical. Whether or not to pre-parse the \code{mungelist}
+using \code{\link{parse_mungepiece}}. Note that if this is \code{TRUE},
+any trained mungepieces will be duplicated and marked as untrained.
+By default, \code{TRUE}.}
 }
 \value{
 A cleaned \code{data.frame}, the result of applying each
