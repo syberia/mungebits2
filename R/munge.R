@@ -156,6 +156,8 @@
 #'    One can also provide a list with a \code{remember} parameter,
 #'    which will be used to construct a stagerunner with the same value
 #'    for its \code{remember} parameter.
+#' @param list logical. Whether or not to return the list of mungepieces
+#'    instead of executing them on the \code{data}. By default \code{FALSE}.
 #' @return A cleaned \code{data.frame}, the result of applying each
 #'    \code{\link{mungepiece}} constructed from the \code{mungelist}.
 #' @seealso \code{\link{mungebit}}, \code{\link{mungepiece}},
@@ -238,7 +240,7 @@
 #' }
 #' # The munge function uses the attached "mungepieces" attribute, a list of
 #' # trained mungepieces.
-munge <- function(data, mungelist, stagerunner = FALSE) {
+munge <- function(data, mungelist, stagerunner = FALSE, list = FALSE) {
   stopifnot(is.data.frame(data))
 
   if (length(mungelist) == 0L) {
@@ -258,15 +260,20 @@ munge <- function(data, mungelist, stagerunner = FALSE) {
     # An optional interaction effect with the tundra package.
     Recall(data, mungelist$munge_procedure, stagerunner)
   } else {
-    munge_(data, mungelist, stagerunner)
+    munge_(data, mungelist, stagerunner, list)
   }
 }
 
 # Assume proper arguments.
-munge_ <- function(data, mungelist, stagerunner) {
+munge_ <- function(data, mungelist, stagerunner, list_output) {
   runners <- vapply(mungelist, is, logical(1), "stageRunner")
   # TODO: (RK) Intercept errors and inject with name for helpfulness!
   mungelist[!runners] <- lapply(mungelist[!runners], parse_mungepiece)
+
+  if (isTRUE(list_output)) {
+    return(mungelist)
+  }
+
   stages <- mungepiece_stages(mungelist)
 
   if (is.environment(data)) {

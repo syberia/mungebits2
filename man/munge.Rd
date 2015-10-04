@@ -4,7 +4,7 @@
 \alias{munge}
 \title{Apply a list of mungepieces to data.}
 \usage{
-munge(data, mungelist, stagerunner = FALSE)
+munge(data, mungelist, stagerunner = FALSE, list = FALSE)
 }
 \arguments{
 \item{data}{data.frame. Raw, uncleaned data.}
@@ -22,6 +22,9 @@ but often the special syntax is more convenient. See the examples section.}
    One can also provide a list with a \code{remember} parameter,
    which will be used to construct a stagerunner with the same value
    for its \code{remember} parameter.}
+
+\item{list}{logical. Whether or not to return the list of mungepieces
+instead of executing them on the \code{data}. By default \code{FALSE}.}
 }
 \value{
 A cleaned \code{data.frame}, the result of applying each

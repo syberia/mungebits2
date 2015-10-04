@@ -30,6 +30,15 @@ test_that("it correctly munges a simple mungepiece sequence", {
   expect_equal(iris2[[1]], iris[[1]] * 6)
 })
 
+describe("it can procure the mungepieces list", {
+ test_that("it can return the mungelist", {
+    args <- lapply(seq_len(2) + 1,
+      function(x) list(function(x, v) { x[[1]] <- v * x[[1]]; x }, x))
+    list <- munge(iris, args, list = TRUE)
+    expect_equal(munge(iris, args), munge(iris, list))
+  })
+})
+
 describe("using mungepieces with inputs", {
 
   simple_imputer <- function(...) {
@@ -50,7 +59,7 @@ describe("using mungepieces with inputs", {
   }
 
   test_that("it munges a sequence of mungepieces with inputs", {
-    imputer <- simple_imputer("Sepal.Length")
+    imputer    <- simple_imputer("Sepal.Length")
     iris[1, 1] <- NA
     
     iris2 <- munge(iris, list("Impute first column" = imputer, 
@@ -59,11 +68,26 @@ describe("using mungepieces with inputs", {
   })
 
   test_that("it munges in predict mode a sequence of mungepieces with inputs", {
-    imputer <- simple_imputer("Sepal.Length")
+    imputer    <- simple_imputer("Sepal.Length")
     iris[1, 1] <- NA
     
     iris2 <- munge(iris, list("Impute first column" = imputer, 
                               "Drop species"        = list(drop_variables, "Species")))
+    iris3 <- munge(iris, iris2)
+    expect_equal(iris3, iris2)
+  })
+
+  test_that("it munges in conjunction with separate train and predict args", {
+    imputer    <- simple_imputer("Sepal.Length")
+    iris[1, 1] <- NA
+    irisprime  <- transform(iris, dependent_variable = c(0L, 1L))
+    
+    iris2 <- munge(irisprime, list(
+      "Select training var" = list(train = list(`[`, colnames(irisprime)), predict = list(`[`, colnames(iris))),
+      "Impute first column" = imputer, 
+      "Drop species"        = list(drop_variables, "Species")
+    ))
+
     iris3 <- munge(iris, iris2)
     expect_equal(iris3, iris2)
   })
