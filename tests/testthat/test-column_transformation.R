@@ -87,7 +87,18 @@ describe("Passing arguments", {
     scaler <- mungebit$new(column_transformation(function(x, v) { v * x }))
     iris2  <- scaler$run(iris[1:4], , 2)
     expect_equal(iris2[1:4], 2 * iris[1:4],
-                 info = "column_transformation must double first column of iris2")
+                 info = "column_transformation must double first column of iris")
+  })
+
+  describe("The name argument for named column transformations", {
+
+    test_that("the name argument is respected", {
+      paster <- mungebit$new(column_transformation(function(x, name) { paste0(x, "_", name) }))
+      iris2  <- paster$run(iris[5])
+      expect_equal(iris2, transform(iris[5], Species = paste0(Species, "_Species")),
+                   info = "column_transformation must double first column of iris")
+    })
+
   })
 
 })
