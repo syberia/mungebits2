@@ -132,29 +132,46 @@ mungepiece_run <- function(data, ..., `_envir` = parent.frame()) {
   parent.env(calling_environment) <- `_envir`
   on.exit(parent.env(calling_environment) <- emptyenv(), add = TRUE)
 
-  args <- c(list(data = substitute(data)), args)
+  args <- c(list(substitute(data)), args)
 
   do.call(self$.mungebit$run, args, envir = calling_environment)
 }
 
 strip_arguments <- function(fun, n) {
-  formals(fun) <- formals(fun)[setdiff(seq_along(formals(fun)), seq_len(n))]
-  fun
+  if (length(formals(fun)) > 0L) {
+    formals(fun) <- formals(fun)[setdiff(seq_along(formals(fun)), seq_len(n))]
+    fun
+  } else {
+    fun
+  }
 }
 
 two_way_argument_merge <- function(reference_function, calling_environment, args) {
-  call      <- as.call(c(alist(self), args))
-  base_args <- as.list(match.call(reference_function, call)[-1L])
+  if (length(formals(reference_function)) == 0L) {
+    # If reference_function is `[`, calling match.call gives an
+    # "invalid definition" error.
+    reference_function <- function() { }
+    if (length(args) > 0L) {
+      args
+    } else {
+      default_args <- env2listcall(calling_environment)
+      names(default_args) <- attr(calling_environment, "initial_names")
+      default_args
+    }
+  } else {
+    call <- as.call(c(alist(self), args))
+    base_args <- as.list(match.call(reference_function, call)[-1L])
 
-  default_args <- env2listcall(calling_environment)
-  names(default_args) <- attr(calling_environment, "initial_names")
-  call         <- as.call(c(alist(self), default_args))
-  default_args <- as.list(match.call(reference_function, call)[-1L])
+    default_args <- env2listcall(calling_environment)
+    names(default_args) <- attr(calling_environment, "initial_names")
+    call         <- as.call(c(alist(self), default_args))
+    default_args <- as.list(match.call(reference_function, call)[-1L])
 
-  if (unnamed_count(default_args) > 0 && unnamed_count(base_args) > 0) {
-    default_args[unnamed(default_args)] <- NULL
+    if (unnamed_count(default_args) > 0 && unnamed_count(base_args) > 0) {
+      default_args[unnamed(default_args)] <- NULL
+    }
+
+    list_merge(default_args, base_args)
   }
-
-  list_merge(default_args, base_args)
 }
 

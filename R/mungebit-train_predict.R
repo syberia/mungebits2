@@ -92,7 +92,7 @@ inject_metadata <- function(func, input, trained) {
       ## We also inject a helper called `trained` used for discriminating
       ## whether the function has been trained already.
       trained = isTRUE(trained)
-    ), parent = environment(func))
+    ), parent = environment(func) %||% baseenv())
 
     ## Touching a function's environment like in the expression above
     ## *clears its internal debug flag*. We restore the flag to indicate
