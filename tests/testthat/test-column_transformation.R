@@ -39,12 +39,23 @@ describe("Simplest examples", {
   })
 
   test_that("correctly transforms a column into rounded factors", {
-    round_and_factor <- column_transformation(function(x) factor(round(x)))
+    round_and_factor <- column_transformation(function(x) { factor(round(x)) })
     iris2 <- mungebit$new(round_and_factor)$run(iris, "Sepal.Length")
     
     expect_equal(iris2, transform(iris, Sepal.Length = factor(round(Sepal.Length))),
                  info = paste("column_transformation must convert to factor",
                               "after rounding first column of iris"))
   })
+
+  test_that("correctly transforms using numeric column indices", {
+    doubler <- column_transformation(function(x) { 2 * x })
+    iris2 <- mungebit$new(doubler)$run(iris, 2)
+    
+    expect_equal(iris2, transform(iris, Sepal.Width = 2 * Sepal.Width),
+                 info = paste("column_transformation must be able to reference",
+                              "columns using numeric indices",
+                              "(e.g., doubler(iris2,2)"))
+  })
+
 })
 
