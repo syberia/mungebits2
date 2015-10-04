@@ -10,9 +10,9 @@
 \usage{
 mungebit_run(data, ...)
 
-mungebit_train(data, ...)
+mungebit_train(data, ..., `_envir` = parent.frame())
 
-mungebit_predict(data, ...)
+mungebit_predict(data, ..., `_envir` = parent.frame())
 
 mungebit
 }

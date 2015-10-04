@@ -66,7 +66,7 @@
 #' @examples
 #' doubler <- column_transformation(function(x) { 2 * x })
 #' # doubles the Sepal.Length column in the iris dataset
-#' iris2 <- doubler(iris, c("Sepal.Length")) 
+#' iris2 <- mungebit$new(doubler)$run(iris, c("Sepal.Length")) 
 column_transformation <- function(transformation) {
   ## We will construct a function *from scratch*. Since R is almost
   ## [LISP](https://en.wikipedia.org/wiki/Lisp_(programming_language\))

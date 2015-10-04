@@ -26,10 +26,15 @@ to specify what happens to an individual column, and the mungebit will be
 the resulting column transformation applied to an arbitrary combination of
 columns.
 }
+\note{
+The function produced by calling \code{column_transformation} will
+   not run independently. It must be used a train or predict function for
+   a \code{\link{mungebit}}.
+}
 \examples{
 doubler <- column_transformation(function(x) { 2 * x })
 # doubles the Sepal.Length column in the iris dataset
-iris2 <- doubler(iris, c("Sepal.Length"))
+iris2 <- mungebit$new(doubler)$run(iris, c("Sepal.Length"))
 }
 \seealso{
 \code{\link{multi_column_transformation}}, \code{\link{standard_column_format}}
