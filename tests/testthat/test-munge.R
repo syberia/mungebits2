@@ -60,7 +60,6 @@ describe("using mungepieces with inputs", {
 
   simple_discretize <- function(data, variable, cutoff) {
     input$cutoff <- cutoff
-    browser()
     data[[variable]] <- factor(ifelse(data[[variable]] > cutoff, "Right", "Left"),
                                levels = c("Left", "Right"))
     data
@@ -113,7 +112,6 @@ describe("using mungepieces with inputs", {
     iris[1, 1] <- NA
     irisprime  <- transform(iris, dependent_variable = c(0L, 1L))
     
-    debug(munge)
     iris2 <- munge(irisprime, list(
       "Select training var" = list(train = list(`[`, colnames(irisprime)),
                                    predict = list(`[`, colnames(iris))),

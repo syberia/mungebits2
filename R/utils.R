@@ -47,8 +47,13 @@ env2list <- function(env) {
   if (length(ls(env)) == 0L) {
     list()
   } else {
-    lst <- as.list(env)[attr(env, "name_order")]
-    names(lst) <- attr(env, "initial_names")
+    lst <- as.list(env)
+    lst <- lst[match(names(lst), attr(env, "parsed_names"))]
+    if (any(nzchar(attr(env, "initial_names")))) {
+      names(lst) <- attr(env, "initial_names")
+    } else {
+      names(lst) <- NULL
+    }
     lst
   }
 }
@@ -69,6 +74,7 @@ make_env <- function(lst, parent = emptyenv()) {
   name_order <- match(names(lst), ls(env))
   attr(env, "name_order")    <- name_order
   attr(env, "initial_names") <- initial_names
+  attr(env, "parsed_names")  <- names(lst)
   env
 }
 
