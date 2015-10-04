@@ -235,7 +235,7 @@
 #' # The munge function uses the attached "mungepieces" attribute, a list of
 #' # trained mungepieces.
 parse_mungepiece <- function(args) {
-  stopifnot(is.list(args), length(args) > 0L)
+  if (is.mungepiece(args) || is.mungebit(args)) { args <- list(args) }
 
   if (length(args) == 1L && is.mungepiece(args[[1L]])) {
     ## We duplicate the mungepiece to avoid training it.
@@ -246,12 +246,16 @@ parse_mungepiece <- function(args) {
     mungepiece$new(duplicate_mungebit(args[[1L]]))
     ## The third permissible format requires no unnamed arguments, since it
     ## must be a list consisting of a "train" and "predict" key.
-  } else if (unnamed_count(args) == 0L) {
-    ## For this case, we delegate the work to `parse_mungepiece_dual`.
-    parse_mungepiece_dual(args)
+  } else if (is.list(args) && length(args) > 0L) {
+      if (unnamed_count(args) == 0L) {
+      ## For this case, we delegate the work to `parse_mungepiece_dual`.
+      parse_mungepiece_dual(args)
+    } else {
+      ## Otherwise, the training and prediction arguments are the same.
+      parse_mungepiece_single(args)
+    }
   } else {
-    ## Otherwise, the training and prediction arguments are the same.
-    parse_mungepiece_single(args)
+    stop("Invalid format passed to ", sQuote("parse_mungepiece"))
   }
 }
 
