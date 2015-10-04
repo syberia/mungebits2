@@ -29,6 +29,7 @@ Collate:
     'column_transformation.R'
     'debug.R'
     'messages.R'
+    'multi_column_transformation.R'
     'munge.R'
     'mungebit-initialize.R'
     'mungebit-run.R'

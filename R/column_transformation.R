@@ -1,4 +1,80 @@
-#' Column transform.
-#' @param ... Random.
+## In general, transformations of a single data.frame into another
+## data.frame fall in three categories:
+##
+##   1. **Column transformations**. A one-variable function applied to
+##      an atomic vector (a column) that yields a new vector of the same length.
+##   2. **Row transformations**. A column transformation with a matrix
+##      transposition composed to the left and right of it (i.e., operating
+##      on rows instead of columns).
+##   3. **Whole dataframe transformations**. Any transformation that
+##      cannot be expressed as a column or row transformation: for example,
+##      a transposition or multiple imputation.
+##
+## The `column_transformation` function is a helper that takes a 
+## a function with at least one argument--the atomic vector (column)
+## being operated on, with additional arguments acting as further
+## parametrization--and turns that function into a function suitable
+## for use with a mungebit that will operate on an entire data.frame.
+## For example,
+##
+## ```r
+## stripper <- column_transformation(function(x) {
+##   gsub("[[:space:]]", "", x)
+## })
+## new_dataset <- stripper(dataset, c("column1", "column2"))
+## ```
+##
+## The function produced, `stripper`, accepts a data.frame as its
+## first argument and as its second argument a vector of column names
+## (or several other formats; ## see the `standard_column_format` helper).
+##
+## The argument `name` is reserved, and if you create a column transformation
+## from a function that includes this argument, its value will be set
+## to the name of the column:
+##
+## ```r
+## adjoin_name <- column_transformation(function(x, name) {
+##   paste0(x, "_", name)
+## })
+## new_dataset <- adjoin_name(dataset, c("column1", "column2"))
+## # If column1 and column2 are character vectors, they will now
+## # have all their values prefixed with `column1_` and `column2_`,
+## # respectively.
+## ```
+#' Pure column transformations.
+#'
+#' A mungebit which affects multiple columns identically and independently
+#' can be abstracted into a column transformation. This function allows one
+#' to specify what happens to an individual column, and the mungebit will be
+#' the resulting column transformation applied to an arbitrary combination of
+#' columns.
+#'
+#' @param transformation function. The function's first argument will
+#'    receive an atomic vector derived from some \code{data.frame}. If the
+#'    \code{transformation} has a \code{name} argument, it will receive
+#'    the column name. Any other arguments will be received as the
+#'    \code{list(...)} from calling the function produced by 
+#'    \code{column_transformation}.
+#' @return a function which takes a data.frame and a vector of column
+#'    names (or several other formats, see \code{\link{standard_column_format}})
+#'    and applies the \code{transformation}.
+#' @seealso \code{\link{multi_column_transformation}}, \code{\link{standard_column_format}}
 #' @export
-column_transformation <- function(...) identity(...)
+#' @examples
+#' doubler <- column_transformation(function(x) { 2 * x })
+#' # doubles the Sepal.Length column in the iris dataset
+#' iris2 <- doubler(iris, c("Sepal.Length")) 
+column_transformation <- function(transformation) {
+  ## We will construct a function *from scratch*. Since R is almost
+  ## [LISP](https://en.wikipedia.org/wiki/Lisp_(programming_language))
+  ## under the hood, it is possible to construct a function piece-by-piece.
+  ##
+  full_transformation <- function(data, columns = colnames(data)) { }
+  environment(full_transformation) <- list2env(
+    list(transformation = transformation),
+    parent = globalenv()
+  )
+  body(full_transformation) <- column_transformation_body
+  full_transformation
+}
+
