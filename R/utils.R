@@ -78,6 +78,14 @@ make_env <- function(lst, parent = emptyenv()) {
   env
 }
 
+list2env_safe <- function(lst, ...) {
+  if (length(lst) > 0L) {
+    list2env(lst)
+  } else {
+    new.env(...) 
+  }
+}
+
 unnamed <- function(el) {
   "" == (names(el) %||% character(length(el)))
 }

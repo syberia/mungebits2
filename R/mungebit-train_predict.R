@@ -22,7 +22,7 @@
 #'   or \code{data.frame}. Side effects on the \code{input} local variable
 #'   provided to the \code{train_function} will be recorded on the mungebit
 #'   object.
-mungebit_train <- function(data, ...) {
+mungebit_train <- function(data, ..., `_envir` = parent.frame()) {
   if (self$.enforce_train) {
     if (isTRUE(self$.trained)) {
       stop("This mungebit has already been trained, cannot re-train.")
@@ -41,7 +41,8 @@ mungebit_train <- function(data, ...) {
   ## can remember necessary metadata for replicating the
   ## munging operation at prediction time.
   fn <- inject_metadata(self$.train_function, self$.input, self$.trained)
-  fn(data, ...)
+  args <- c(list(substitute(data)), eval(substitute(alist(...))))
+  do.call(fn, args, envir = `_envir`)
 }
 
 #' Run the predict function on a mungebit.
@@ -66,7 +67,7 @@ mungebit_train <- function(data, ...) {
 #'   or \code{data.frame}. Side effects on the \code{input} local variable
 #'   provided to the \code{predict_function} will be recorded on the mungebit
 #'   object.
-mungebit_predict <- function(data, ...) {
+mungebit_predict <- function(data, ..., `_envir` = parent.frame()) {
   if (!isTRUE(self$.trained)) {
     stop("This mungebit cannot predict because it has not been trained.")
   }
@@ -74,7 +75,8 @@ mungebit_predict <- function(data, ...) {
   ## We inject the `input` helper so that the mungebit
   ## can use the metadata that was compute during training time.
   fn <- inject_metadata(self$.predict_function, self$.input, self$.trained)
-  fn(data, ...)
+  args <- c(list(substitute(data)), eval(substitute(alist(...))))
+  do.call(fn, args, envir = `_envir`)
 }
 
 inject_metadata <- function(func, input, trained) {
