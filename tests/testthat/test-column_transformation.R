@@ -11,5 +11,14 @@ describe("Simplest examples", {
     expect_equal(iris2[TRUE], transform(iris, Sepal.Length = 2 * Sepal.Length),
                  info = "column_transformation must double first column of iris2")
   })
+
+  test_that("correctly transforms multiple columns by multiplying by two", {
+    doubler <- column_transformation(function(x) { 2 * x })
+    iris2   <- mungebit$new(doubler)$run(iris, c("Sepal.Length", "Sepal.Width"))
+    expect_equal(iris2[TRUE], transform(iris, Sepal.Length = 2 * Sepal.Length, Sepal.Width = 2 * Sepal.Width),
+                 info = paste("column_transformation must double first",
+                              "2 columns of iris2"))
+  })
+
 })
 
