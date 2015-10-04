@@ -18,7 +18,7 @@ test_that("it does nothing when no mungepieces are passed", {
 
 test_that("it correctly adds to the mungepieces list", {
   args <- lapply(seq_len(2),
-    function(.) list(column_transformation(function(x, one) x + one), 1))
+    function(.) list(column_transformation(function(x, one) x + one), 1, 1))
   iris2 <- munge(iris, args)
   expect_equal(length(attr(iris2, 'mungepieces')), 2)
 })
