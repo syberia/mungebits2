@@ -5,7 +5,7 @@ before_install:
 - "./travis-tool.sh bootstrap"
 install:
 - "./travis-tool.sh install_deps"
-- "./travis-tool.sh install_r testthat"
+- "./travis-tool.sh install_r testthat microbenchmark"
 - "./travis-tool.sh install_github robertzk/stagerunner robertzk/testthatsomemore jimhester/covr"
 script: "./travis-tool.sh run_tests"
 after_failure:

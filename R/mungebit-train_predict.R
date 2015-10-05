@@ -38,7 +38,9 @@ mungebit_train <- function(data, ..., `_envir` = parent.frame()) {
   ## affecting the `input` environment. Afterwards, we [lock it](https://stat.ethz.ch/R-manual/R-devel/library/base/html/bindenv.html)
   ## so that we are confident the user does not modify it during prediction
   ## time (i.e., when it is run in a real-time production system).
-  on.exit(lockEnvironment(self$.input, TRUE), add = TRUE)
+  if (isTRUE(self$.enforce_train)) {
+    on.exit(lockEnvironment(self$.input, TRUE), add = TRUE)
+  }
 
   ## We inject the `input` helper so that the mungebit
   ## can remember necessary metadata for replicating the

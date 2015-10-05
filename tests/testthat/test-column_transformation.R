@@ -116,3 +116,37 @@ describe("Passing arguments", {
 
 })
 
+if (requireNamespace("microbenchmark", quietly = TRUE)) {
+  describe("Benchmarks", {
+
+    # This is technically a benchmark but I have no place to put it yet
+    test_that("it doubles a column no more than 4.5x as slow as a raw operation", {
+      raw_double <- function(dataframe, cols) {
+        class(dataframe) <- "list"
+        for (col in cols) dataframe[[col]] <- 2 * dataframe[[col]]
+        class(dataframe) <- "data.frame"
+        dataframe
+      }
+      doubler <- mungebit$new(column_transformation(function(x) { 2 * x }))
+      speeds  <- summary(microbenchmark::microbenchmark(
+        doubler$run(iris, 1:4), raw_double(iris, 1:4), times = 5L))
+      column_transformation_runtime <- speeds$median[[1L]]
+      apply_raw_function_runtime    <- speeds$median[[2L]]
+    
+      # TODO: (RK) Reduce this to a factor of 5 by providing "standard evaluation"
+      # mungebits that do not bother with passing along the calling expressions.
+      expect_true(column_transformation_runtime < 20 * apply_raw_function_runtime,
+        paste0("Execution of ", crayon::blue("column_transformation"),
+         " took too long: \nFormer took ",
+         crayon::red(paste0(column_transformation_runtime, "ms")), 
+         " but latter took ",
+         crayon::red(paste0(apply_raw_function_runtime, "ms")), ".\n",
+         "You need to make sure the code for column_transformation\n",
+         "stays efficient relative to ",
+         crayon::blue("raw_double"),
+         " (see code for this unit test)"))
+    })
+
+  })
+}
+

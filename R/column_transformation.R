@@ -126,6 +126,10 @@ column_transformation_body <- quote({
   class(data) <- "list" 
 
   new_transformation <- transformation
+  named      <- is.element("name", names(formals(transformation)))
+  arguments  <- c(list(NULL), eval(substitute(alist(...))))
+  parent_env <- environment(transformation) %||% baseenv()
+
   for (column_name in input$`_columns`) {
     if (isTRUE(trained)) {
       mock_input <- list2env_safe(input[[column_name]])
@@ -136,19 +140,15 @@ column_transformation_body <- quote({
 
     environment(new_transformation) <- list2env(
       list(input = mock_input, trained = trained),
-      parent = environment(transformation) %||% baseenv()
+      parent = parent_env 
     )
     if (isdebugged(transformation)) debug(new_transformation)
 
-    arguments <- eval(substitute(alist(...)))
-    if (is.element("name", names(formals(transformation)))) {
+    if (named) {
       arguments$name <- column_name
     }
-    if (is.name(data_expr)) {
-      arguments <- c(list(bquote(.(data_expr)[[.(column_name)]])), arguments)
-    } else {
-      arguments <- c(list(data[[column_name]]), arguments)
-    }
+
+    arguments[[1L]] <- data[[column_name]]
 
     data[[column_name]] <- do.call(new_transformation, arguments, envir = parent.frame())
 
@@ -162,7 +162,6 @@ column_transformation_body <- quote({
   ## the `data.frame` subsetting operator, handles it for us).
   ## This method of removal preserves attributes, an important fact
   ## to keep in mind once you understand the `munge` function.
-  data[vapply(data, is.null, TRUE)] <- NULL
   class(data) <- old_class
   data
 })

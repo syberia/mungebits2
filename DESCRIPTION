@@ -23,7 +23,8 @@ Imports:
     whisker
 Suggests:
     testthat,
-    testthatsomemore
+    testthatsomemore,
+    microbenchmark
 Roxygen: list(wrap = FALSE)
 Collate:
     'column_transformation.R'
