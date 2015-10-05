@@ -167,19 +167,41 @@ column_transformation_body <- quote({
   ## (which will use underlying C code).
   class(data) <- "list" 
 
+  ## We copy over the `transformation` passed to the function so we
+  ## can inject the `input` and `trained` locals below.
   new_transformation <- transformation
+  ## Recall that if the `transformation` has a `name` formal argument,
+  ## we will have to provide the column name dynamically.
   named      <- is.element("name", names(formals(transformation)))
+  ## This standard trick allows us to capture the unevaluated 
+  ## expressions in the `...` parameter.
   arguments  <- c(list(NULL), eval(substitute(alist(...))))
   parent_env <- environment(transformation) %||% baseenv()
+  ## If we are supporting non-standard evaluation, we precompute
+  ## the expression used.
   if (nonstandard) {
     data_expr <- substitute(data)
+    ## Unfortunately, we forcibly have to disable nonstandard evaluation
+    ## support if a call was passed in instead of an atomic symbol,
+    ## since then we could be re-computing side effectful computations!
+    if (!is.name(data_expr)) nonstandard <- FALSE
   }
 
   for (column_name in input$`_columns`) {
+    ## We have to inject the `input` local into the train or predict
+    ## function.
     if (isTRUE(trained)) {
+      ## `list2env_safe` is just [`list2env`](https://stat.ethz.ch/R-manual/R-devel/library/base/html/list2env.html)
+      ## with graceful handling of `NULL`s and empty lists.
       mock_input <- list2env_safe(input[[column_name]])
+      ## If the mungebit is already trained, we do not want the user
+      ## messing with the `input`! The mungebit is now considered immutable.
       lockEnvironment(mock_input, bindings = TRUE)
     } else {
+      ## Otherwise, we use a new environment to capture what they
+      ## assign to the `input`. Since the column transformation runs
+      ## once on each column, we have to make a "mock input" so we
+      ## capture do it separately for each column.
       mock_input <- new.env(parent = emptyenv())
     }
 
