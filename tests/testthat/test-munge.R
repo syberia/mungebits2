@@ -27,7 +27,7 @@ test_that("it handles a mutating column transformation", {
   args <- lapply(seq_len(2),
     function(.) list(list(column_transformation(function(x, one) {
       input$one <- one; x + one
-    }), column_transformation(function(x, ...) x + input$one)), 1, 1))
+    }), column_transformation(function(x, ...) { x + input$one })), 1, 1))
   iris2 <- munge(iris, args)
   iris3 <- munge(iris, iris2)
   expect_equal(iris2[TRUE], iris3[TRUE])
