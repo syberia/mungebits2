@@ -1,3 +1,7 @@
+## *Note*: For better comprehension, this function should be read
+## *after* understanding the `mungebit` and `mungepiece`
+## classes defined in this package.
+## 
 ## In general, transformations of a single data.frame into another
 ## data.frame fall in three categories:
 ##
@@ -117,9 +121,30 @@ column_transformation <- function(transformation, nonstandard = FALSE) {
 ## change, we can store it in the package namespace.
 column_transformation_body <- quote({
   # Recall that `data` and `columns` are formals.
-  data_expr <- substitute(data)
+  ## In this function, optimization matters. Column transformations will
+  ## run millions of times over various datasets, so even microsecond
+  ## shaved off is valuable. Throughout, note the code may be
+  ## slightly improved for readability but at a speed cost. When
+  ## developing new packages, one should follow the old adage to
+  ## first make it functional, then make it beautiful, then make
+  ## it fast. In this case, we prefer speed over beauty!
+
   if (!isTRUE(trained)) {
-    input$`_columns` <- standard_column_format(columns, data)
+    ## The dataset passed in may look different depending on whether
+    ## we are running the mungebit in train or predict mode. If 
+    ## `columns` are `1:4` and the dataset is shuffled, we will
+    ## be referencing the wrong columns after running the mungebit
+    ## the second time in predict mode! To avoid this problem, keeping
+    ## in mind that R data.frames have unique column names by design,
+    ## we store the *character vector of column names* in the mungebit
+    ## input so that we know exactly which columns this transformation
+    ## should apply to in predict mode.
+    ##
+    ## If you require operating totally different column names during
+    ## training versus prediction, it is by definition not the same mathematical
+    ## transformation, and thus a mungebit is likely not the appropriate
+    ## tool for your problem.
+    input$`_columns` <- intersect(colnames(data), standard_column_format(columns, data))
   }
 
   if (length(colnames(data)) != length(unique(colnames(data)))) {
@@ -137,6 +162,9 @@ column_transformation_body <- quote({
   named      <- is.element("name", names(formals(transformation)))
   arguments  <- c(list(NULL), eval(substitute(alist(...))))
   parent_env <- environment(transformation) %||% baseenv()
+  if (nonstandard) {
+    data_expr <- substitute(data)
+  }
 
   for (column_name in input$`_columns`) {
     if (isTRUE(trained)) {
