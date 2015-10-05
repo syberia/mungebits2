@@ -206,11 +206,18 @@ column_transformation_body <- quote({
       mock_input <- new.env(parent = emptyenv())
     }
 
+    ## Finally, we are ready to inject the `input` and `trained` locals
+    ## into the copy of the `transformation`.
     environment(new_transformation) <- list2env(
       list(input = mock_input, trained = trained),
       parent = parent_env 
     )
-    if (isdebugged(transformation)) debug(new_transformation)
+    ## Assigning a function's environment clears its internal debug 
+    ## flag, so if the function was previously being debugged we
+    ## retain this property.
+    if (isdebugged(transformation)) {
+      debug(new_transformation)
+    }
 
     if (named) {
       arguments$name <- column_name
