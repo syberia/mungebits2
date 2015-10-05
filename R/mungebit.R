@@ -214,8 +214,12 @@ mungebit <- R6::R6Class("mungebit",
     trained    = function(val) {
       if (missing(val)) self$.trained
       else {
-        environment(self$.train_function)$trained   <- isTRUE(val)
-        environment(self$.predict_function)$trained <- isTRUE(val)
+        if (!is.null(self$.train_function) && !is.null(environment(self$.train_function))) {
+          environment(self$.train_function)$trained <- isTRUE(val)
+        }
+        if (!is.null(self$.predict_function) && !is.null(environment(self$.predict_function))) {
+          environment(self$.predict_function)$trained <- isTRUE(val)
+        }
         self$.trained <- isTRUE(val)
       }
     },

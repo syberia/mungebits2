@@ -136,5 +136,11 @@ describe("using mungepieces with inputs", {
     expect_equal(iris3[TRUE], iris2[colnames(iris3)]) 
   })
 
+  describe("One-sided munging", {
+    test_that("it works with a predict-only mungebit", {
+      expect_equal(munge(iris, list("Drop nothing" = list(list(NULL, drop_variables), "Species"))),
+                   iris[1:4])
+    })
+  })
 })
 

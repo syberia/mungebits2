@@ -138,6 +138,7 @@ piece <- mungepiece$new(
 # and enclosing mungepieces at once.
 
 raw_data <- iris
+debug(munge)
 munged_data <- munge(raw_data, list(
   # If the train function with train args is the same as the predict function
   # with predict args, we use this syntax. The first element should be
