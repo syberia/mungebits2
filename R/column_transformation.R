@@ -147,6 +147,9 @@ column_transformation_body <- quote({
     input$`_columns` <- intersect(colnames(data), standard_column_format(columns, data))
   }
 
+  ## If the data.frame has duplicate column names, a rare but possible 
+  ## corruption, the `for` loop below that applies the transformations
+  ## will malfunction, so we should error.
   if (length(colnames(data)) != length(unique(colnames(data)))) {
     duplicate_names <- utils::head(colnames(data)[duplicated(colnames(data))], 5)
     stop("Cannot run a ", sQuote("column_transformation"), " on data ",
@@ -156,6 +159,12 @@ column_transformation_body <- quote({
 
   # An optimization trick to avoid the slow `[.data.frame` operator.
   old_class   <- class(data)
+  ## Try to run ``print(`[.data.frame`)`` from your R console. Notice how
+  ## much code is run to perform data.frame subsetting! The same is
+  ## true for ``print(`[[<-.data.frame`)``, data.frame element assignment.
+  ## Since we use this operation below, we want to skip over the typical
+  ## checks for the sake of performance and use straight-up list subsetting
+  ## (which will use underlying C code).
   class(data) <- "list" 
 
   new_transformation <- transformation
