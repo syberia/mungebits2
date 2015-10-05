@@ -4,7 +4,7 @@
 \name{mungepiece}
 \alias{mungepiece}
 \title{Mungepiece.}
-\format{\preformatted{Class 'R6ClassGenerator' <environment: 0x7fd6891561f8> 
+\format{\preformatted{Class 'R6ClassGenerator' <environment: 0x7fd689395868> 
  - attr(*, "name")= chr "mungepiece_generator"
 }}
 \usage{
