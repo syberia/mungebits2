@@ -252,15 +252,22 @@ column_transformation_body <- quote({
     data[[column_name]] <- do.call(new_transformation, arguments, envir = parent.frame())
 
     if (!isTRUE(trained)) {
+      ## And here is the trick for partitioning up the `input`, one for
+      ## each column the transformation was applied to!
+      ## 
+      ## If we are running a `column_transformation` on columns `blue` and
+      ## `yellow`, then the underlying mungebit's `input` will have
+      ## keys `blue` and `yellow` with the respective "sub-inputs" (and
+      ## a reserved key `_colnames` as observed earlier in this function).
       input[[column_name]] <- as.list(mock_input)
     }
   }
 
-  ## Because we stripped the `data` of its `data.frame` class earlier,
-  ## we will have to remove `NULL` values manually (usually `[.data.frame`,
-  ## the `data.frame` subsetting operator, handles it for us).
-  ## This method of removal preserves attributes, an important fact
-  ## to keep in mind once you understand the `munge` function.
+  ## Finally, we reset the class to `data.frame` after stripping it
+  ## for a speed optimization. If you study the code of ``(`[.data.frame`)``,
+  ## you will see this is exactly the same trick the R base library uses
+  ## to delegate to the list subsetting after the data.frame-specific
+  ## checks have been completed.
   class(data) <- old_class
   data
 })
