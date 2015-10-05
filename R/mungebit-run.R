@@ -38,15 +38,21 @@ mungebit_run <- function(data, ...) {
            "provide one that contains a ", sQuote("data"), " key.")
     }
 
-    args <- c(list(bquote(.(substitute(data))$data)), eval(substitute(alist(...))))
-    data$data <- do.call(self$run, args, envir = parent.frame())
+    #args <- c(list(bquote(.(substitute(data))$data)), eval(substitute(alist(...))))
+    #data$data <- do.call(self$run, args, envir = parent.frame())
+    data$data <- Recall(data$data, ...)
+    data
   } else if (isTRUE(self$.trained)) {
-    args <- c(list(substitute(data)), eval(substitute(alist(...))))
-    data <- do.call(self$predict, args, envir = parent.frame())
+    #args <- c(list(substitute(data)), eval(substitute(alist(...))))
+    self$predict(data, ...)
+    #data <- .Internal(do.call(self$predict, args, parent.frame()))
+    #data <- do.call(self$predict, args, envir = parent.frame())
   } else {
-    args <- c(list(substitute(data)), eval(substitute(alist(...))))
-    data <- do.call(self$train, args, envir = parent.frame())
+    #args <- c(list(substitute(data)), eval(substitute(alist(...))))
+    #data <- do.call(self$train, args, envir = parent.frame())
+    #data <- .Internal(do.call(self$train, args, parent.frame()))
+    self$train(data, ...)
   }
-  data
+  #data
 }
 
