@@ -157,7 +157,7 @@ column_transformation_body <- quote({
     ## training versus prediction, it is by definition not the same mathematical
     ## transformation, and thus a mungebit is likely not the appropriate
     ## tool for your problem.
-    input$`_columns` <- intersect(colnames(data), standard_column_format(columns, data))
+    input$columns <- intersect(colnames(data), standard_column_format(columns, data))
   }
 
   ## If the data.frame has duplicate column names, a rare but possible 
@@ -200,17 +200,17 @@ column_transformation_body <- quote({
   empty_lock <- new.env(parent = emptyenv())
   lockEnvironment(empty_lock)
 
-  indices <- match(input$`_columns`, names(data))
+  indices <- match(input$columns, names(data))
 
   eval_frame <- parent.frame()
 
   if (!isTRUE(trained)) {
     input$sub_inputs <- structure(replicate(
-      length(input$`_columns`), new.env(parent = emptyenv()), simplify = FALSE
-    ), .Names = input$`_columns`)
+      length(input$columns), new.env(parent = emptyenv()), simplify = FALSE
+    ), .Names = input$columns)
   }
 
-  #for (column_name in input$`_columns`) {
+  #for (column_name in input$columns) {
   #for (i in indices) {
   data[indices] <- lapply(seq_along(indices), function(j) {
     i <- indices[j]
