@@ -280,7 +280,8 @@ column_transformation_body <- quote({
       ## If NSE should not be carried over we do not bother with the
       ## magic and simply send the function the value.
       arguments[[1L]] <- .subset2(data, i) #data[[column_name]]
-      .Internal(do.call(new_transformation, arguments, environment()))
+      # Jump to the environment that contains _2, _1 etc
+      .Internal(do.call(new_transformation, arguments, parent.frame(3)))
     }
 
     ## Finally, we require the `envir` argument to `do.call` to ensure
