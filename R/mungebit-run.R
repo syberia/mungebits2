@@ -44,7 +44,9 @@ mungebit_run <- function(data, ...) {
     data
   } else if (isTRUE(self$.trained)) {
     #args <- c(list(substitute(data)), eval(substitute(alist(...))))
-    if (!is.null(self$.predict_function)) {
+    if (is.null(self$.predict_function)) {
+      data
+    } else {
       self$predict(data, ...)
     }
     #data <- .Internal(do.call(self$predict, args, parent.frame()))

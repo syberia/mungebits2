@@ -138,8 +138,16 @@ describe("using mungepieces with inputs", {
 
   describe("One-sided munging", {
     test_that("it works with a predict-only mungebit", {
-      expect_equal(munge(iris, list("Drop nothing" = list(list(NULL, drop_variables), "Species"))),
-                   iris[1:4])
+      iris2 <- munge(iris, list("Drop nothing" = list(list(NULL, drop_variables), "Species")))
+      expect_equal(iris2[TRUE], iris)
+      expect_equal(munge(iris, iris2)[TRUE], iris[1:4])
+    })
+
+    test_that("it works with a train-only mungebit", {
+      iris2 <- munge(iris, list("Drop nothing" = list(list(drop_variables, NULL), "Species")))
+      expect_equal(iris2[TRUE], iris[1:4])
+      iris3 <- munge(iris, iris2)
+      expect_equal(iris3[TRUE], iris)
     })
   })
 })
