@@ -21,8 +21,8 @@
 #' standard_column_format(list(is.numeric, c(1,5)), iris)  # 'Sepal.Length'
 #' # TODO: (RK) Explain except()
 standard_column_format <- function(cols, dataframe) {
-  missingcols <- missing(cols)
-  if (missingcols) colnames(dataframe)
+  ## If no columns are provided, we assume we are running on the entire data set.
+  if (missing(cols)) colnames(dataframe) 
   else {
     process1 <- function(subcols) {
       if (is(subcols, "except")) {
