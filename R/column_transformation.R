@@ -195,6 +195,7 @@ column_transformation_body <- quote({
     parent = parent_env
   )
   env <- environment(new_transformation)
+  env$trained <- trained
   
   empty_lock <- new.env(parent = emptyenv())
   lockEnvironment(empty_lock)
@@ -203,18 +204,25 @@ column_transformation_body <- quote({
 
   eval_frame <- parent.frame()
 
+  if (!isTRUE(trained)) {
+    input$sub_inputs <- structure(replicate(
+      length(input$`_columns`), new.env(parent = emptyenv()), simplify = FALSE
+    ), .Names = input$`_columns`)
+  }
+
   #for (column_name in input$`_columns`) {
   #for (i in indices) {
-  data[indices] <- lapply(indices, function(i) {
+  data[indices] <- lapply(seq_along(indices), function(j) {
+    i <- indices[j]
     column_name <- .subset2(names(data), i)
     ## We have to inject the `input` local into the train or predict
     ## function.
-    if (isTRUE(trained)) {
-      if (length(input[[column_name]]) == 0L) {
-        mock_input <- empty_lock
-      } else {
-        mock_input <- list2env_safe(input[[column_name]])
-      }
+    #if (isTRUE(trained)) {
+    #  if (length(input[[column_name]]) == 0L) {
+    #    mock_input <- empty_lock
+    #  } else {
+    #    mock_input <- list2env_safe(input[[column_name]])
+    #  }
 
       ## `list2env_safe` is just [`list2env`](https://stat.ethz.ch/R-manual/R-devel/library/base/html/list2env.html)
       ## with graceful handling of `NULL`s and empty lists.
@@ -222,13 +230,13 @@ column_transformation_body <- quote({
       ## If the mungebit is already trained, we do not want the user
       ## messing with the `input`! The mungebit is now considered immutable.
       #lockEnvironment(mock_input, bindings = TRUE)
-    } else {
+    #} else {
       ## Otherwise, we use a new environment to capture what they
       ## assign to the `input`. Since the column transformation runs
       ## once on each column, we have to make a "mock input" so we
       ## capture do it separately for each column.
-      mock_input <- new.env(parent = emptyenv())
-    }
+    #  mock_input <- new.env(parent = emptyenv())
+    #}
 
     ## Finally, we are ready to inject the `input` and `trained` locals
     ## into the copy of the `transformation`.
@@ -236,15 +244,14 @@ column_transformation_body <- quote({
     #  list(input = mock_input, trained = trained),
     #  parent = parent_env 
     #)
-    env$input   <- mock_input
-    env$trained <- trained
+    env$input   <- .subset2(input$sub_inputs, j)
 
     ## Assigning a function's environment clears its internal debug 
     ## flag, so if the function was previously being debugged we
     ## retain this property.
-    #if (isdebugged(transformation)) {
-    #  debug(new_transformation)
-    #}
+    if (isdebugged(transformation)) {
+      debug(new_transformation)
+    }
 
     ## Recall that if the `transformation` has a formal argument called
     ## "name", we must pass along the column name.
@@ -268,17 +275,20 @@ column_transformation_body <- quote({
       ## during the second call (in other words, it is equivalent to
       ## `y <- quote(some_data[["first"]])` in the first call, etc.).
       arguments[[1L]] <- bquote(.(data_expr)[[.(column_name)]])
+      .Internal(do.call(new_transformation, arguments, eval_frame))
     } else {
       ## If NSE should not be carried over we do not bother with the
       ## magic and simply send the function the value.
       arguments[[1L]] <- .subset2(data, i) #data[[column_name]]
+      .Internal(do.call(new_transformation, arguments, environment()))
     }
 
     ## Finally, we require the `envir` argument to `do.call` to ensure
     ## the NSE carry-over works correctly.
-    out <- do.call(new_transformation, arguments, envir = eval_frame)
+    #do.call(new_transformation, arguments, envir = eval_frame)
+    #new_transformation(arguments[[1L]])
 
-    if (!isTRUE(trained)) {
+    #if (!isTRUE(trained)) {
       ## And here is the trick for partitioning up the `input`, one for
       ## each column the transformation was applied to!
       ## 
@@ -288,12 +298,16 @@ column_transformation_body <- quote({
       ## a reserved key `_colnames` as observed earlier in this function).
 
       # THIS IS SLOOOOOOW
-      input[[column_name]] <- as.list(mock_input)
-    }
+      #input[[column_name]] <- as.list(mock_input)
+    #}
 
-    out
+    #out
   #}
   })
+
+  if (!isTRUE(trained)) {
+    lapply(input$sub_inputs, lockEnvironment, bindings = TRUE)
+  }
 
   ## Finally, we reset the class to `data.frame` after stripping it
   ## for a speed optimization. If you study the code of ``(`[.data.frame`)``,
