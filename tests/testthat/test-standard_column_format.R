@@ -65,3 +65,8 @@ test_that("it can use except with two columns", {
   expect_equal(cols, colnames(iris)[-c(1,2)])
 })
 
+test_that("it can accept named columns", {
+  cols <- standard_column_format(function(., name) grepl("^Sep", name), iris)
+  expect_equal(cols, grep("^Sep", colnames(iris), value = TRUE))
+})
+

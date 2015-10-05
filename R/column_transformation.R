@@ -45,6 +45,9 @@
 ## # have all their values prefixed with `column1_` and `column2_`,
 ## # respectively.
 ## ```
+##
+## TODO: (RK) List many more examples here and explain column transformation
+## standard column format usage.
 #' Pure column transformations.
 #'
 #' A mungebit which affects multiple columns identically and independently

@@ -31,11 +31,17 @@ standard_column_format <- function(cols, dataframe) {
         setdiff(colnames(dataframe), process(unexcepted))
       } else if (is.function(subcols)) {
         # Much faster than lapply here.
-        colnames(dataframe)[(function() {
+        colnames(dataframe)[local({
           ix <- logical(length(dataframe))
-          for (i in seq_along(dataframe)) ix[i] <- subcols(.subset2(dataframe, i))
+          if (is.element("name", names(formals(subcols)))) {
+            for (i in seq_along(dataframe)) {
+              ix[i] <- subcols(.subset2(dataframe, i), name = .subset2(colnames(dataframe), i))
+            }
+          } else {
+            for (i in seq_along(dataframe)) ix[i] <- subcols(.subset2(dataframe, i))
+          }
           ix
-        })()]
+        })]
       }
       else if (is.character(subcols)) force(subcols) 
       else if (is.list(subcols)) process(subcols)
