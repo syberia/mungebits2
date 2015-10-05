@@ -197,12 +197,10 @@ column_transformation_body <- quote({
   env <- environment(new_transformation)
   env$trained <- trained
   
-  empty_lock <- new.env(parent = emptyenv())
-  lockEnvironment(empty_lock)
-
   indices <- match(input$columns, names(data))
-
-  eval_frame <- parent.frame()
+  if (nonstandard) {
+    eval_frame <- parent.frame()
+  }
 
   if (!isTRUE(trained)) {
     input$sub_inputs <- structure(replicate(
@@ -213,8 +211,6 @@ column_transformation_body <- quote({
   #for (column_name in input$columns) {
   #for (i in indices) {
   data[indices] <- lapply(seq_along(indices), function(j) {
-    i <- indices[j]
-    column_name <- .subset2(names(data), i)
     ## We have to inject the `input` local into the train or predict
     ## function.
     #if (isTRUE(trained)) {
@@ -244,7 +240,7 @@ column_transformation_body <- quote({
     #  list(input = mock_input, trained = trained),
     #  parent = parent_env 
     #)
-    env$input   <- .subset2(input$sub_inputs, j)
+    env$input <- .subset2(.subset2(input, "sub_inputs"), j)
 
     ## Assigning a function's environment clears its internal debug 
     ## flag, so if the function was previously being debugged we
@@ -256,7 +252,7 @@ column_transformation_body <- quote({
     ## Recall that if the `transformation` has a formal argument called
     ## "name", we must pass along the column name.
     if (named) {
-      arguments$name <- column_name
+      arguments$name <- .subset2(names(data), .subset2(indices, j))
     }
 
     if (nonstandard) {
@@ -274,12 +270,14 @@ column_transformation_body <- quote({
       ## `some_data[["first"]]` during the first call and `some_data[["second"]]`
       ## during the second call (in other words, it is equivalent to
       ## `y <- quote(some_data[["first"]])` in the first call, etc.).
-      arguments[[1L]] <- bquote(.(data_expr)[[.(column_name)]])
+      arguments[[1L]] <- bquote(.(data_expr)[[.(
+        if (named) arguments$name else .subset2(names(data), .subset2(indices, j))
+      )]])
       .Internal(do.call(new_transformation, arguments, eval_frame))
     } else {
       ## If NSE should not be carried over we do not bother with the
       ## magic and simply send the function the value.
-      arguments[[1L]] <- .subset2(data, i) #data[[column_name]]
+      arguments[[1L]] <- .subset2(data, .subset2(indices, j)) #data[[column_name]]
       # Jump to the environment that contains _2, _1 etc
       .Internal(do.call(new_transformation, arguments, parent.frame(3)))
     }
