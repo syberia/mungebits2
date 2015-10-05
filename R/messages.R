@@ -7,7 +7,7 @@ messages <- list(
     "it must consist solely of ", sQuote("train"), " and ",
     sQuote("predict"), " elements giving a list with the ",
     "respective train or predict function and any additional ",
-    ## Note the use of `{{{error}}}` in conjuction with
+    ## Note the use of `{{{error}}}` in conjunction with
     ## [whisker](https://github.com/edwindj/whisker) below.
     "train or predict arguments. ", crayon::red("{{{error}}}."),
     " For example,\n\n",
