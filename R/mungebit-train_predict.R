@@ -78,9 +78,9 @@ mungebit_train <- function(data, ..., `_envir` = parent.frame()) {
 #'   object.
 mungebit_predict <- function(data, ..., `_envir` = parent.frame()) {
   # For some reason, accessing this takes some time..
-  #if (!isTRUE(self$.trained)) {
-  #  stop("This mungebit cannot predict because it has not been trained.")
-  #}
+  if (!isTRUE(self$.trained)) {
+    stop("This mungebit cannot predict because it has not been trained.")
+  }
 
   ## We inject the `input` helper so that the mungebit
   ## can use the metadata that was computed during training time.
