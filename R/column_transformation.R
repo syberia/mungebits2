@@ -95,6 +95,11 @@ column_transformation <- function(transformation, nonstandard = FALSE) {
   ## For a `column_transformation`, its derived transformation will be
   ## a new function that takes a `data` argument and a vector of `columns`,
   ## and executes the `transformation` on each column.
+  ##
+  ## Note we have to inject a few helpers like `%||%` and `list2env_safe`,
+  ## which are defined in the mungebits2 package internals, since these
+  ## may not be available when a mungebit is serialized and exported out of
+  ## the active R session (if mungebits2 is not attached to the search path).
   full_transformation <- function(data, columns = colnames(data), ...) { }
   environment(full_transformation) <- list2env(
     list(transformation = transformation, nonstandard = isTRUE(nonstandard),
