@@ -21,35 +21,38 @@
 #' standard_column_format(list(is.numeric, c(1,5)), iris)  # 'Sepal.Length'
 #' # TODO: (RK) Explain except()
 standard_column_format <- function(cols, dataframe) {
-  if (missing(dataframe)) stop('No dataframe provided')
   missingcols <- missing(cols)
   if (missingcols) colnames(dataframe)
   else {
-    eval.parent(substitute({
-
-      process <- function(xcols) {
-        Reduce(intersect, lapply(xcols, function(subcols) {
-          if (is(subcols, 'except')) {
-            unexcepted <- unexcept(subcols)
-            if (!is.list(unexcepted)) unexcepted <- list(unexcepted)
-            setdiff(colnames(dataframe), process(unexcepted))
-          } else if (is.function(subcols)) {
-            # Much faster than lapply here.
-            colnames(dataframe)[(function() {
-              ix <- logical(length(dataframe))
-              for (i in seq_along(dataframe)) ix[i] <- subcols(.subset2(dataframe, i))
-              ix
-            })()]
-          }
-          else if (is.character(subcols)) force(subcols) 
-          else if (is.list(subcols)) process(subcols)
-          else colnames(dataframe)[subcols]
-        }))
+    process1 <- function(subcols) {
+      if (is(subcols, "except")) {
+        unexcepted <- unexcept(subcols)
+        if (!is.list(unexcepted)) unexcepted <- list(unexcepted)
+        setdiff(colnames(dataframe), process(unexcepted))
+      } else if (is.function(subcols)) {
+        # Much faster than lapply here.
+        colnames(dataframe)[(function() {
+          ix <- logical(length(dataframe))
+          for (i in seq_along(dataframe)) ix[i] <- subcols(.subset2(dataframe, i))
+          ix
+        })()]
       }
+      else if (is.character(subcols)) force(subcols) 
+      else if (is.list(subcols)) process(subcols)
+      else colnames(dataframe)[subcols]
+    }
 
-      if (is(cols, 'except')) setdiff(colnames(dataframe), process(list(unexcept(cols))))
-      else process(if (is.list(cols)) cols else list(cols))
-    }))
+    process <- function(xcols) {
+      Reduce(intersect, lapply(xcols, process1))
+    }
+
+    if (is(cols, "except")) {
+      setdiff(colnames(dataframe), process(list(unexcept(cols))))
+    } else if (is.list(cols)) {
+      process(cols)
+    } else {
+      process1(cols)
+    }
   }
 }
 
