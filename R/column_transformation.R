@@ -195,11 +195,11 @@ column_transformation_body <- quote({
   ## we will have to provide the column name dynamically.
   ## This standard trick allows us to capture the unevaluated 
   ## expressions in the `...` parameter.
-  #arguments  <- c(list(NULL), eval(substitute(alist(...))))
-  #arguments <- c(list(NULL), list(...))
   env$trained <- trained
   
   if (nonstandard) {
+    arguments  <- c(list(NULL), eval(substitute(alist(...))))
+    # arguments <- c(list(NULL), list(...))
     eval_frame <- parent.frame()
   }
 
@@ -250,12 +250,6 @@ column_transformation_body <- quote({
       debug(transformation)
     }
 
-    ## Recall that if the `transformation` has a formal argument called
-    ## "name", we must pass along the column name.
-    if (named) {
-      arguments$name <- .subset2(names(data), .subset2(indices, j))
-    }
-
     if (nonstandard) {
       # Support non-standard evaluation at a slight speed cost.
       ## And the non-standard evaluation trick! Imagine a user had called
@@ -271,6 +265,13 @@ column_transformation_body <- quote({
       ## `some_data[["first"]]` during the first call and `some_data[["second"]]`
       ## during the second call (in other words, it is equivalent to
       ## `y <- quote(some_data[["first"]])` in the first call, etc.).
+
+      ## Recall that if the `transformation` has a formal argument called
+      ## "name", we must pass along the column name.
+      if (named) {
+        arguments$name <- .subset2(names(data), .subset2(indices, j))
+      }
+
       arguments[[1L]] <- bquote(.(data_expr)[[.(
         if (named) arguments$name else .subset2(names(data), .subset2(indices, j))
       )]])
@@ -281,7 +282,12 @@ column_transformation_body <- quote({
       #arguments[[1L]] <- .subset2(data, .subset2(indices, j)) #data[[column_name]]
       # Jump to the environment that contains _2, _1 etc
       #.Internal(do.call(transformation, arguments, parent.frame(3)))
-      transformation(.subset2(data, .subset2(indices, j)), ...)
+      if (named) {
+        transformation(.subset2(data, .subset2(indices, j)), ...,
+                       name = .subset2(names(data), .subset2(indices, j)))
+      } else {
+        transformation(.subset2(data, .subset2(indices, j)), ...)
+      }
     }
 
     ## Finally, we require the `envir` argument to `do.call` to ensure
