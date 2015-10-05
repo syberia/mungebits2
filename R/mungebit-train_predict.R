@@ -51,10 +51,10 @@ mungebit_train <- function(data, ..., `_envir` = parent.frame()) {
   ## can remember necessary metadata for replicating the
   ## munging operation at prediction time.
   #fn <- inject_metadata(self$.train_function, self$.input, self$.trained)
-  #args <- c(list(substitute(data)), eval(substitute(alist(...))))
-  #do.call(fn, args, envir = `_envir`)
   if (!is.null(self$.train_function)) {
-    self$.train_function(data, ...)
+    args <- c(list(substitute(data)), eval(substitute(alist(...))))
+    do.call(self$.train_function, args, envir = `_envir`)
+    #self$.train_function(data, ...)
   }
 }
 

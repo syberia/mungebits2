@@ -30,6 +30,7 @@ describe("errors", {
 })
 
 make_fn <- function(train) {
+  force(train)
   function(data, first = NULL, ...) {
     list(train = train, first = first, dots = list(...),
          first_expr = substitute(first),

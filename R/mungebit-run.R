@@ -50,10 +50,10 @@ mungebit_run <- function(data, ...) {
     #data <- .Internal(do.call(self$predict, args, parent.frame()))
     #data <- do.call(self$predict, args, envir = parent.frame())
   } else {
-    #args <- c(list(substitute(data)), eval(substitute(alist(...))))
+    args <- c(list(substitute(data)), eval(substitute(alist(...))))
     #data <- do.call(self$train, args, envir = parent.frame())
-    #data <- .Internal(do.call(self$train, args, parent.frame()))
-    self$train(data, ...)
+    .Internal(do.call(self$train, args, parent.frame()))
+    #self$train(data, ...)
   }
   #data
 }
