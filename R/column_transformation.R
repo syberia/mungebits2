@@ -55,6 +55,10 @@
 #'    the column name. Any other arguments will be received as the
 #'    \code{list(...)} from calling the function produced by 
 #'    \code{column_transformation}.
+#' @param nonstandard logical. If \code{TRUE}, nonstandard evaluation support
+#'    will be provided for the derived function, so it will be possible
+#'    to capture the calling expression for each column. By default \code{FALSE}.
+#'    Note this will slow the transformation by 0.1ms on each column.
 #' @return a function which takes a data.frame and a vector of column
 #'    names (or several other formats, see \code{\link{standard_column_format}})
 #'    and applies the \code{transformation}.
@@ -67,7 +71,7 @@
 #' doubler <- column_transformation(function(x) { 2 * x })
 #' # doubles the Sepal.Length column in the iris dataset
 #' iris2 <- mungebit$new(doubler)$run(iris, c("Sepal.Length")) 
-column_transformation <- function(transformation) {
+column_transformation <- function(transformation, nonstandard = FALSE) {
   ## We will construct a function *from scratch*. Since R is almost
   ## [LISP](https://en.wikipedia.org/wiki/Lisp_(programming_language\))
   ## under the hood, it is possible to construct a function piece-by-piece.
@@ -93,7 +97,7 @@ column_transformation <- function(transformation) {
   ## and executes the `transformation` on each column.
   full_transformation <- function(data, columns = colnames(data), ...) { }
   environment(full_transformation) <- list2env(
-    list(transformation = transformation),
+    list(transformation = transformation, nonstandard = isTRUE(nonstandard)),
     parent = globalenv()
   )
   body(full_transformation) <- column_transformation_body
@@ -148,7 +152,12 @@ column_transformation_body <- quote({
       arguments$name <- column_name
     }
 
-    arguments[[1L]] <- data[[column_name]]
+    if (nonstandard) {
+      # Support non-standard evaluation at a slight speed cost.
+      arguments[[1L]] <- bquote(.(data_expr)[[.(column_name)]])
+    } else {
+      arguments[[1L]] <- data[[column_name]]
+    }
 
     data[[column_name]] <- do.call(new_transformation, arguments, envir = parent.frame())
 

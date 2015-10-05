@@ -4,7 +4,7 @@
 \alias{column_transformation}
 \title{Pure column transformations.}
 \usage{
-column_transformation(transformation)
+column_transformation(transformation, nonstandard = FALSE)
 }
 \arguments{
 \item{transformation}{function. The function's first argument will
@@ -13,6 +13,11 @@ receive an atomic vector derived from some \code{data.frame}. If the
 the column name. Any other arguments will be received as the
 \code{list(...)} from calling the function produced by
 \code{column_transformation}.}
+
+\item{nonstandard}{logical. If \code{TRUE}, nonstandard evaluation support
+will be provided for the derived function, so it will be possible
+to capture the calling expression for each column. By default \code{FALSE}.
+Note this will slow the transformation by 0.1ms on each column.}
 }
 \value{
 a function which takes a data.frame and a vector of column
