@@ -13,11 +13,34 @@ Authors@R: c(person("Robert", "Krzyzanowski",
     email = "technoguyrob@gmail.com", role = c("aut", "cre")))
 Depends:
     R (>= 3.1.0)
-License: MIT
+License: MIT + file LICENSE
 LazyData: true
 Imports:
-    stagerunner
+    crayon,
+    lazyeval,
+    R6,
+    stagerunner,
+    whisker
 Suggests:
     testthat,
-    testthatsomemore
+    testthatsomemore,
+    microbenchmark
 Roxygen: list(wrap = FALSE)
+Collate:
+    'column_transformation.R'
+    'debug.R'
+    'messages.R'
+    'multi_column_transformation.R'
+    'munge.R'
+    'mungebit-initialize.R'
+    'mungebit-run.R'
+    'mungebit-train_predict.R'
+    'mungebit.R'
+    'mungepiece-initialize.R'
+    'mungepiece-run.R'
+    'mungepiece.R'
+    'package.mungebits2.R'
+    'parse_mungepiece.R'
+    'standard_column_format.R'
+    'utils.R'
+    'zzz.R'
