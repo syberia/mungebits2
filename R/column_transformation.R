@@ -128,6 +128,16 @@ column_transformation_body <- quote({
   ## developing new packages, one should follow the old adage to
   ## first make it functional, then make it beautiful, then make
   ## it fast. In this case, we prefer speed over beauty!
+  ## 
+  ## If we are supporting non-standard evaluation, we precompute
+  ## the expression used, or we will lose it upon first reference of `data`.
+  if (nonstandard) {
+    data_expr <- substitute(data)
+    ## Unfortunately, we forcibly have to disable nonstandard evaluation
+    ## support if a call was passed in instead of an atomic symbol,
+    ## since then we could be re-computing side effectful computations!
+    if (!is.name(data_expr)) nonstandard <- FALSE
+  }
 
   if (!isTRUE(trained)) {
     ## The dataset passed in may look different depending on whether
@@ -172,20 +182,11 @@ column_transformation_body <- quote({
   new_transformation <- transformation
   ## Recall that if the `transformation` has a `name` formal argument,
   ## we will have to provide the column name dynamically.
-  named      <- is.element("name", names(formals(transformation)))
+  named <- is.element("name", names(formals(transformation)))
   ## This standard trick allows us to capture the unevaluated 
   ## expressions in the `...` parameter.
   arguments  <- c(list(NULL), eval(substitute(alist(...))))
   parent_env <- environment(transformation) %||% baseenv()
-  ## If we are supporting non-standard evaluation, we precompute
-  ## the expression used.
-  if (nonstandard) {
-    data_expr <- substitute(data)
-    ## Unfortunately, we forcibly have to disable nonstandard evaluation
-    ## support if a call was passed in instead of an atomic symbol,
-    ## since then we could be re-computing side effectful computations!
-    if (!is.name(data_expr)) nonstandard <- FALSE
-  }
 
   for (column_name in input$`_columns`) {
     ## We have to inject the `input` local into the train or predict
