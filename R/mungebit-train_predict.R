@@ -41,7 +41,9 @@ mungebit_train <- function(data, ..., `_envir` = parent.frame()) {
   if (isTRUE(self$.enforce_train)) {
     on.exit({
       lockEnvironment(self$.input, TRUE)
-      environment(self$.predict_function)$trained <- TRUE
+      if (!is.null(self$.predict_function)) {
+        environment(self$.predict_function)$trained <- TRUE
+      }
     }, add = TRUE)
   }
 
@@ -51,7 +53,9 @@ mungebit_train <- function(data, ..., `_envir` = parent.frame()) {
   #fn <- inject_metadata(self$.train_function, self$.input, self$.trained)
   #args <- c(list(substitute(data)), eval(substitute(alist(...))))
   #do.call(fn, args, envir = `_envir`)
-  self$.train_function(data, ...)
+  if (!is.null(self$.train_function)) {
+    self$.train_function(data, ...)
+  }
 }
 
 #' Run the predict function on a mungebit.

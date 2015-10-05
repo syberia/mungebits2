@@ -51,14 +51,13 @@ test_that("it sets input correctly", {
 })
 
 test_that("it can execute NULL functions", {
-          browser()
   mb <- mungebit$new(NULL, NULL)
   testthatsomemore::assert(mb$run(iris))
   testthatsomemore::assert(mb$run(iris))
 })
 
 test_that("it errors if we attempt to modify input after training", {
-  mb <- mungebit$new(NULL, function(d) input$foo <- TRUE)          
+  mb <- mungebit$new(NULL, function(d) { input$foo <- TRUE })
   testthatsomemore::assert(mb$run(iris))
   expect_error(mb$run(iris), "cannot add bindings to a locked environment")
 })

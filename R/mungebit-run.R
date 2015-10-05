@@ -42,12 +42,14 @@ mungebit_run <- function(data, ...) {
     #data$data <- do.call(self$run, args, envir = parent.frame())
     data$data <- Recall(data$data, ...)
     data
-  } else if (isTRUE(self$.trained) && !is.null(self$.predict_function)) {
+  } else if (isTRUE(self$.trained)) {
     #args <- c(list(substitute(data)), eval(substitute(alist(...))))
-    self$predict(data, ...)
+    if (!is.null(self$.predict_function)) {
+      self$predict(data, ...)
+    }
     #data <- .Internal(do.call(self$predict, args, parent.frame()))
     #data <- do.call(self$predict, args, envir = parent.frame())
-  } else if (!isTRUE(self$.trained) && !is.null(self$.train_function)) {
+  } else {
     #args <- c(list(substitute(data)), eval(substitute(alist(...))))
     #data <- do.call(self$train, args, envir = parent.frame())
     #data <- .Internal(do.call(self$train, args, parent.frame()))
