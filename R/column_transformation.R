@@ -14,7 +14,7 @@
 ##      cannot be expressed as a column or row transformation: for example,
 ##      a transposition or multiple imputation.
 ##
-## The `column_transformation` function is a helper that tak 
+## The `column_transformation` function is a helper that takes
 ## a function with at least one argument--the atomic vector (column)
 ## being operated on, with additional arguments acting as further
 ## parametrization--and turns that function into a function suitable
