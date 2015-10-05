@@ -10,3 +10,5 @@
   }
 }
 
+globalVariables(c("newpieces", "mungepieces", "size"))
+
