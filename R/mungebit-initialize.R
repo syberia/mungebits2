@@ -61,13 +61,17 @@ mungebit_initialize <- function(train_function   = base::identity,
 
   self$.input            <- new.env(parent = emptyenv())
   self$.train_function   <- to_function(train_function, "train")
-  environment(self$.train_function) <- list2env(list(
-    input = self$.input, trained = FALSE),
-    parent = environment(self$.train_function) %||% globalenv())
+  if (!is.null(self$.train_function)) {
+    environment(self$.train_function) <- list2env(list(
+      input = self$.input, trained = FALSE),
+      parent = environment(self$.train_function) %||% globalenv())
+  }
   self$.predict_function <- to_function(predict_function, "predict")
-  environment(self$.predict_function) <- list2env(list(
-    input = self$.input, trained = FALSE),
-    parent = environment(self$.predict_function) %||% globalenv())
+  if (!is.null(self$.predict_function)) {
+    environment(self$.predict_function) <- list2env(list(
+      input = self$.input, trained = FALSE),
+      parent = environment(self$.predict_function) %||% globalenv())
+  }
   self$.trained          <- FALSE
   self$.enforce_train    <- enforce_train
 }

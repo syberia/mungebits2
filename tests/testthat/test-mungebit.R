@@ -51,6 +51,7 @@ test_that("it sets input correctly", {
 })
 
 test_that("it can execute NULL functions", {
+          browser()
   mb <- mungebit$new(NULL, NULL)
   testthatsomemore::assert(mb$run(iris))
   testthatsomemore::assert(mb$run(iris))
