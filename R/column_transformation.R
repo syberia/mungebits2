@@ -219,17 +219,36 @@ column_transformation_body <- quote({
       debug(new_transformation)
     }
 
+    ## Recall that if the `transformation` has a formal argument called
+    ## "name", we must pass along the column name.
     if (named) {
       arguments$name <- column_name
     }
 
     if (nonstandard) {
       # Support non-standard evaluation at a slight speed cost.
+      ## And the non-standard evaluation trick! Imagine a user had called
+      ## a column transformation with the code below.
+      ##
+      ## ```r
+      ## ct <- column_transformation(nonstandard = TRUE, function(x) { y <- substitute(x) })
+      ## some_data <- data.frame(first = 1:2, second = c("a", "b"))
+      ## mungebit$new(ct)$run(some_data)
+      ## ```
+      ##
+      ## Then `substitute(x)` would be precisely the expression 
+      ## `some_data[["first"]]` during the first call and `some_data[["second"]]`
+      ## during the second call (in other words, it is equivalent to
+      ## `y <- quote(some_data[["first"]])` in the first call, etc.).
       arguments[[1L]] <- bquote(.(data_expr)[[.(column_name)]])
     } else {
+      ## If NSE should not be carried over we do not bother with the
+      ## magic and simply send the function the value.
       arguments[[1L]] <- data[[column_name]]
     }
 
+    ## Finally, we require the `envir` argument to `do.call` to ensure
+    ## the NSE carry-over works correctly.
     data[[column_name]] <- do.call(new_transformation, arguments, envir = parent.frame())
 
     if (!isTRUE(trained)) {
