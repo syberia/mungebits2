@@ -111,15 +111,509 @@
         </div>
         <div class="section">
           <div class="markdown markdown-body">
-            
+            <p><em>Note</em>: For better comprehension, this function should be read
+<em>after</em> understanding the <code>mungebit</code> and <code>mungepiece</code>
+classes defined in this package.</p>
+
+<p>In general, transformations of a single data.frame into another
+data.frame fall in three categories:</p>
+
+<ol>
+<li><strong>Column transformations</strong>. A one-variable function applied to
+ an atomic vector (a column) that yields a new vector of the same length.</li>
+<li><strong>Row transformations</strong>. A column transformation with a matrix
+ transposition composed to the left and right of it (i.e., operating
+ on rows instead of columns).</li>
+<li><strong>Whole dataframe transformations</strong>. Any transformation that
+ cannot be expressed as a column or row transformation: for example,
+ a transposition or multiple imputation.</li>
+</ol>
+
+<p>The <code>column_transformation</code> function is a helper that tak 
+a function with at least one argument&ndash;the atomic vector (column)
+being operated on, with additional arguments acting as further
+parametrization&ndash;and turns that function into a function suitable
+for use with a mungebit that will operate on an entire data.frame.
+For example,</p>
+
+<pre><code class="r">stripper &lt;- column_transformation(function(x) {
+  gsub(&quot;[[:space:]]&quot;, &quot;&quot;, x)
+})
+new_dataset &lt;- stripper(dataset, c(&quot;column1&quot;, &quot;column2&quot;))
+</code></pre>
+
+<p>The function produced, <code>stripper</code>, accepts a data.frame as its
+first argument and as its second argument a vector of column names
+(or several other formats; see the <code>standard_column_format</code> helper).</p>
+
+<p>The argument <code>name</code> is reserved, and if you create a column transformation
+from a function that includes this argument, its value will be set
+to the name of the column:</p>
+
+<pre><code class="r">adjoin_name &lt;- column_transformation(function(x, name) {
+  paste0(x, &quot;_&quot;, name)
+})
+new_dataset &lt;- adjoin_name(dataset, c(&quot;column1&quot;, &quot;column2&quot;))
+# If column1 and column2 are character vectors, they will now
+# have all their values prefixed with `column1_` and `column2_`,
+# respectively.
+</code></pre>
+
+<p>TODO: (RK) List many more examples here and explain column transformation
+standard column format usage.</p>
+
           </div>
 
           <div class="code">
             <pre>
-              <code class="R"><span class="spacer">#' Column transform.
-#' @param ... Random.
+              <code class="R"><span class="spacer">#' Pure column transformations.
+#'
+#' A mungebit which affects multiple columns identically and independently
+#' can be abstracted into a column transformation. This function allows one
+#' to specify what happens to an individual column, and the mungebit will be
+#' the resulting column transformation applied to an arbitrary combination of
+#' columns.
+#'
+#' @param transformation function. The function's first argument will
+#'    receive an atomic vector derived from some \code{data.frame}. If the
+#'    \code{transformation} has a \code{name} argument, it will receive
+#'    the column name. Any other arguments will be received as the
+#'    \code{list(...)} from calling the function produced by 
+#'    \code{column_transformation}.
+#' @param nonstandard logical. If \code{TRUE}, nonstandard evaluation support
+#'    will be provided for the derived function, so it will be possible
+#'    to capture the calling expression for each column. By default \code{FALSE}.
+#'    Note this will slow the transformation by 0.1ms on each column.
+#' @return a function which takes a data.frame and a vector of column
+#'    names (or several other formats, see \code{\link{standard_column_format}})
+#'    and applies the \code{transformation}.
+#' @seealso \code{\link{multi_column_transformation}}, \code{\link{standard_column_format}}
+#' @note The function produced by calling \code{column_transformation} will
+#'    not run independently. It must be used a train or predict function for
+#'    a \code{\link{mungebit}}.
 #' @export
-column_transformation <- function(...) identity(...)</span></code>
+#' @examples
+#' doubler <- column_transformation(function(x) { 2 * x })
+#' # doubles the Sepal.Length column in the iris dataset
+#' iris2 <- mungebit$new(doubler)$run(iris, c("Sepal.Length")) 
+column_transformation <- function(transformation, nonstandard = FALSE) {</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>We will construct a function <em>from scratch</em>. Since R is almost
+<a href="https://en.wikipedia.org/wiki/Lisp_(programming_language)">LISP</a>
+under the hood, it is possible to construct a function piece-by-piece.</p>
+
+<p>In general, an R function <a href="http://adv-r.had.co.nz/Functions.html">consists of three components</a>:</p>
+
+<ul>
+<li><strong>Formals</strong>. The arguments to the function. You can access these
+for any function using the <a href="https://stat.ethz.ch/R-manual/R-patched/library/base/html/formals.html"><code>formals</code></a>
+helper. This is a named list of expressions, with the values being
+the defaults for each argument.</li>
+<li><strong>Body</strong>. The body of the function. In R, a block of code can be 
+represented within R itself as a <code>language</code> object. Specifically,
+using <a href="https://stat.ethz.ch/R-manual/R-devel/library/base/html/substitute.html"><code>quote</code></a>
+can be used to construct the <em>body</em> of a function, as in
+<code>quote({ a &lt;- 1; print(a); return(a) })</code>. This is a form of
+<a href="https://en.wikipedia.org/wiki/Reflection_(computer_programming)">reflection</a>.</li>
+<li><strong>Environment</strong>. The R environment the function has access to
+when looking for local variables. In other words, its lexical
+environment <a href="https://en.wikipedia.org/wiki/Closure_(computer_programming)">as a closure</a>.</li>
+</ul>
+
+<p>For a <code>column_transformation</code>, its derived transformation will be
+a new function that takes a <code>data</code> argument and a vector of <code>columns</code>,
+and executes the <code>transformation</code> on each column.</p>
+
+<p>Note we have to inject a few helpers like <code>%||%</code> and <code>list2env_safe</code>,
+which are defined in the mungebits2 package internals, since these
+may not be available when a mungebit is serialized and exported out of
+the active R session (if mungebits2 is not attached to the search path).</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">  full_transformation <- function(data, columns = colnames(data), ...) { }
+  environment(full_transformation) <- list2env(
+    list(transformation = transformation, nonstandard = isTRUE(nonstandard),
+         "%||%" = `%||%`, list2env_safe = list2env_safe),
+    parent = globalenv()
+  )
+  body(full_transformation) <- column_transformation_body
+  # Add some convenient metadata for overloading `debug` and `print`.
+  class(full_transformation) <- c("column_transformation", "transformation", "function")
+  full_transformation
+}
+</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>As promised, we specify the <em>body</em> for the derived transformation
+generated by calling <code>column_transformation</code>. Since this will not
+change, we can store it in the package namespace.</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">column_transformation_body <- quote({
+  # Recall that `data` and `columns` are formals.</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>In this function, optimization matters. Column transformations will
+run millions of times over various datasets, so even microsecond
+shaved off is valuable. Throughout, note the code may be
+slightly improved for readability but at a speed cost. When
+developing new packages, one should follow the old adage to
+first make it functional, then make it beautiful, then make
+it fast. In this case, we prefer speed over beauty!</p>
+
+<p>If we are supporting non-standard evaluation, we precompute
+the expression used, or we will lose it upon first reference of <code>data</code>.</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">  if (nonstandard) {
+    data_expr <- substitute(data)</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>Unfortunately, we forcibly have to disable nonstandard evaluation
+support if a call was passed in instead of an atomic symbol,
+since then we could be re-computing side effectful computations!</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">    if (!is.name(data_expr)) nonstandard <- FALSE
+  }
+
+  if (!isTRUE(trained)) {</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>The dataset passed in may look different depending on whether
+we are running the mungebit in train or predict mode. If 
+<code>columns</code> are <code>1:4</code> and the dataset is shuffled, we will
+be referencing the wrong columns after running the mungebit
+the second time in predict mode! To avoid this problem, keeping
+in mind that R data.frames have unique column names by design,
+we store the <em>character vector of column names</em> in the mungebit
+input so that we know exactly which columns this transformation
+should apply to in predict mode.</p>
+
+<p>If you require operating totally different column names during
+training versus prediction, it is by definition not the same mathematical
+transformation, and thus a mungebit is likely not the appropriate
+tool for your problem.</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">    input$`_columns` <- intersect(colnames(data), standard_column_format(columns, data))
+  }
+</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>If the data.frame has duplicate column names, a rare but possible 
+corruption, the <code>for</code> loop below that applies the transformations
+will malfunction, so we should error.</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">  if (length(colnames(data)) != length(unique(colnames(data)))) {
+    duplicate_names <- utils::head(colnames(data)[duplicated(colnames(data))], 5)
+    stop("Cannot run a ", sQuote("column_transformation"), " on data ",
+         "with duplicate column names: ",
+         paste(vapply(duplicate_names, crayon::red, character(1)), collapse = ", "))
+  }
+
+  # An optimization trick to avoid the slow `[.data.frame` operator.
+  old_class   <- class(data)</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>Try to run <code>print(`[.data.frame`)</code> from your R console. Notice how
+much code is run to perform data.frame subsetting! The same is
+true for <code>print(`[[&lt;-.data.frame`)</code>, data.frame element assignment.
+Since we use this operation below, we want to skip over the typical
+checks for the sake of performance and use straight-up list subsetting
+(which will use underlying C code).</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">  class(data) <- "list" 
+</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>We copy over the <code>transformation</code> passed to the function so we
+can inject the <code>input</code> and <code>trained</code> locals below.</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">  new_transformation <- transformation</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>Recall that if the <code>transformation</code> has a <code>name</code> formal argument,
+we will have to provide the column name dynamically.</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">  named <- is.element("name", names(formals(transformation)))</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>This standard trick allows us to capture the unevaluated 
+expressions in the <code>...</code> parameter.</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">  arguments  <- c(list(NULL), eval(substitute(alist(...))))
+  parent_env <- environment(transformation) %||% baseenv()
+
+  for (column_name in input$`_columns`) {</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>We have to inject the <code>input</code> local into the train or predict
+function.</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">    if (isTRUE(trained)) {</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p><code>list2env_safe</code> is just <a href="https://stat.ethz.ch/R-manual/R-devel/library/base/html/list2env.html"><code>list2env</code></a>
+with graceful handling of <code>NULL</code>s and empty lists.</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">      mock_input <- list2env_safe(input[[column_name]])</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>If the mungebit is already trained, we do not want the user
+messing with the <code>input</code>! The mungebit is now considered immutable.</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">      lockEnvironment(mock_input, bindings = TRUE)
+    } else {</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>Otherwise, we use a new environment to capture what they
+assign to the <code>input</code>. Since the column transformation runs
+once on each column, we have to make a &ldquo;mock input&rdquo; so we
+capture do it separately for each column.</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">      mock_input <- new.env(parent = emptyenv())
+    }
+</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>Finally, we are ready to inject the <code>input</code> and <code>trained</code> locals
+into the copy of the <code>transformation</code>.</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">    environment(new_transformation) <- list2env(
+      list(input = mock_input, trained = trained),
+      parent = parent_env 
+    )</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>Assigning a function&#39;s environment clears its internal debug 
+flag, so if the function was previously being debugged we
+retain this property.</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">    if (isdebugged(transformation)) {
+      debug(new_transformation)
+    }
+</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>Recall that if the <code>transformation</code> has a formal argument called
+&ldquo;name&rdquo;, we must pass along the column name.</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">    if (named) {
+      arguments$name <- column_name
+    }
+
+    if (nonstandard) {
+      # Support non-standard evaluation at a slight speed cost.</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>And the non-standard evaluation trick! Imagine a user had called
+a column transformation with the code below.</p>
+
+<pre><code class="r">ct &lt;- column_transformation(nonstandard = TRUE, function(x) { y &lt;- substitute(x) })
+some_data &lt;- data.frame(first = 1:2, second = c(&quot;a&quot;, &quot;b&quot;))
+mungebit$new(ct)$run(some_data)
+</code></pre>
+
+<p>Then <code>substitute(x)</code> would be precisely the expression 
+<code>some_data[[&quot;first&quot;]]</code> during the first call and <code>some_data[[&quot;second&quot;]]</code>
+during the second call (in other words, it is equivalent to
+<code>y &lt;- quote(some_data[[&quot;first&quot;]])</code> in the first call, etc.).</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">      arguments[[1L]] <- bquote(.(data_expr)[[.(column_name)]])
+    } else {</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>If NSE should not be carried over we do not bother with the
+magic and simply send the function the value.</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">      arguments[[1L]] <- data[[column_name]]
+    }
+</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>Finally, we require the <code>envir</code> argument to <code>do.call</code> to ensure
+the NSE carry-over works correctly.</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">    data[[column_name]] <- do.call(new_transformation, arguments, envir = parent.frame())
+
+    if (!isTRUE(trained)) {</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>And here is the trick for partitioning up the <code>input</code>, one for
+each column the transformation was applied to!</p>
+
+<p>If we are running a <code>column_transformation</code> on columns <code>blue</code> and
+<code>yellow</code>, then the underlying mungebit&#39;s <code>input</code> will have
+keys <code>blue</code> and <code>yellow</code> with the respective &ldquo;sub-inputs&rdquo; (and
+a reserved key <code>_colnames</code> as observed earlier in this function).</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">      input[[column_name]] <- as.list(mock_input)
+    }
+  }
+</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>Finally, we reset the class to <code>data.frame</code> after stripping it
+for a speed optimization. If you study the code of <code>(`[.data.frame`)</code>,
+you will see this is exactly the same trick the R base library uses
+to delegate to the list subsetting after the data.frame-specific
+checks have been completed.</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">  class(data) <- old_class
+  data
+})
+</span></code>
             </pre>
           </div>
         </div>
@@ -450,6 +944,31 @@ arguments we will pass.</p>
         </div>
         <div class="section">
           <div class="markdown markdown-body">
+            <h1>multi_column_transformation.R</h1>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer"></span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">#' Multi column transform.
+#' @export
+multi_column_transformation <- function() { }</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
             <h1>munge.R</h1>
 
           </div>
@@ -623,6 +1142,12 @@ correctly replicate the same munging it performed during model training.</p>
 #'    One can also provide a list with a \code{remember} parameter,
 #'    which will be used to construct a stagerunner with the same value
 #'    for its \code{remember} parameter.
+#' @param list logical. Whether or not to return the list of mungepieces
+#'    instead of executing them on the \code{data}. By default \code{FALSE}.
+#' @param parse logical. Whether or not to pre-parse the \code{mungelist}
+#'    using \code{\link{parse_mungepiece}}. Note that if this is \code{TRUE},
+#'    any trained mungepieces will be duplicated and marked as untrained.
+#'    By default, \code{TRUE}.
 #' @return A cleaned \code{data.frame}, the result of applying each
 #'    \code{\link{mungepiece}} constructed from the \code{mungelist}.
 #' @seealso \code{\link{mungebit}}, \code{\link{mungepiece}},
@@ -705,36 +1230,100 @@ correctly replicate the same munging it performed during model training.</p>
 #' }
 #' # The munge function uses the attached "mungepieces" attribute, a list of
 #' # trained mungepieces.
-munge <- function(data, mungelist, stagerunner = FALSE) {
+munge <- function(data, mungelist, stagerunner = FALSE, list = FALSE, parse = TRUE) {
   stopifnot(is.data.frame(data))
 
   if (length(mungelist) == 0L) {
     return(data)
   }
 
-  if (!is.list(mungelist)) {
-    stop(m("munge_type_error", class = class(mungelist)[1L]))
-  }
+  if (!is.list(mungelist)) {</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>This error is grabbed from the <code>messages.R</code> file.</p>
 
-  if (is.data.frame(mungelist)) {
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">    stop(m("munge_type_error", class = class(mungelist)[1L]))
+  }
+</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>We allow munging in prediction mode using an existing <em>trained</em> data.frame.
+For example, if we had ran <code>iris2 &lt;- munge(iris, some_list_of_mungepieces)</code>,
+an attributes would be created on <code>iris2</code> with the name <code>&quot;mungepieces&quot;</code>.
+The <code>munge</code> function is capable of re-using this attribute, a list of 
+trained mungepieces, and apply it to a new dataset. In English, it is
+asking to &ldquo;perform the exact same munging that was done on <code>iris2</code>&rdquo;.</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">  if (is.data.frame(mungelist)) {
     if (!is.element("mungepieces", names(attributes(mungelist)))) {
       stop(m("munge_lack_of_mungepieces_attribute"))
     }
-    Recall(data, attr(mungelist, "mungepieces"), stagerunner)
+    Recall(data, attr(mungelist, "mungepieces"), stagerunner = stagerunner,
+           list = list, parse = FALSE)
   } else if (is(mungelist, "tundraContainer")) {
     # An optional interaction effect with the tundra package.
-    Recall(data, mungelist$munge_procedure, stagerunner)
+    Recall(data, mungelist$munge_procedure, stagerunner = stagerunner,
+           list = list, parse = FALSE)
   } else {
-    munge_(data, mungelist, stagerunner)
+    munge_(data, mungelist, stagerunner, list, parse)
   }
 }
 
 # Assume proper arguments.
-munge_ <- function(data, mungelist, stagerunner) {
-  runners <- vapply(mungelist, is, logical(1), "stageRunner")
-  mungelist[!runners] <- lapply(mungelist[!runners], parse_mungepiece)
-  stages <- mungepiece_stages(mungelist)
+munge_ <- function(data, mungelist, stagerunner, list_output, parse) {
+  if (isTRUE(parse)) {</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>It is possible to have nested stagerunners of mungeprocedures,
+but this is a more advanced feature. We skip stagerunners
+when parsing the munge procedure using <code>parse_mungepiece</code>.</p>
 
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">    runners <- vapply(mungelist, is, logical(1), "stageRunner")
+    # TODO: (RK) Intercept errors and inject with name for helpfulness!
+    mungelist[!runners] <- lapply(mungelist[!runners], parse_mungepiece)
+  }
+
+  if (isTRUE(list_output)) {
+    return(mungelist)
+  }
+</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>We will construct a <a href="https://github.com/robertzk/stagerunner">stagerunner</a>
+and execute it on a context (environment) containing just a <code>data</code> key.</p>
+
+<p>The stages of the stagerunner will be one for each mungepiece, defined
+by the <code>mungepiece_stages</code> helper.</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">  stages <- mungepiece_stages(mungelist)
   if (is.environment(data)) {
     context <- data
   } else {
@@ -752,8 +1341,25 @@ munge_ <- function(data, mungelist, stagerunner) {
   }
 }
 
-mungepiece_stages <- function(mungelist, contiguous = FALSE) {
-  if (!isTRUE(contiguous)) {
+mungepiece_stages <- function(mungelist, contiguous = FALSE) {</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>As before, remember that a munge procedure can consist of mungepieces
+but also stagerunners earlier produced by <code>munge</code>. If we have a
+mungelist that looks like <code>list(mungepiece, runner, mungepiece, mungepiece, runner, ...)</code>
+then each <em>contiguous</em> block of mungepieces needs to be transformed
+into a sequence of stages. We will see later why this is necessary: we 
+have to append the <code>mungepieces</code> to the data.frame after the last 
+mungepiece has been executed. </p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">  if (!isTRUE(contiguous)) {
     singles <- which(vapply(mungelist, Negate(is), logical(1), "stageRunner"))
     groups  <- cumsum(diff(c(singles[1L] - 1, singles)) != 1)
     split(mungelist[singles], groups) <- lapply(
@@ -775,13 +1381,44 @@ mungepiece_stages_contiguous <- function(mungelist) {
 }
 
 mungepiece_stage <- function(mungepiece_index, context) {
-  stage <- function(env) {
-    # Make a fresh copy to avoid shared stage problems.
+  stage <- function(env) {</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>Each mungepiece will correspond to one stage in a stagerunner.
+We will construct a <em>new</em> mungepiece on-the-fly to avoid
+sharing state with other mungepiece objects, run that
+mungepiece, and then modify the <code>newpieces</code> to store
+the trained mungepiece.</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">    # Make a fresh copy to avoid shared stage problems.
     piece <- mungepieces[[mungepiece_index]]$duplicate(private = TRUE)
     piece$run(env)
     newpieces[[mungepiece_index]] <<- piece
+</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>When we are out of mungepieces, that is, when the current index equals
+the number of mungepieces in the actively processed contiguous chain 
+of mungepieces, we append the mungepieces to the dataframe&#39;s
+<code>&quot;mungepieces&quot;</code> attribute. This is what allows us to later replay
+the munging actions on new data by passing the dataframe as the second 
+argument to the <code>munge</code> function.</p>
 
-    if (mungepiece_index == size) {
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">    if (mungepiece_index == size) {
       attr(env$data, "mungepieces") <-
         append(attr(env$data, "mungepieces"), newpieces)
     }
@@ -944,11 +1581,14 @@ mungebit_run <- function(data, ...) {
            "provide one that contains a ", sQuote("data"), " key.")
     }
 
-    data$data <- self$run(data$data, ...)
+    args <- c(list(bquote(.(substitute(data))$data)), eval(substitute(alist(...))))
+    data$data <- do.call(self$run, args, envir = parent.frame())
   } else if (isTRUE(self$.trained)) {
-    data <- self$predict(data, ...)
+    args <- c(list(substitute(data)), eval(substitute(alist(...))))
+    data <- do.call(self$predict, args, envir = parent.frame())
   } else {
-    data <- self$train(data, ...)  
+    args <- c(list(substitute(data)), eval(substitute(alist(...))))
+    data <- do.call(self$train, args, envir = parent.frame())
   }
   data
 }
@@ -995,11 +1635,14 @@ mungebit_run <- function(data, ...) {
 #'
 #' @rdname mungebit
 #' @inheritParams mungebit_run
+#' @param _envir environment. Internal argument used for determining
+#'   the execution context of the invoked \code{train_function} or
+#'   \code{predict_function}.
 #' @return The modified \code{data}, whether it is an \code{environment}
 #'   or \code{data.frame}. Side effects on the \code{input} local variable
 #'   provided to the \code{train_function} will be recorded on the mungebit
 #'   object.
-mungebit_train <- function(data, ...) {
+mungebit_train <- function(data, ..., `_envir` = parent.frame()) {
   if (self$.enforce_train) {
     if (isTRUE(self$.trained)) {
       stop("This mungebit has already been trained, cannot re-train.")
@@ -1022,7 +1665,9 @@ time (i.e., when it is run in a real-time production system).</p>
 
           <div class="code">
             <pre>
-              <code class="R"><span class="spacer">  on.exit(lockEnvironment(self$.input, TRUE), add = TRUE)
+              <code class="R"><span class="spacer">  if (isTRUE(self$.enforce_train)) {
+    on.exit(lockEnvironment(self$.input, TRUE), add = TRUE)
+  }
 </span></code>
             </pre>
           </div>
@@ -1038,7 +1683,8 @@ munging operation at prediction time.</p>
           <div class="code">
             <pre>
               <code class="R"><span class="spacer">  fn <- inject_metadata(self$.train_function, self$.input, self$.trained)
-  fn(data, ...)
+  args <- c(list(substitute(data)), eval(substitute(alist(...))))
+  do.call(fn, args, envir = `_envir`)
 }
 
 #' Run the predict function on a mungebit.
@@ -1063,7 +1709,7 @@ munging operation at prediction time.</p>
 #'   or \code{data.frame}. Side effects on the \code{input} local variable
 #'   provided to the \code{predict_function} will be recorded on the mungebit
 #'   object.
-mungebit_predict <- function(data, ...) {
+mungebit_predict <- function(data, ..., `_envir` = parent.frame()) {
   if (!isTRUE(self$.trained)) {
     stop("This mungebit cannot predict because it has not been trained.")
   }
@@ -1081,7 +1727,8 @@ can use the metadata that was compute during training time.</p>
           <div class="code">
             <pre>
               <code class="R"><span class="spacer">  fn <- inject_metadata(self$.predict_function, self$.input, self$.trained)
-  fn(data, ...)
+  args <- c(list(substitute(data)), eval(substitute(alist(...))))
+  do.call(fn, args, envir = `_envir`)
 }
 
 inject_metadata <- function(func, input, trained) {</span></code>
@@ -1119,7 +1766,7 @@ whether the function has been trained already.</p>
           <div class="code">
             <pre>
               <code class="R"><span class="spacer">      trained = isTRUE(trained)
-    ), parent = environment(func))
+    ), parent = environment(func) %||% baseenv())
 </span></code>
             </pre>
           </div>
@@ -1763,30 +2410,47 @@ mungepiece_run <- function(data, ..., `_envir` = parent.frame()) {
   parent.env(calling_environment) <- `_envir`
   on.exit(parent.env(calling_environment) <- emptyenv(), add = TRUE)
 
-  args <- c(list(data = substitute(data)), args)
+  args <- c(list(substitute(data)), args)
 
   do.call(self$.mungebit$run, args, envir = calling_environment)
 }
 
 strip_arguments <- function(fun, n) {
-  formals(fun) <- formals(fun)[setdiff(seq_along(formals(fun)), seq_len(n))]
-  fun
+  if (length(formals(fun)) > 0L) {
+    formals(fun) <- formals(fun)[setdiff(seq_along(formals(fun)), seq_len(n))]
+    fun
+  } else {
+    fun
+  }
 }
 
 two_way_argument_merge <- function(reference_function, calling_environment, args) {
-  call      <- as.call(c(alist(self), args))
-  base_args <- as.list(match.call(reference_function, call)[-1L])
+  if (length(formals(reference_function)) == 0L) {
+    # If reference_function is `[`, calling match.call gives an
+    # "invalid definition" error.
+    reference_function <- function() { }
+    if (length(args) > 0L) {
+      args
+    } else {
+      default_args <- env2listcall(calling_environment)
+      names(default_args) <- attr(calling_environment, "initial_names")
+      default_args
+    }
+  } else {
+    call <- as.call(c(alist(self), args))
+    base_args <- as.list(match.call(reference_function, call)[-1L])
 
-  default_args <- env2listcall(calling_environment)
-  names(default_args) <- attr(calling_environment, "initial_names")
-  call         <- as.call(c(alist(self), default_args))
-  default_args <- as.list(match.call(reference_function, call)[-1L])
+    default_args <- env2listcall(calling_environment)
+    names(default_args) <- attr(calling_environment, "initial_names")
+    call         <- as.call(c(alist(self), default_args))
+    default_args <- as.list(match.call(reference_function, call)[-1L])
 
-  if (unnamed_count(default_args) > 0 && unnamed_count(base_args) > 0) {
-    default_args[unnamed(default_args)] <- NULL
+    if (unnamed_count(default_args) > 0 && unnamed_count(base_args) > 0) {
+      default_args[unnamed(default_args)] <- NULL
+    }
+
+    list_merge(default_args, base_args)
   }
-
-  list_merge(default_args, base_args)
 }
 </span></code>
             </pre>
@@ -2222,7 +2886,7 @@ on the training set in a production system on single row data sets
 #' # The munge function uses the attached "mungepieces" attribute, a list of
 #' # trained mungepieces.
 parse_mungepiece <- function(args) {
-  stopifnot(is.list(args), length(args) > 0L)
+  if (is.mungepiece(args) || is.mungebit(args)) { args <- list(args) }
 
   if (length(args) == 1L && is.mungepiece(args[[1L]])) {</span></code>
             </pre>
@@ -2263,7 +2927,8 @@ must be a list consisting of a &ldquo;train&rdquo; and &ldquo;predict&rdquo; key
 
           <div class="code">
             <pre>
-              <code class="R"><span class="spacer">  } else if (unnamed_count(args) == 0L) {</span></code>
+              <code class="R"><span class="spacer">  } else if (is.list(args) && length(args) > 0L) {
+      if (unnamed_count(args) == 0L) {</span></code>
             </pre>
           </div>
         </div>
@@ -2275,8 +2940,8 @@ must be a list consisting of a &ldquo;train&rdquo; and &ldquo;predict&rdquo; key
 
           <div class="code">
             <pre>
-              <code class="R"><span class="spacer">    parse_mungepiece_dual(args)
-  } else {</span></code>
+              <code class="R"><span class="spacer">      parse_mungepiece_dual(args)
+    } else {</span></code>
             </pre>
           </div>
         </div>
@@ -2288,7 +2953,10 @@ must be a list consisting of a &ldquo;train&rdquo; and &ldquo;predict&rdquo; key
 
           <div class="code">
             <pre>
-              <code class="R"><span class="spacer">    parse_mungepiece_single(args)
+              <code class="R"><span class="spacer">      parse_mungepiece_single(args)
+    }
+  } else {
+    stop("Invalid format passed to ", sQuote("parse_mungepiece"))
   }
 }
 </span></code>
@@ -2675,6 +3343,116 @@ may be NULL.</p>
         </div>
         <div class="section">
           <div class="markdown markdown-body">
+            <h1>standard_column_format.R</h1>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer"></span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">#' Converts a logical / numeric / character vector or a function
+#' into a character vector of column names for a dataframe.
+#'
+#' If a function is provided, it will be applied to each column of
+#' the dataframe and must return a logical; those with resulting value TRUE
+#' will be returned as a character vector.
+#'
+#' @param cols a vector or function. If logical / numeric / character vector,
+#'    it will attempt to find those columns matching these values. If \code{cols}
+#'    is a function, it will apply this function to each column of the dataframe
+#'    and return the names of columns for which it was \code{TRUE}. Additionally,
+#'    \code{cols} can be a list of any combination of the above, which will 
+#'    require all the conditions to be met.
+#' @param dataframe a reference dataframe. Necessary for computing the
+#'    column names if a numeric or logical vector is specified for \code{cols}.
+#' @export
+#' @examples
+#' standard_column_format(c(1,5), iris)  # c('Sepal.Length', 'Species')
+#' standard_column_format(c(TRUE,FALSE,FALSE,FALSE,TRUE), iris)  # c('Sepal.Length', 'Species')
+#' standard_column_format('Sepal.Length', iris)  # 'Sepal.Length'
+#' standard_column_format(list(is.numeric, c(1,5)), iris)  # 'Sepal.Length'
+#' # TODO: (RK) Explain except()
+standard_column_format <- function(cols, dataframe) {</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>If no columns are provided, we assume we are running on the entire data set.</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">  if (missing(cols)) colnames(dataframe) 
+  else {
+    process1 <- function(subcols) {
+      if (is(subcols, "except")) {
+        unexcepted <- unexcept(subcols)
+        if (!is.list(unexcepted)) unexcepted <- list(unexcepted)
+        setdiff(colnames(dataframe), process(unexcepted))
+      } else if (is.function(subcols)) {
+        # Much faster than lapply here.
+        colnames(dataframe)[local({
+          ix <- logical(length(dataframe))
+          if (is.element("name", names(formals(subcols)))) {
+            for (i in seq_along(dataframe)) {
+              ix[i] <- subcols(.subset2(dataframe, i), name = .subset2(colnames(dataframe), i))
+            }
+          } else {
+            for (i in seq_along(dataframe)) ix[i] <- subcols(.subset2(dataframe, i))
+          }
+          ix
+        })]
+      }
+      else if (is.character(subcols)) force(subcols) 
+      else if (is.list(subcols)) process(subcols)
+      else colnames(dataframe)[subcols]
+    }
+
+    process <- function(xcols) {
+      Reduce(intersect, lapply(xcols, process1))
+    }
+
+    if (is(cols, "except")) {
+      setdiff(colnames(dataframe), process(list(unexcept(cols))))
+    } else if (is.list(cols)) {
+      process(cols)
+    } else {
+      process1(cols)
+    }
+  }
+}
+
+#' Ignore during standard column format.
+#'
+#' @param x ANY. An R object.
+#' @export
+except <- function(x) {
+  class(x) <- c('except', class(x))
+  x
+}
+
+unexcept <- function(x) {
+  class(x) <- setdiff(class(x), 'except')
+  x
+}
+</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
             <h1>utils.R</h1>
 
           </div>
@@ -2741,8 +3519,13 @@ env2list <- function(env) {
   if (length(ls(env)) == 0L) {
     list()
   } else {
-    lst <- as.list(env)[attr(env, "name_order")]
-    names(lst) <- attr(env, "initial_names")
+    lst <- as.list(env)
+    lst <- lst[match(names(lst), attr(env, "parsed_names"))]
+    if (any(nzchar(attr(env, "initial_names")))) {
+      names(lst) <- attr(env, "initial_names")
+    } else {
+      names(lst) <- NULL
+    }
     lst
   }
 }
@@ -2763,7 +3546,16 @@ make_env <- function(lst, parent = emptyenv()) {
   name_order <- match(names(lst), ls(env))
   attr(env, "name_order")    <- name_order
   attr(env, "initial_names") <- initial_names
+  attr(env, "parsed_names")  <- names(lst)
   env
+}
+
+list2env_safe <- function(lst, ...) {
+  if (length(lst) > 0L) {
+    list2env(lst)
+  } else {
+    new.env(...) 
+  }
 }
 
 unnamed <- function(el) {
