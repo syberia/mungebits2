@@ -345,6 +345,7 @@ mungepiece_stages_contiguous <- function(mungelist) {
 }
 
 mungepiece_stage <- function(mungepiece_index, context) {
+  newpieces <- list() # make R CMD CHECK happy
   stage <- function(env) {
     ## Each mungepiece will correspond to one stage in a stagerunner.
     ## We will construct a *new* mungepiece on-the-fly to avoid
