@@ -534,5 +534,16 @@ describe("edge cases", {
     mp <- mungepiece$new(mungebit$new(`[`), list("Sepal.Width", drop = FALSE))
     expect_equal(mp$run(iris), iris["Sepal.Width"])
   })
+
+  test_that("it can use NSE during train", {
+    mp <- mungepiece$new(mungebit$new(function(x) substitute(x)))
+    expect_equal(mp$run(iris), quote(iris))
+  })
+
+  test_that("it can use NSE during predict", {
+    mp <- mungepiece$new(mungebit$new(function(x) substitute(x)))
+    mp$run(iris)
+    expect_equal(mp$run(iris), quote(iris))
+  })
 })
 
