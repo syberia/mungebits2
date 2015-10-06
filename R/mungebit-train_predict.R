@@ -91,9 +91,9 @@ mungebit_predict <- function(data, ..., `_envir` = parent.frame()) {
   ## We inject the `input` helper so that the mungebit
   ## can use the metadata that was computed during training time.
   #fn <- inject_metadata(self$.predict_function, self$.input, self$.trained)
-  #args <- c(list(substitute(data)), eval(substitute(alist(...))))
-  #do.call(fn, args, envir = `_envir`)
-  self$.predict_function(data, ...)
+  args <- c(list(substitute(data)), eval(substitute(alist(...))))
+  do.call(self$.predict_function, args, envir = `_envir`)
+  #self$.predict_function(data, ...)
 }
 
 inject_metadata <- function(func, input, trained) {

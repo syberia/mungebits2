@@ -47,10 +47,10 @@ mungebit_run <- function(data, ...) {
     if (is.null(self$.predict_function)) {
       data
     } else {
-      self$predict(data, ...)
+      args <- c(list(substitute(data)), eval(substitute(alist(...))))
+      args$`_envir` <- parent.frame()
+      do.call(self$predict, args, envir = parent.frame())
     }
-    #data <- .Internal(do.call(self$predict, args, parent.frame()))
-    #data <- do.call(self$predict, args, envir = parent.frame())
   } else {
     args <- c(list(substitute(data)), eval(substitute(alist(...))))
     do.call(self$train, args, envir = parent.frame())
