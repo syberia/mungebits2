@@ -238,9 +238,16 @@ the active R session (if mungebits2 is not attached to the search path).</p>
           <div class="code">
             <pre>
               <code class="R"><span class="spacer">  full_transformation <- function(data, columns = colnames(data), ...) { }
+  was_debugged <- isdebugged(transformation)
+  environment(transformation) <- list2env(list(
+    input = NULL, trained = NULL
+  ), parent = environment(transformation) %||% baseenv())
+
   environment(full_transformation) <- list2env(
     list(transformation = transformation, nonstandard = isTRUE(nonstandard),
-         "%||%" = `%||%`, list2env_safe = list2env_safe),
+         "%||%" = `%||%`, list2env_safe = list2env_safe,
+         named = is.element("name", names(formals(transformation))),
+         env = environment(transformation), was_debugged = was_debugged),
     parent = globalenv()
   )
   body(full_transformation) <- column_transformation_body
@@ -327,7 +334,7 @@ tool for your problem.</p>
 
           <div class="code">
             <pre>
-              <code class="R"><span class="spacer">    input$`_columns` <- intersect(colnames(data), standard_column_format(columns, data))
+              <code class="R"><span class="spacer">    input$columns <-  intersect(colnames(data), standard_column_format(columns, data))
   }
 </span></code>
             </pre>
@@ -343,12 +350,13 @@ will malfunction, so we should error.</p>
 
           <div class="code">
             <pre>
-              <code class="R"><span class="spacer">  if (length(colnames(data)) != length(unique(colnames(data)))) {
-    duplicate_names <- utils::head(colnames(data)[duplicated(colnames(data))], 5)
-    stop("Cannot run a ", sQuote("column_transformation"), " on data ",
-         "with duplicate column names: ",
-         paste(vapply(duplicate_names, crayon::red, character(1)), collapse = ", "))
-  }
+              <code class="R"><span class="spacer">  indices <- match(input$columns, names(data))
+  #if (length(indices) != 0L && min(indices) == 0L) { # Duplicates found.
+  #  duplicate_names <- utils::head(colnames(data)[duplicated(colnames(data))], 5)
+  #  stop("Cannot run a ", sQuote("column_transformation"), " on data ",
+  #       "with duplicate column names: ",
+  #       paste(vapply(duplicate_names, crayon::red, character(1)), collapse = ", "))
+  #}
 
   # An optimization trick to avoid the slow `[.data.frame` operator.
   old_class   <- class(data)</span></code>
@@ -382,36 +390,38 @@ can inject the <code>input</code> and <code>trained</code> locals below.</p>
 
           <div class="code">
             <pre>
-              <code class="R"><span class="spacer">  new_transformation <- transformation</span></code>
+              <code class="R"><span class="spacer"></span></code>
             </pre>
           </div>
         </div>
         <div class="section">
           <div class="markdown markdown-body">
             <p>Recall that if the <code>transformation</code> has a <code>name</code> formal argument,
-we will have to provide the column name dynamically.</p>
-
-          </div>
-
-          <div class="code">
-            <pre>
-              <code class="R"><span class="spacer">  named <- is.element("name", names(formals(transformation)))</span></code>
-            </pre>
-          </div>
-        </div>
-        <div class="section">
-          <div class="markdown markdown-body">
-            <p>This standard trick allows us to capture the unevaluated 
+we will have to provide the column name dynamically.
+This standard trick allows us to capture the unevaluated 
 expressions in the <code>...</code> parameter.</p>
 
           </div>
 
           <div class="code">
             <pre>
-              <code class="R"><span class="spacer">  arguments  <- c(list(NULL), eval(substitute(alist(...))))
-  parent_env <- environment(transformation) %||% baseenv()
+              <code class="R"><span class="spacer">  env$trained <- trained
+  
+  if (nonstandard) {
+    arguments  <- c(list(NULL), eval(substitute(alist(...))))
+    # arguments <- c(list(NULL), list(...))
+    eval_frame <- parent.frame()
+  }
 
-  for (column_name in input$`_columns`) {</span></code>
+  if (!isTRUE(trained)) {
+    input$sub_inputs <- structure(replicate(
+      length(input$columns), new.env(parent = emptyenv()), simplify = FALSE
+    ), .Names = input$columns)
+  }
+
+  #for (column_name in input$columns) {
+  #for (i in indices) {
+  data[indices] <- lapply(seq_along(indices), function(j, ...) {</span></code>
             </pre>
           </div>
         </div>
@@ -424,7 +434,13 @@ function.</p>
 
           <div class="code">
             <pre>
-              <code class="R"><span class="spacer">    if (isTRUE(trained)) {</span></code>
+              <code class="R"><span class="spacer">    #if (isTRUE(trained)) {
+    #  if (length(input[[column_name]]) == 0L) {
+    #    mock_input <- empty_lock
+    #  } else {
+    #    mock_input <- list2env_safe(input[[column_name]])
+    #  }
+</span></code>
             </pre>
           </div>
         </div>
@@ -437,7 +453,7 @@ with graceful handling of <code>NULL</code>s and empty lists.</p>
 
           <div class="code">
             <pre>
-              <code class="R"><span class="spacer">      mock_input <- list2env_safe(input[[column_name]])</span></code>
+              <code class="R"><span class="spacer">      #mock_input <- list2env_safe(input[[column_name]])</span></code>
             </pre>
           </div>
         </div>
@@ -450,8 +466,8 @@ messing with the <code>input</code>! The mungebit is now considered immutable.</
 
           <div class="code">
             <pre>
-              <code class="R"><span class="spacer">      lockEnvironment(mock_input, bindings = TRUE)
-    } else {</span></code>
+              <code class="R"><span class="spacer">      #lockEnvironment(mock_input, bindings = TRUE)
+    #} else {</span></code>
             </pre>
           </div>
         </div>
@@ -466,8 +482,8 @@ capture do it separately for each column.</p>
 
           <div class="code">
             <pre>
-              <code class="R"><span class="spacer">      mock_input <- new.env(parent = emptyenv())
-    }
+              <code class="R"><span class="spacer">    #  mock_input <- new.env(parent = emptyenv())
+    #}
 </span></code>
             </pre>
           </div>
@@ -481,10 +497,12 @@ into the copy of the <code>transformation</code>.</p>
 
           <div class="code">
             <pre>
-              <code class="R"><span class="spacer">    environment(new_transformation) <- list2env(
-      list(input = mock_input, trained = trained),
-      parent = parent_env 
-    )</span></code>
+              <code class="R"><span class="spacer">    #environment(transformation) <- list2env(
+    #  list(input = mock_input, trained = trained),
+    #  parent = parent_env 
+    #)
+    env$input <- .subset2(.subset2(input, "sub_inputs"), j)
+</span></code>
             </pre>
           </div>
         </div>
@@ -498,24 +516,8 @@ retain this property.</p>
 
           <div class="code">
             <pre>
-              <code class="R"><span class="spacer">    if (isdebugged(transformation)) {
-      debug(new_transformation)
-    }
-</span></code>
-            </pre>
-          </div>
-        </div>
-        <div class="section">
-          <div class="markdown markdown-body">
-            <p>Recall that if the <code>transformation</code> has a formal argument called
-&ldquo;name&rdquo;, we must pass along the column name.</p>
-
-          </div>
-
-          <div class="code">
-            <pre>
-              <code class="R"><span class="spacer">    if (named) {
-      arguments$name <- column_name
+              <code class="R"><span class="spacer">    if (was_debugged) {
+      debug(transformation)
     }
 
     if (nonstandard) {
@@ -542,7 +544,27 @@ during the second call (in other words, it is equivalent to
 
           <div class="code">
             <pre>
-              <code class="R"><span class="spacer">      arguments[[1L]] <- bquote(.(data_expr)[[.(column_name)]])
+              <code class="R"><span class="spacer"></span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>Recall that if the <code>transformation</code> has a formal argument called
+&ldquo;name&rdquo;, we must pass along the column name.</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">      if (named) {
+        arguments$name <- .subset2(names(data), .subset2(indices, j))
+      }
+
+      arguments[[1L]] <- bquote(.(data_expr)[[.(
+        if (named) arguments$name else .subset2(names(data), .subset2(indices, j))
+      )]])
+      .Internal(do.call(transformation, arguments, eval_frame))
     } else {</span></code>
             </pre>
           </div>
@@ -556,7 +578,15 @@ magic and simply send the function the value.</p>
 
           <div class="code">
             <pre>
-              <code class="R"><span class="spacer">      arguments[[1L]] <- data[[column_name]]
+              <code class="R"><span class="spacer">      #arguments[[1L]] <- .subset2(data, .subset2(indices, j)) #data[[column_name]]
+      # Jump to the environment that contains _2, _1 etc
+      #.Internal(do.call(transformation, arguments, parent.frame(3)))
+      if (named) {
+        transformation(.subset2(data, .subset2(indices, j)), ...,
+                       name = .subset2(names(data), .subset2(indices, j)))
+      } else {
+        transformation(.subset2(data, .subset2(indices, j)), ...)
+      }
     }
 </span></code>
             </pre>
@@ -571,9 +601,10 @@ the NSE carry-over works correctly.</p>
 
           <div class="code">
             <pre>
-              <code class="R"><span class="spacer">    data[[column_name]] <- do.call(new_transformation, arguments, envir = parent.frame())
+              <code class="R"><span class="spacer">    #do.call(transformation, arguments, envir = eval_frame)
+    #transformation(arguments[[1L]])
 
-    if (!isTRUE(trained)) {</span></code>
+    #if (!isTRUE(trained)) {</span></code>
             </pre>
           </div>
         </div>
@@ -591,8 +622,17 @@ a reserved key <code>_colnames</code> as observed earlier in this function).</p>
 
           <div class="code">
             <pre>
-              <code class="R"><span class="spacer">      input[[column_name]] <- as.list(mock_input)
-    }
+              <code class="R"><span class="spacer">
+      # THIS IS SLOOOOOOW
+      #input[[column_name]] <- as.list(mock_input)
+    #}
+
+    #out
+  #}
+  }, ...)
+
+  if (!isTRUE(trained)) {
+    lapply(input$sub_inputs, lockEnvironment, bindings = TRUE)
   }
 </span></code>
             </pre>
@@ -810,7 +850,7 @@ the R code with a multitude of strings.</p>
         </div>
         <div class="section">
           <div class="markdown markdown-body">
-            <p>Note the use of <code>{{{error}}}</code> in conjuction with
+            <p>Note the use of <code>{{{error}}}</code> in conjunction with
 <a href="https://github.com/edwindj/whisker">whisker</a> below.</p>
 
           </div>
@@ -1381,6 +1421,7 @@ mungepiece_stages_contiguous <- function(mungelist) {
 }
 
 mungepiece_stage <- function(mungepiece_index, context) {
+  newpieces <- list() # make R CMD CHECK happy
   stage <- function(env) {</span></code>
             </pre>
           </div>
@@ -1512,9 +1553,19 @@ mungebit_initialize <- function(train_function   = base::identity,
          "something of class ", sQuote(crayon::red(class(predict_function)[1L])), ".")
   }
 
-  self$.train_function   <- to_function(train_function, "train")
-  self$.predict_function <- to_function(predict_function, "predict")
   self$.input            <- new.env(parent = emptyenv())
+  self$.train_function   <- to_function(train_function, "train")
+  if (!is.null(self$.train_function)) {
+    environment(self$.train_function) <- list2env(list(
+      input = self$.input, trained = FALSE),
+      parent = environment(self$.train_function) %||% globalenv())
+  }
+  self$.predict_function <- to_function(predict_function, "predict")
+  if (!is.null(self$.predict_function)) {
+    environment(self$.predict_function) <- list2env(list(
+      input = self$.input, trained = FALSE),
+      parent = environment(self$.predict_function) %||% globalenv())
+  }
   self$.trained          <- FALSE
   self$.enforce_train    <- enforce_train
 }
@@ -1583,14 +1634,24 @@ mungebit_run <- function(data, ...) {
 
     args <- c(list(bquote(.(substitute(data))$data)), eval(substitute(alist(...))))
     data$data <- do.call(self$run, args, envir = parent.frame())
+    #data$data <- Recall(data$data, ...)
+    data
   } else if (isTRUE(self$.trained)) {
-    args <- c(list(substitute(data)), eval(substitute(alist(...))))
-    data <- do.call(self$predict, args, envir = parent.frame())
+    #args <- c(list(substitute(data)), eval(substitute(alist(...))))
+    if (is.null(self$.predict_function)) {
+      data
+    } else {
+      args <- c(list(substitute(data)), eval(substitute(alist(...))))
+      args$`_envir` <- parent.frame()
+      do.call(self$predict, args, envir = parent.frame())
+    }
   } else {
     args <- c(list(substitute(data)), eval(substitute(alist(...))))
-    data <- do.call(self$train, args, envir = parent.frame())
+    do.call(self$train, args, envir = parent.frame())
+    #.Internal(do.call(self$train, args, parent.frame()))
+    #self$train(data, ...)
   }
-  data
+  #data
 }
 </span></code>
             </pre>
@@ -1666,7 +1727,12 @@ time (i.e., when it is run in a real-time production system).</p>
           <div class="code">
             <pre>
               <code class="R"><span class="spacer">  if (isTRUE(self$.enforce_train)) {
-    on.exit(lockEnvironment(self$.input, TRUE), add = TRUE)
+    on.exit({
+      lockEnvironment(self$.input, TRUE)
+      if (!is.null(self$.predict_function)) {
+        environment(self$.predict_function)$trained <- TRUE
+      }
+    }, add = TRUE)
   }
 </span></code>
             </pre>
@@ -1682,9 +1748,14 @@ munging operation at prediction time.</p>
 
           <div class="code">
             <pre>
-              <code class="R"><span class="spacer">  fn <- inject_metadata(self$.train_function, self$.input, self$.trained)
-  args <- c(list(substitute(data)), eval(substitute(alist(...))))
-  do.call(fn, args, envir = `_envir`)
+              <code class="R"><span class="spacer">  #fn <- inject_metadata(self$.train_function, self$.input, self$.trained)
+  if (is.null(self$.train_function)) {
+    data
+  } else {
+    args <- c(list(substitute(data)), eval(substitute(alist(...))))
+    do.call(self$.train_function, args, envir = `_envir`)
+    #self$.train_function(data, ...)
+  }
 }
 
 #' Run the predict function on a mungebit.
@@ -1710,6 +1781,7 @@ munging operation at prediction time.</p>
 #'   provided to the \code{predict_function} will be recorded on the mungebit
 #'   object.
 mungebit_predict <- function(data, ..., `_envir` = parent.frame()) {
+  # For some reason, accessing this takes some time..
   if (!isTRUE(self$.trained)) {
     stop("This mungebit cannot predict because it has not been trained.")
   }
@@ -1720,15 +1792,16 @@ mungebit_predict <- function(data, ..., `_envir` = parent.frame()) {
         <div class="section">
           <div class="markdown markdown-body">
             <p>We inject the <code>input</code> helper so that the mungebit
-can use the metadata that was compute during training time.</p>
+can use the metadata that was computed during training time.</p>
 
           </div>
 
           <div class="code">
             <pre>
-              <code class="R"><span class="spacer">  fn <- inject_metadata(self$.predict_function, self$.input, self$.trained)
+              <code class="R"><span class="spacer">  #fn <- inject_metadata(self$.predict_function, self$.input, self$.trained)
   args <- c(list(substitute(data)), eval(substitute(alist(...))))
-  do.call(fn, args, envir = `_envir`)
+  do.call(self$.predict_function, args, envir = `_envir`)
+  #self$.predict_function(data, ...)
 }
 
 inject_metadata <- function(func, input, trained) {</span></code>
@@ -2036,10 +2109,20 @@ mungebit <- R6::R6Class("mungebit",
     predict_function = function() { self$.predict_function },
     trained    = function(val) {
       if (missing(val)) self$.trained
-      else self$.trained <- isTRUE(val)
+      else {
+        if (!is.null(self$.train_function) && !is.null(environment(self$.train_function))) {
+          environment(self$.train_function)$trained <- isTRUE(val)
+        }
+        if (!is.null(self$.predict_function) && !is.null(environment(self$.predict_function))) {
+          environment(self$.predict_function)$trained <- isTRUE(val)
+        }
+        self$.trained <- isTRUE(val)
+      }
     },
-    input      = function(val) {
-      if (missing(val)) as.list(self$.input)
+    input      = function(val, list = TRUE) {
+      if (missing(val) && isTRUE(list)) as.list(self$.input)
+      else if (missing(val) && !isTRUE(list)) self$.input
+      else if (is.environment(val)) self$.input <- val
       else self$.input <- list2env(val, parent = parent.env(self$.input))
     },
     duplicate  = function(...) { duplicate_mungebit(self, ...) }
@@ -2061,7 +2144,7 @@ existing mungebit</p>
               <code class="R"><span class="spacer">duplicate_mungebit <- function(bit, private = FALSE) {
   newbit <- mungebit$new(bit$train_function(), bit$predict_function())
   if (isTRUE(private)) {
-    newbit$input(as.list(bit$input()))
+    copy_env(newbit$.input, bit$input(list = FALSE))
     newbit$trained(bit$trained())
   }
   newbit
@@ -2075,6 +2158,35 @@ existing mungebit</p>
 #' @export
 is.mungebit <- function(x) {
   inherits(x, "mungebit")
+}
+
+#' Copy one environment into another recursively.
+#' 
+#' @param to environment. The new environment.
+#' @param from environment. The old environment.
+#' @note Both \code{to} and \code{from} must be pre-existing environments
+#'   or this function will error.
+copy_env <- function(to, from) {
+  stopifnot(is.environment(to) && is.environment(from))
+  rm(list = ls(to, all.names = TRUE), envir = to)
+  for (name in ls(from, all.names = TRUE)) {
+    swap_environments <- function(obj) {
+      # TODO: (RK) Attributes?
+      if (is.environment(obj)) {
+        env <- new.env(parent = parent.env(obj))
+        copy_env(env, obj)
+        env
+      } else if (is.recursive(obj)) {
+        for (i in seq_along(obj)) {
+          obj[[i]] <- Recall(obj[[i]])
+        }
+        obj
+      } else { obj }
+    }
+
+    # Copy sub-environments in full.
+    assign(name, swap_environments(from[[name]]), envir = to)
+  }
 }
 </span></code>
             </pre>
@@ -3599,6 +3711,8 @@ unnamed_count <- function(el) {
     )))
   }
 }
+
+globalVariables(c("newpieces", "mungepieces", "size"))
 </span></code>
             </pre>
           </div>
