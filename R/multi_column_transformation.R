@@ -96,5 +96,167 @@
 #' # Another way to achieve the same thing.
 #' iris2 <- mungebit$new(divider)$run(iris, 1:2, "Sepal.Ratio") 
 multi_column_transformation <- function(transformation, nonstandard = FALSE) {
+  full_transformation <- function(data, input_columns, output_columns, ...) { }
+  was_debugged <- isdebugged(transformation)
+  environment(transformation) <- list2env(list(
+    input = NULL, trained = NULL
+  ), parent = environment(transformation) %||% baseenv())
+
+  environment(full_transformation) <- list2env(
+    list(transformation = transformation, nonstandard = isTRUE(nonstandard),
+         "%||%" = `%||%`, list2env_safe = list2env_safe,
+         named = is.element("names", names(formals(transformation))),
+         env = environment(transformation), was_debugged = was_debugged),
+    parent = globalenv()
+  )
+  body(full_transformation) <- multi_column_transformation_body
+  # Add some convenient metadata for overloading `debug` and `print`.
+  class(full_transformation) <- c("multi_column_transformation", "transformation", "function")
+  full_transformation
 }
+
+multi_column_transformation_body <- quote({
+  # Recall that `data` and `columns` are formals.
+  ## In this function, optimization matters. Column transformations will
+  ## run millions of times over various datasets, so even microsecond
+  ## shaved off is valuable. Throughout, note the code may be
+  ## slightly improved for readability but at a speed cost. When
+  ## developing new packages, one should follow the old adage to
+  ## first make it functional, then make it beautiful, then make
+  ## it fast. In this case, we prefer speed over beauty!
+  ## 
+  ## If we are supporting non-standard evaluation, we precompute
+  ## the expression used, or we will lose it upon first reference of `data`.
+  if (nonstandard) {
+    data_expr <- substitute(data)
+    ## Unfortunately, we forcibly have to disable nonstandard evaluation
+    ## support if a call was passed in instead of an atomic symbol,
+    ## since then we could be re-computing side effectful computations!
+    if (!is.name(data_expr)) nonstandard <- FALSE
+  }
+
+  if (!isTRUE(trained)) {
+    ## The dataset passed in may look different depending on whether
+    ## we are running the mungebit in train or predict mode. If 
+    ## `columns` are `1:4` and the dataset is shuffled, we will
+    ## be referencing the wrong columns after running the mungebit
+    ## the second time in predict mode! To avoid this problem, keeping
+    ## in mind that R data.frames have unique column names by design,
+    ## we store the *character vector of column names* in the mungebit
+    ## input so that we know exactly which columns this transformation
+    ## should apply to in predict mode.
+    ##
+    ## If you require operating totally different column names during
+    ## training versus prediction, it is by definition not the same mathematical
+    ## transformation, and thus a mungebit is likely not the appropriate
+    ## tool for your problem.
+    input$columns <- intersect(colnames(data), standard_column_format(input_columns, data))
+  }
+
+  if (!(is.character(output_columns) && all(nzchar(output_columns)) &&
+        !any(is.na(output_columns)) && length(output_columns) > 0 &&
+        length(unique(output_columns)) == 1)) {
+    stop("The ", sQuote("output_columns"), " for a ",
+         sQuote("multi_column_transformation"), " must be given by a",
+         "non-zero character vector of non-NA, non-blank unique strings.")
+  }
+
+  ## If the data.frame has duplicate column names, a rare but possible 
+  ## corruption, the `for` loop below that applies the transformations
+  ## will malfunction, so we should error.
+  indices <- match(input$columns, names(data))
+
+  # An optimization trick to avoid the slow `[.data.frame` operator.
+  old_class   <- class(data)
+  ## Try to run ``print(`[.data.frame`)`` from your R console. Notice how
+  ## much code is run to perform data.frame subsetting! The same is
+  ## true for ``print(`[[<-.data.frame`)``, data.frame element assignment.
+  ## Since we use this operation below, we want to skip over the typical
+  ## checks for the sake of performance and use straight-up list subsetting
+  ## (which will use underlying C code).
+  class(data) <- "list" 
+
+  ## We copy over the `transformation` passed to the function so we
+  ## can inject the `input` and `trained` locals below.
+
+  ## Recall that if the `transformation` has a `name` formal argument,
+  ## we will have to provide the column name dynamically.
+  ## This standard trick allows us to capture the unevaluated 
+  ## expressions in the `...` parameter.
+  env$trained <- trained
+  
+  if (nonstandard) {
+    ## We reserve the first n arguments for the input columns.
+    arguments  <- c(vector("list", length(input$columns)),
+                    eval(substitute(alist(...))))
+    eval_frame <- parent.frame()
+  } else {
+    arguments  <- c(vector("list", length(input$columns)),
+                    list(...))
+  }
+ 
+  ## Assigning a function's environment clears its internal debug 
+  ## flag, so if the function was previously being debugged we
+  ## retain this property.
+  if (was_debugged) {
+    debug(transformation)
+  }
+
+  if (nonstandard) {
+    # Support non-standard evaluation at a slight speed cost.
+    ## And the non-standard evaluation trick! Imagine a user had called
+    ## a column transformation with the code below.
+    ##
+    ## ```r
+    ## ct <- column_transformation(nonstandard = TRUE, function(x) { y <- substitute(x) })
+    ## some_data <- data.frame(first = 1:2, second = c("a", "b"))
+    ## mungebit$new(ct)$run(some_data)
+    ## ```
+    ##
+    ## Then `substitute(x)` would be precisely the expression 
+    ## `some_data[["first"]]` during the first call and `some_data[["second"]]`
+    ## during the second call (in other words, it is equivalent to
+    ## `y <- quote(some_data[["first"]])` in the first call, etc.).
+
+    ## Recall that if the `transformation` has a formal argument called
+    ## "name", we must pass along the column name.
+    if (named) {
+      arguments$names <- input$columns
+    }
+
+    arguments[seq_along(input$columns)] <- data[indices]
+    if (length(output_columns) == 1) {
+      data[[output_columns]] <- .Internal(do.call(transformation, arguments, eval_frame))
+    } else {
+      data[output_columns] <- .Internal(do.call(transformation, arguments, eval_frame))
+    }
+  } else {
+    ## If NSE should not be carried over we do not bother with the
+    ## magic and simply send the function the value.
+    #arguments[[1L]] <- .subset2(data, .subset2(indices, j)) #data[[column_name]]
+    # Jump to the environment that contains _2, _1 etc
+    #.Internal(do.call(transformation, arguments, parent.frame(3)))
+    if (named) {
+      arguments$names <- input$columns
+    }
+    arguments[seq_along(input$columns)] <- data[indices]
+    if (length(output_columns) == 1) {
+      data[[output_columns]] <- .Internal(do.call(transformation, arguments, environment()))
+    } else {
+      data[output_columns] <- .Internal(do.call(transformation, arguments, environment()))
+    }
+  }
+
+  if (!isTRUE(trained)) {
+    lapply(env$input, lockEnvironment, bindings = TRUE)
+  }
+
+  ## Finally, we reset the class to `data.frame` after stripping it
+  ## for a speed optimization. If you study the code of ``(`[.data.frame`)``,
+  ## you will see this is exactly the same trick the R base library uses
+  ## to delegate to the list subsetting after the data.frame-specific
+  ## checks have been completed.
+  class(data) <- old_class
+  data
+})
 
