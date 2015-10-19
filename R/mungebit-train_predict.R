@@ -47,10 +47,6 @@ mungebit_train <- function(data, ..., `_envir` = parent.frame()) {
     }, add = TRUE)
   }
 
-  ## We inject the `input` helper so that the mungebit
-  ## can remember necessary metadata for replicating the
-  ## munging operation at prediction time.
-  #fn <- inject_metadata(self$.train_function, self$.input, self$.trained)
   if (is.null(self$.train_function)) {
     data
   } else if (self$.nse) {
@@ -89,9 +85,6 @@ mungebit_predict <- function(data, ..., `_envir` = parent.frame()) {
     stop("This mungebit cannot predict because it has not been trained.")
   }
 
-  ## We inject the `input` helper so that the mungebit
-  ## can use the metadata that was computed during training time.
-  #fn <- inject_metadata(self$.predict_function, self$.input, self$.trained)
   if (self$.nse) {
     args <- c(list(substitute(data)), eval(substitute(alist(...))))
     do.call(self$.predict_function, args, envir = `_envir`)
@@ -100,6 +93,8 @@ mungebit_predict <- function(data, ..., `_envir` = parent.frame()) {
   }
 }
 
+# TODO: (RK) Remove now that environment injection is implicit in
+# the train and predict functions.
 inject_metadata <- function(func, input, trained) {
   ## If there is no training or prediction function, we perform 
   ## *no transformation* on the data or the mungebit `input`, i.e.,
