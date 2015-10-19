@@ -99,7 +99,7 @@ multi_column_transformation <- function(transformation, nonstandard = FALSE) {
   full_transformation <- function(data, input_columns, output_columns, ...) { }
   was_debugged <- isdebugged(transformation)
   environment(transformation) <- list2env(list(
-    input = NULL, trained = NULL
+    trained = NULL
   ), parent = environment(transformation) %||% baseenv())
 
   environment(full_transformation) <- list2env(
@@ -136,28 +136,17 @@ multi_column_transformation_body <- quote({
   }
 
   if (!isTRUE(trained)) {
-    ## The dataset passed in may look different depending on whether
-    ## we are running the mungebit in train or predict mode. If 
-    ## `columns` are `1:4` and the dataset is shuffled, we will
-    ## be referencing the wrong columns after running the mungebit
-    ## the second time in predict mode! To avoid this problem, keeping
-    ## in mind that R data.frames have unique column names by design,
-    ## we store the *character vector of column names* in the mungebit
-    ## input so that we know exactly which columns this transformation
-    ## should apply to in predict mode.
-    ##
-    ## If you require operating totally different column names during
-    ## training versus prediction, it is by definition not the same mathematical
-    ## transformation, and thus a mungebit is likely not the appropriate
-    ## tool for your problem.
-    input$columns <- intersect(colnames(data), standard_column_format(input_columns, data))
+    if (!is.simple_character_vector(input_columns)) {
+      stop("The ", sQuote("input_columns"), " for a ",
+           sQuote("multi_column_transformation"), " must be given by a ",
+           "non-zero character vector of non-NA, non-blank unique strings.")
+    }
+    input$columns <- input_columns
   }
 
-  if (!(is.character(output_columns) && all(nzchar(output_columns)) &&
-        !any(is.na(output_columns)) && length(output_columns) > 0 &&
-        length(unique(output_columns)) == 1)) {
+  if (!is.simple_character_vector(output_columns)) {
     stop("The ", sQuote("output_columns"), " for a ",
-         sQuote("multi_column_transformation"), " must be given by a",
+         sQuote("multi_column_transformation"), " must be given by a ",
          "non-zero character vector of non-NA, non-blank unique strings.")
   }
 
@@ -189,11 +178,13 @@ multi_column_transformation_body <- quote({
     ## We reserve the first n arguments for the input columns.
     arguments  <- c(vector("list", length(input$columns)),
                     eval(substitute(alist(...))))
-    eval_frame <- parent.frame()
   } else {
     arguments  <- c(vector("list", length(input$columns)),
                     list(...))
   }
+  eval_frame <- parent.frame()
+
+  env$input <- input
  
   ## Assigning a function's environment clears its internal debug 
   ## flag, so if the function was previously being debugged we
@@ -202,53 +193,19 @@ multi_column_transformation_body <- quote({
     debug(transformation)
   }
 
-  if (nonstandard) {
-    # Support non-standard evaluation at a slight speed cost.
-    ## And the non-standard evaluation trick! Imagine a user had called
-    ## a column transformation with the code below.
-    ##
-    ## ```r
-    ## ct <- column_transformation(nonstandard = TRUE, function(x) { y <- substitute(x) })
-    ## some_data <- data.frame(first = 1:2, second = c("a", "b"))
-    ## mungebit$new(ct)$run(some_data)
-    ## ```
-    ##
-    ## Then `substitute(x)` would be precisely the expression 
-    ## `some_data[["first"]]` during the first call and `some_data[["second"]]`
-    ## during the second call (in other words, it is equivalent to
-    ## `y <- quote(some_data[["first"]])` in the first call, etc.).
+  if (named) {
+    arguments$names <- input$columns
+  }
+  arguments[seq_along(input$columns)] <- data[indices]
 
-    ## Recall that if the `transformation` has a formal argument called
-    ## "name", we must pass along the column name.
-    if (named) {
-      arguments$names <- input$columns
-    }
-
-    arguments[seq_along(input$columns)] <- data[indices]
-    if (length(output_columns) == 1) {
-      data[[output_columns]] <- .Internal(do.call(transformation, arguments, eval_frame))
-    } else {
-      data[output_columns] <- .Internal(do.call(transformation, arguments, eval_frame))
-    }
+  if (length(output_columns) == 1) {
+    data[[output_columns]] <- .Internal(do.call(transformation, arguments, eval_frame))
   } else {
-    ## If NSE should not be carried over we do not bother with the
-    ## magic and simply send the function the value.
-    #arguments[[1L]] <- .subset2(data, .subset2(indices, j)) #data[[column_name]]
-    # Jump to the environment that contains _2, _1 etc
-    #.Internal(do.call(transformation, arguments, parent.frame(3)))
-    if (named) {
-      arguments$names <- input$columns
-    }
-    arguments[seq_along(input$columns)] <- data[indices]
-    if (length(output_columns) == 1) {
-      data[[output_columns]] <- .Internal(do.call(transformation, arguments, environment()))
-    } else {
-      data[output_columns] <- .Internal(do.call(transformation, arguments, environment()))
-    }
+    data[output_columns] <- .Internal(do.call(transformation, arguments, eval_frame))
   }
 
   if (!isTRUE(trained)) {
-    lapply(env$input, lockEnvironment, bindings = TRUE)
+    lockEnvironment(env$input, bindings = TRUE) 
   }
 
   ## Finally, we reset the class to `data.frame` after stripping it

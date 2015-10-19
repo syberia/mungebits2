@@ -31,6 +31,12 @@ is.acceptable_function <- function(x) {
   is.mungebit(x)
 }
 
+is.simple_character_vector <- function(x) {
+  is.character(x) && all(nzchar(x)) &&
+  !any(is.na(x)) && length(x) > 0 &&
+  length(unique(x)) == length(x)
+}
+
 # If an environment contains variables "a" and "b",
 # create a list (a = quote(a), b = quote(b)).
 env2listcall <- function(env) {
