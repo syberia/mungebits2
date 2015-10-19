@@ -105,7 +105,7 @@ describe("Passing arguments", {
 
   describe("Nonstandard evaluation pass-along", {
     it("passes along nonstandard evaluation", {
-      nse <- mungebit$new(column_transformation(nonstandard = TRUE, function(x) {
+      nse <- mungebit$new(nse = TRUE, column_transformation(nonstandard = TRUE, function(x) {
         paste0(deparse(substitute(x)), x) }))
       balloo <- iris
       iris2  <- nse$run(balloo, 5)

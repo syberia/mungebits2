@@ -536,12 +536,12 @@ describe("edge cases", {
   })
 
   test_that("it can use NSE during train", {
-    mp <- mungepiece$new(mungebit$new(function(x) substitute(x)))
+    mp <- mungepiece$new(mungebit$new(nse = TRUE, function(x) substitute(x)))
     expect_equal(mp$run(iris), quote(iris))
   })
 
   test_that("it can use NSE during predict", {
-    mp <- mungepiece$new(mungebit$new(function(x) substitute(x)))
+    mp <- mungepiece$new(mungebit$new(nse = TRUE, function(x) substitute(x)))
     mp$run(iris)
     expect_equal(mp$run(iris), quote(iris))
   })

@@ -196,11 +196,12 @@ NULL
 #' }
 mungebit <- R6::R6Class("mungebit",
   public = list(
-    .train_function   = NULL, # Function or NULL
-    .predict_function = NULL, # Function or NULL
-    .input            = NULL, # Environment
+    .train_function   = NULL,  # Function or NULL
+    .predict_function = NULL,  # Function or NULL
+    .input            = NULL,  # Environment
     .trained          = FALSE, # Logical
-    .enforce_train    = TRUE, # Logical
+    .enforce_train    = TRUE,  # Logical
+    .nse              = FALSE, # Logicl
 
     initialize = mungebit_initialize,
     run        = mungebit_run,

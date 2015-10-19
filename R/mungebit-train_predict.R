@@ -53,10 +53,11 @@ mungebit_train <- function(data, ..., `_envir` = parent.frame()) {
   #fn <- inject_metadata(self$.train_function, self$.input, self$.trained)
   if (is.null(self$.train_function)) {
     data
-  } else {
+  } else if (self$.nse) {
     args <- c(list(substitute(data)), eval(substitute(alist(...))))
     do.call(self$.train_function, args, envir = `_envir`)
-    #self$.train_function(data, ...)
+  } else {
+    self$.train_function(data, ...)
   }
 }
 
@@ -91,9 +92,12 @@ mungebit_predict <- function(data, ..., `_envir` = parent.frame()) {
   ## We inject the `input` helper so that the mungebit
   ## can use the metadata that was computed during training time.
   #fn <- inject_metadata(self$.predict_function, self$.input, self$.trained)
-  args <- c(list(substitute(data)), eval(substitute(alist(...))))
-  do.call(self$.predict_function, args, envir = `_envir`)
-  #self$.predict_function(data, ...)
+  if (self$.nse) {
+    args <- c(list(substitute(data)), eval(substitute(alist(...))))
+    do.call(self$.predict_function, args, envir = `_envir`)
+  } else {
+    self$.predict_function(data, ...)
+  }
 }
 
 inject_metadata <- function(func, input, trained) {
