@@ -2,11 +2,54 @@
 % Please edit documentation in R/multi_column_transformation.R
 \name{multi_column_transformation}
 \alias{multi_column_transformation}
-\title{Multi column transform.}
+\title{Multi column transformations.}
 \usage{
-multi_column_transformation()
+multi_column_transformation(transformation, nonstandard = FALSE)
+}
+\arguments{
+\item{transformation}{function. The function's first argument will
+receive atomic vectors derived from some \code{data.frame}.
+Any other arguments will be received as the
+\code{list(...)} from calling the function produced by
+\code{multi_column_transformation}.}
+
+\item{nonstandard}{logical. If \code{TRUE}, nonstandard evaluation support
+will be provided for the derived function, so it will be possible
+to capture the calling expression for each column. By default \code{FALSE}.
+Note this will slow the transformation by 0.1ms on each column.}
+}
+\value{
+a function which takes a data.frame and a vector of column
+   names (or several other formats, see \code{\link{standard_column_format}})
+   and applies the \code{transformation}.
 }
 \description{
-Multi column transform.
+A mungebit which takes a fixed group of columns and produces a new
+group of columns (or a single new column) can be abstracted into a
+multi-column transformation. This functions allows one to specify what
+happens to a fixed list of columns, and the mungebit will be the
+resulting multi-column transformation applied to an arbitrary combination
+of columns. An arity-1 multi-column transformation with a single output
+column equal to its original input column is simply a
+\code{\link{column_transformation}}.
+can be abstracted into a column transformation. This function allows one
+to specify what happens to an individual column, and the mungebit will be
+the resulting column transformation applied to an arbitrary combination of
+columns.
+}
+\note{
+The function produced by calling \code{multi_column_transformation} will
+   not run independently. It must be used a train or predict function for
+   a \code{\link{mungebit}}.
+}
+\examples{
+divider <- multi_column_transformation(function(x, y) { x / y })
+# Determines the ratio of Sepal.Length and Sepal.Width in the iris dataset.
+iris2 <- mungebit$new(divider)$run(iris, c("Sepal.Length", "Sepal.Width"), "Sepal.Ratio")
+# Another way to achieve the same thing.
+iris2 <- mungebit$new(divider)$run(iris, 1:2, "Sepal.Ratio")
+}
+\seealso{
+\code{\link{column_transformation}}, \code{\link{standard_column_format}}
 }
 
