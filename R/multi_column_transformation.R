@@ -155,32 +155,26 @@ multi_column_transformation_body <- quote({
   ## will malfunction, so we should error.
   indices <- match(input$columns, names(data))
 
-  # An optimization trick to avoid the slow `[.data.frame` operator.
-  old_class   <- class(data)
   ## Try to run ``print(`[.data.frame`)`` from your R console. Notice how
   ## much code is run to perform data.frame subsetting! The same is
   ## true for ``print(`[[<-.data.frame`)``, data.frame element assignment.
   ## Since we use this operation below, we want to skip over the typical
   ## checks for the sake of performance and use straight-up list subsetting
   ## (which will use underlying C code).
+  # An optimization trick to avoid the slow `[.data.frame` operator.
+  old_class <- class(data)
   class(data) <- "list" 
 
-  ## We copy over the `transformation` passed to the function so we
-  ## can inject the `input` and `trained` locals below.
-
-  ## Recall that if the `transformation` has a `name` formal argument,
-  ## we will have to provide the column name dynamically.
-  ## This standard trick allows us to capture the unevaluated 
-  ## expressions in the `...` parameter.
   env$trained <- trained
-  
+
   if (nonstandard) {
-    ## We reserve the first n arguments for the input columns.
-    arguments  <- c(vector("list", length(input$columns)),
-                    eval(substitute(alist(...))))
+    ## We reserve the first few arguments for the input columns.
+    arguments <- c(vector("list", length(input$columns)),
+    ## This standard trick allows us to capture the unevaluated 
+    ## expressions in the `...` parameter.
+                   eval(substitute(alist(...))))
   } else {
-    arguments  <- c(vector("list", length(input$columns)),
-                    list(...))
+    arguments <- c(vector("list", length(input$columns)), list(...))
   }
   eval_frame <- parent.frame()
 
