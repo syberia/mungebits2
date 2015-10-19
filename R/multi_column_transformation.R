@@ -93,8 +93,6 @@
 #' divider <- multi_column_transformation(function(x, y) { x / y })
 #' # Determines the ratio of Sepal.Length and Sepal.Width in the iris dataset.
 #' iris2 <- mungebit$new(divider)$run(iris, c("Sepal.Length", "Sepal.Width"), "Sepal.Ratio") 
-#' # Another way to achieve the same thing.
-#' iris2 <- mungebit$new(divider)$run(iris, 1:2, "Sepal.Ratio") 
 multi_column_transformation <- function(transformation, nonstandard = FALSE) {
   full_transformation <- function(data, input_columns, output_columns, ...) { }
   was_debugged <- isdebugged(transformation)
@@ -116,6 +114,12 @@ multi_column_transformation <- function(transformation, nonstandard = FALSE) {
 }
 
 multi_column_transformation_body <- quote({
+  is.simple_character_vector <- function(x) {
+    is.character(x) && all(nzchar(x)) &&
+    !any(is.na(x)) && length(x) > 0 &&
+    length(unique(x)) == length(x)
+  }
+
   # Recall that `data` and `columns` are formals.
   ## In this function, optimization matters. Column transformations will
   ## run millions of times over various datasets, so even microsecond

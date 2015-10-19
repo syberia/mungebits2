@@ -46,8 +46,6 @@ The function produced by calling \code{multi_column_transformation} will
 divider <- multi_column_transformation(function(x, y) { x / y })
 # Determines the ratio of Sepal.Length and Sepal.Width in the iris dataset.
 iris2 <- mungebit$new(divider)$run(iris, c("Sepal.Length", "Sepal.Width"), "Sepal.Ratio")
-# Another way to achieve the same thing.
-iris2 <- mungebit$new(divider)$run(iris, 1:2, "Sepal.Ratio")
 }
 \seealso{
 \code{\link{column_transformation}}, \code{\link{standard_column_format}}
