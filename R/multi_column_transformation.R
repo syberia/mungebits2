@@ -102,7 +102,7 @@ multi_column_transformation <- function(transformation, nonstandard = FALSE) {
 
   environment(full_transformation) <- list2env(
     list(transformation = transformation, nonstandard = isTRUE(nonstandard),
-         "%||%" = `%||%`, list2env_safe = list2env_safe,
+         "%||%" = `%||%`, is.simple_character_vector = is.simple_character_vector,
          named = is.element("names", names(formals(transformation))),
          env = environment(transformation), was_debugged = was_debugged),
     parent = globalenv()
@@ -114,13 +114,9 @@ multi_column_transformation <- function(transformation, nonstandard = FALSE) {
 }
 
 multi_column_transformation_body <- quote({
-  is.simple_character_vector <- function(x) {
-    is.character(x) && all(nzchar(x)) &&
-    !any(is.na(x)) && length(x) > 0 &&
-    length(unique(x)) == length(x)
-  }
+  # Recall that `data`, `input_columns`, and `output_columns` are
+  # the arguments to this function.
 
-  # Recall that `data` and `columns` are formals.
   ## In this function, optimization matters. Column transformations will
   ## run millions of times over various datasets, so even microsecond
   ## shaved off is valuable. Throughout, note the code may be
