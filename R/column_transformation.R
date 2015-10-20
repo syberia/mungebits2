@@ -108,9 +108,16 @@ column_transformation <- function(transformation, nonstandard = FALSE) {
   ## may not be available when a mungebit is serialized and exported out of
   ## the active R session (if mungebits2 is not attached to the search path).
   full_transformation <- function(data, columns = colnames(data), ...) { }
+  was_debugged <- isdebugged(transformation)
+  environment(transformation) <- list2env(list(
+    input = NULL, trained = NULL
+  ), parent = environment(transformation) %||% baseenv())
+
   environment(full_transformation) <- list2env(
     list(transformation = transformation, nonstandard = isTRUE(nonstandard),
-         "%||%" = `%||%`, list2env_safe = list2env_safe),
+         "%||%" = `%||%`, list2env_safe = list2env_safe,
+         named = is.element("name", names(formals(transformation))),
+         env = environment(transformation), was_debugged = was_debugged),
     parent = globalenv()
   )
   body(full_transformation) <- column_transformation_body
@@ -157,18 +164,19 @@ column_transformation_body <- quote({
     ## training versus prediction, it is by definition not the same mathematical
     ## transformation, and thus a mungebit is likely not the appropriate
     ## tool for your problem.
-    input$`_columns` <- intersect(colnames(data), standard_column_format(columns, data))
+    input$columns <- intersect(colnames(data), standard_column_format(columns, data))
   }
 
   ## If the data.frame has duplicate column names, a rare but possible 
   ## corruption, the `for` loop below that applies the transformations
   ## will malfunction, so we should error.
-  if (length(colnames(data)) != length(unique(colnames(data)))) {
-    duplicate_names <- utils::head(colnames(data)[duplicated(colnames(data))], 5)
-    stop("Cannot run a ", sQuote("column_transformation"), " on data ",
-         "with duplicate column names: ",
-         paste(vapply(duplicate_names, crayon::red, character(1)), collapse = ", "))
-  }
+  indices <- match(input$columns, names(data))
+  #if (length(indices) != 0L && min(indices) == 0L) { # Duplicates found.
+  #  duplicate_names <- utils::head(colnames(data)[duplicated(colnames(data))], 5)
+  #  stop("Cannot run a ", sQuote("column_transformation"), " on data ",
+  #       "with duplicate column names: ",
+  #       paste(vapply(duplicate_names, crayon::red, character(1)), collapse = ", "))
+  #}
 
   # An optimization trick to avoid the slow `[.data.frame` operator.
   old_class   <- class(data)
@@ -182,50 +190,63 @@ column_transformation_body <- quote({
 
   ## We copy over the `transformation` passed to the function so we
   ## can inject the `input` and `trained` locals below.
-  new_transformation <- transformation
+
   ## Recall that if the `transformation` has a `name` formal argument,
   ## we will have to provide the column name dynamically.
-  named <- is.element("name", names(formals(transformation)))
   ## This standard trick allows us to capture the unevaluated 
   ## expressions in the `...` parameter.
-  arguments  <- c(list(NULL), eval(substitute(alist(...))))
-  parent_env <- environment(transformation) %||% baseenv()
+  env$trained <- trained
+  
+  if (nonstandard) {
+    arguments  <- c(list(NULL), eval(substitute(alist(...))))
+    eval_frame <- parent.frame()
+  }
 
-  for (column_name in input$`_columns`) {
+  if (!isTRUE(trained)) {
+    input$sub_inputs <- structure(replicate(
+      length(input$columns), new.env(parent = emptyenv()), simplify = FALSE
+    ), .Names = input$columns)
+  }
+
+  #for (column_name in input$columns) {
+  #for (i in indices) {
+  data[indices] <- lapply(seq_along(indices), function(j, ...) {
     ## We have to inject the `input` local into the train or predict
     ## function.
-    if (isTRUE(trained)) {
+    #if (isTRUE(trained)) {
+    #  if (length(input[[column_name]]) == 0L) {
+    #    mock_input <- empty_lock
+    #  } else {
+    #    mock_input <- list2env_safe(input[[column_name]])
+    #  }
+
       ## `list2env_safe` is just [`list2env`](https://stat.ethz.ch/R-manual/R-devel/library/base/html/list2env.html)
       ## with graceful handling of `NULL`s and empty lists.
-      mock_input <- list2env_safe(input[[column_name]])
+      #mock_input <- list2env_safe(input[[column_name]])
       ## If the mungebit is already trained, we do not want the user
       ## messing with the `input`! The mungebit is now considered immutable.
-      lockEnvironment(mock_input, bindings = TRUE)
-    } else {
+      #lockEnvironment(mock_input, bindings = TRUE)
+    #} else {
       ## Otherwise, we use a new environment to capture what they
       ## assign to the `input`. Since the column transformation runs
       ## once on each column, we have to make a "mock input" so we
       ## capture do it separately for each column.
-      mock_input <- new.env(parent = emptyenv())
-    }
+    #  mock_input <- new.env(parent = emptyenv())
+    #}
 
     ## Finally, we are ready to inject the `input` and `trained` locals
     ## into the copy of the `transformation`.
-    environment(new_transformation) <- list2env(
-      list(input = mock_input, trained = trained),
-      parent = parent_env 
-    )
+    #environment(transformation) <- list2env(
+    #  list(input = mock_input, trained = trained),
+    #  parent = parent_env 
+    #)
+    env$input <- .subset2(.subset2(input, "sub_inputs"), j)
+
     ## Assigning a function's environment clears its internal debug 
     ## flag, so if the function was previously being debugged we
     ## retain this property.
-    if (isdebugged(transformation)) {
-      debug(new_transformation)
-    }
-
-    ## Recall that if the `transformation` has a formal argument called
-    ## "name", we must pass along the column name.
-    if (named) {
-      arguments$name <- column_name
+    if (was_debugged) {
+      debug(transformation)
     }
 
     if (nonstandard) {
@@ -243,18 +264,37 @@ column_transformation_body <- quote({
       ## `some_data[["first"]]` during the first call and `some_data[["second"]]`
       ## during the second call (in other words, it is equivalent to
       ## `y <- quote(some_data[["first"]])` in the first call, etc.).
-      arguments[[1L]] <- bquote(.(data_expr)[[.(column_name)]])
+
+      ## Recall that if the `transformation` has a formal argument called
+      ## "name", we must pass along the column name.
+      if (named) {
+        arguments$name <- .subset2(names(data), .subset2(indices, j))
+      }
+
+      arguments[[1L]] <- bquote(.(data_expr)[[.(
+        if (named) arguments$name else .subset2(names(data), .subset2(indices, j))
+      )]])
+      .Internal(do.call(transformation, arguments, eval_frame))
     } else {
       ## If NSE should not be carried over we do not bother with the
       ## magic and simply send the function the value.
-      arguments[[1L]] <- data[[column_name]]
+      #arguments[[1L]] <- .subset2(data, .subset2(indices, j)) #data[[column_name]]
+      # Jump to the environment that contains _2, _1 etc
+      #.Internal(do.call(transformation, arguments, parent.frame(3)))
+      if (named) {
+        transformation(.subset2(data, .subset2(indices, j)), ...,
+                       name = .subset2(names(data), .subset2(indices, j)))
+      } else {
+        transformation(.subset2(data, .subset2(indices, j)), ...)
+      }
     }
 
     ## Finally, we require the `envir` argument to `do.call` to ensure
     ## the NSE carry-over works correctly.
-    data[[column_name]] <- do.call(new_transformation, arguments, envir = parent.frame())
+    #do.call(transformation, arguments, envir = eval_frame)
+    #transformation(arguments[[1L]])
 
-    if (!isTRUE(trained)) {
+    #if (!isTRUE(trained)) {
       ## And here is the trick for partitioning up the `input`, one for
       ## each column the transformation was applied to!
       ## 
@@ -262,8 +302,17 @@ column_transformation_body <- quote({
       ## `yellow`, then the underlying mungebit's `input` will have
       ## keys `blue` and `yellow` with the respective "sub-inputs" (and
       ## a reserved key `_colnames` as observed earlier in this function).
-      input[[column_name]] <- as.list(mock_input)
-    }
+
+      # THIS IS SLOOOOOOW
+      #input[[column_name]] <- as.list(mock_input)
+    #}
+
+    #out
+  #}
+  }, ...)
+
+  if (!isTRUE(trained)) {
+    lapply(input$sub_inputs, lockEnvironment, bindings = TRUE)
   }
 
   ## Finally, we reset the class to `data.frame` after stripping it

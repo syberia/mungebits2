@@ -30,6 +30,7 @@ describe("errors", {
 })
 
 make_fn <- function(train) {
+  force(train)
   function(data, first = NULL, ...) {
     list(train = train, first = first, dots = list(...),
          first_expr = substitute(first),
@@ -530,8 +531,19 @@ describe("edge cases", {
   })
 
   test_that("it can run builtin train functions", {
-    mp <- mungepiece$new(mungebit$new(`[`), list("Sepal.Width", drop = FALSE))
+    mp <- mungepiece$new(mungebit$new(`[`), list("Sepal.Width"))
     expect_equal(mp$run(iris), iris["Sepal.Width"])
+  })
+
+  test_that("it can use NSE during train", {
+    mp <- mungepiece$new(mungebit$new(nse = TRUE, function(x) substitute(x)))
+    expect_equal(mp$run(iris), quote(iris))
+  })
+
+  test_that("it can use NSE during predict", {
+    mp <- mungepiece$new(mungebit$new(nse = TRUE, function(x) substitute(x)))
+    mp$run(iris)
+    expect_equal(mp$run(iris), quote(iris))
   })
 })
 

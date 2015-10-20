@@ -23,6 +23,16 @@ test_that("it correctly adds to the mungepieces list", {
   expect_equal(length(attr(iris2, 'mungepieces')), 2)
 })
 
+test_that("it handles a mutating column transformation", {
+  args <- lapply(seq_len(2),
+    function(.) list(list(column_transformation(function(x, one) {
+      input$one <- one; x + one
+    }), column_transformation(function(x, ...) { x + input$one })), 1, 1))
+  iris2 <- munge(iris, args)
+  iris3 <- munge(iris, iris2)
+  expect_equal(iris2[TRUE], iris3[TRUE])
+})
+
 test_that("it correctly munges a simple mungepiece sequence", {
   args <- lapply(seq_len(2) + 1,
     function(x) list(function(x, v) { x[[1]] <- v * x[[1]]; x }, x))
@@ -126,5 +136,19 @@ describe("using mungepieces with inputs", {
     expect_equal(iris3[TRUE], iris2[colnames(iris3)]) 
   })
 
+  describe("One-sided munging", {
+    test_that("it works with a predict-only mungebit", {
+      iris2 <- munge(iris, list("Drop nothing" = list(list(NULL, drop_variables), "Species")))
+      expect_equal(iris2[TRUE], iris)
+      expect_equal(munge(iris, iris2)[TRUE], iris[1:4])
+    })
+
+    test_that("it works with a train-only mungebit", {
+      iris2 <- munge(iris, list("Drop nothing" = list(list(drop_variables, NULL), "Species")))
+      expect_equal(iris2[TRUE], iris[1:4])
+      iris3 <- munge(iris, iris2)
+      expect_equal(iris3[TRUE], iris)
+    })
+  })
 })
 

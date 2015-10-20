@@ -196,11 +196,12 @@ NULL
 #' }
 mungebit <- R6::R6Class("mungebit",
   public = list(
-    .train_function   = NULL, # Function or NULL
-    .predict_function = NULL, # Function or NULL
-    .input            = NULL, # Environment
+    .train_function   = NULL,  # Function or NULL
+    .predict_function = NULL,  # Function or NULL
+    .input            = NULL,  # Environment
     .trained          = FALSE, # Logical
-    .enforce_train    = TRUE, # Logical
+    .enforce_train    = TRUE,  # Logical
+    .nse              = FALSE, # Logicl
 
     initialize = mungebit_initialize,
     run        = mungebit_run,
@@ -213,10 +214,20 @@ mungebit <- R6::R6Class("mungebit",
     predict_function = function() { self$.predict_function },
     trained    = function(val) {
       if (missing(val)) self$.trained
-      else self$.trained <- isTRUE(val)
+      else {
+        if (!is.null(self$.train_function) && !is.null(environment(self$.train_function))) {
+          environment(self$.train_function)$trained <- isTRUE(val)
+        }
+        if (!is.null(self$.predict_function) && !is.null(environment(self$.predict_function))) {
+          environment(self$.predict_function)$trained <- isTRUE(val)
+        }
+        self$.trained <- isTRUE(val)
+      }
     },
-    input      = function(val) {
-      if (missing(val)) as.list(self$.input)
+    input      = function(val, list = TRUE) {
+      if (missing(val) && isTRUE(list)) as.list(self$.input)
+      else if (missing(val) && !isTRUE(list)) self$.input
+      else if (is.environment(val)) self$.input <- val
       else self$.input <- list2env(val, parent = parent.env(self$.input))
     },
     duplicate  = function(...) { duplicate_mungebit(self, ...) }
@@ -228,7 +239,7 @@ mungebit <- R6::R6Class("mungebit",
 duplicate_mungebit <- function(bit, private = FALSE) {
   newbit <- mungebit$new(bit$train_function(), bit$predict_function())
   if (isTRUE(private)) {
-    newbit$input(as.list(bit$input()))
+    copy_env(newbit$.input, bit$input(list = FALSE))
     newbit$trained(bit$trained())
   }
   newbit
@@ -242,5 +253,34 @@ duplicate_mungebit <- function(bit, private = FALSE) {
 #' @export
 is.mungebit <- function(x) {
   inherits(x, "mungebit")
+}
+
+#' Copy one environment into another recursively.
+#' 
+#' @param to environment. The new environment.
+#' @param from environment. The old environment.
+#' @note Both \code{to} and \code{from} must be pre-existing environments
+#'   or this function will error.
+copy_env <- function(to, from) {
+  stopifnot(is.environment(to) && is.environment(from))
+  rm(list = ls(to, all.names = TRUE), envir = to)
+  for (name in ls(from, all.names = TRUE)) {
+    swap_environments <- function(obj) {
+      # TODO: (RK) Attributes?
+      if (is.environment(obj)) {
+        env <- new.env(parent = parent.env(obj))
+        copy_env(env, obj)
+        env
+      } else if (is.recursive(obj)) {
+        for (i in seq_along(obj)) {
+          obj[[i]] <- Recall(obj[[i]])
+        }
+        obj
+      } else { obj }
+    }
+
+    # Copy sub-environments in full.
+    assign(name, swap_environments(from[[name]]), envir = to)
+  }
 }
 
