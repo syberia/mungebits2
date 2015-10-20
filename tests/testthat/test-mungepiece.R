@@ -531,7 +531,7 @@ describe("edge cases", {
   })
 
   test_that("it can run builtin train functions", {
-    mp <- mungepiece$new(mungebit$new(`[`), list("Sepal.Width", drop = FALSE))
+    mp <- mungepiece$new(mungebit$new(`[`), list("Sepal.Width"))
     expect_equal(mp$run(iris), iris["Sepal.Width"])
   })
 
