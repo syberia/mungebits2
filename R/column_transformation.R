@@ -164,7 +164,7 @@ column_transformation_body <- quote({
     ## training versus prediction, it is by definition not the same mathematical
     ## transformation, and thus a mungebit is likely not the appropriate
     ## tool for your problem.
-    input$columns <-  intersect(colnames(data), standard_column_format(columns, data))
+    input$columns <- intersect(colnames(data), standard_column_format(columns, data))
   }
 
   ## If the data.frame has duplicate column names, a rare but possible 
@@ -199,7 +199,6 @@ column_transformation_body <- quote({
   
   if (nonstandard) {
     arguments  <- c(list(NULL), eval(substitute(alist(...))))
-    # arguments <- c(list(NULL), list(...))
     eval_frame <- parent.frame()
   }
 
