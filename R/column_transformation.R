@@ -113,11 +113,18 @@ column_transformation <- function(transformation, nonstandard = FALSE) {
     input = NULL, trained = NULL
   ), parent = environment(transformation) %||% baseenv())
 
+  ## We create a copy of the `standard_column_format` helper
+  ## in this package so it can accompany the `column_transformation`
+  ## to R sessions even where this package is not present.
+  standard_column_format_dup <- standard_column_format
+  environment(standard_column_format_dup) <- globalenv()
+
   environment(full_transformation) <- list2env(
     list(transformation = transformation, nonstandard = isTRUE(nonstandard),
          "%||%" = `%||%`, list2env_safe = list2env_safe,
          named = is.element("name", names(formals(transformation))),
-         env = environment(transformation), was_debugged = was_debugged),
+         env = environment(transformation), was_debugged = was_debugged,
+         standard_column_format = standard_column_format_dup),
     parent = globalenv()
   )
   body(full_transformation) <- column_transformation_body
