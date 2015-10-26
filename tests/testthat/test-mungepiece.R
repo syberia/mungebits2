@@ -30,7 +30,8 @@ describe("errors", {
 
   test_that("it errors when you pass a list with non-unique names as args", {
     mb <- mungebit$new()
-    expect_error(mungepiece$new(mb, list(a = 1, a = 2)))
+    expect_error(mungepiece$new(mb, list(a = 1, a = 2)), "duplicate names")
+    expect_error(mungepiece$new(mb, predict_args = list(a = 1, a = 2)), "duplicate names")
   })
 })
 

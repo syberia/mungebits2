@@ -71,6 +71,10 @@ make_env <- function(lst, parent = emptyenv()) {
     paste0("_", initial_names)
   )
 
+  if (anyDuplicated(names(lst))) {
+    stop("Cannot accept lists with duplicate names")
+  }
+
   if (length(lst) == 0) {
     env <- new.env(parent = parent)
   } else {
