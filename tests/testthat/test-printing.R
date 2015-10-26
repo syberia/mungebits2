@@ -108,6 +108,26 @@ describe("printing mungebits", {
     mp <- mungepiece$new(mungebit$new(column_transformation(identity)))
     expect_output(print(mp), "Column transformation")
   })
+
+  test_that("it can snip away really long formal arguments", {
+    really_long_function_definition <- function(
+      really_long_function_definition1, really_long_function_definition2,
+      really_long_function_definition10, really_long_function_definition3,
+      really_long_function_definition4, really_long_function_definition5,
+      really_long_function_definition6, really_long_function_definition7,
+      really_long_function_definition8, really_long_function_definition9,
+      really_long_function_definition11, really_long_function_definition12,
+      really_long_function_definition20, really_long_function_definition13,
+      really_long_function_definition14, really_long_function_definition15,
+      really_long_function_definition16, really_long_function_definition17,
+      really_long_function_definition18, really_long_function_definition19
+    ) x
+
+    mp <- mungepiece$new(mungebit$new(column_transformation(really_long_function_definition)))
+    expect_output(print(mp), "...", fixed = TRUE)
+    out <- capture.output(print(mp, full = TRUE))
+    expect_false(any(grepl("...", out, fixed = TRUE)))
+  })
 })
 
 describe("transformations", {
