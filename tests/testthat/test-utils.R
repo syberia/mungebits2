@@ -13,11 +13,20 @@ describe("list2env_safe", {
 
 describe("zzz", {
   test_that("it can call onLoad", {
-    assert(suppressPackageStartupMessages(.onLoad()))
+    testthatsomemore::package_stub("base", "as.package_version", function(...) {
+      if (!is.character(..1)) structure(list(c(3, 0, 0)), class = c("R_system_version", "package_version", "numeric_version"))
+      else ..1        
+    }, 
+    testthatsomemore::package_stub("base", "packageStartupMessage", function(x) {
+      expect_true(grepl("with R version", x))
+    }, .onLoad()))
   })
 
   test_that("it can call onAttach", {
-    assert(suppressPackageStartupMessages(.onAttach()))
+    testthatsomemore::package_stub("base", "setHook", function(ev, fn) { fn() }, 
+    testthatsomemore::package_stub("base", "packageStartupMessage", function(x) {
+      expect_true(grepl("have loaded mungebits", x))
+    }, .onAttach()))
   })
 })
 
