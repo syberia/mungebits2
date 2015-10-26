@@ -284,3 +284,8 @@ copy_env <- function(to, from) {
   }
 }
 
+#' @export
+print.mungebit <- function(x, ...) {
+  print_mungebit(x, ...)
+}
+

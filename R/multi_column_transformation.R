@@ -211,3 +211,10 @@ multi_column_transformation_body <- quote({
   data
 })
 
+#' @export
+print.multi_column_transformation <- function(x, ...) {
+  # `print_transformation` parameters include
+  #  `indent = 0L, full = FALSE`.
+  print_transformation(x, ..., byline = "Multi column transformation")
+}
+

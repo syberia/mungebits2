@@ -41,6 +41,7 @@ Collate:
     'mungepiece.R'
     'package.mungebits2.R'
     'parse_mungepiece.R'
+    'print.R'
     'standard_column_format.R'
     'utils.R'
     'zzz.R'
