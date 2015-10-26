@@ -40,6 +40,19 @@ test_that("munge works with environments", {
   expect_equal(length(attr(env$data, 'mungepieces')), 2)
 })
 
+test_that("munge can return a stagerunner", {
+  args <- lapply(seq_len(2),
+    function(.) list(column_transformation(function(x, one) x + one), 1, 1))
+  expect_is(munge(iris, args, stagerunner = TRUE), "stageRunner")
+})
+
+test_that("munge can return a stagerunner with remember", {
+  args <- lapply(seq_len(2),
+    function(.) list(column_transformation(function(x, one) x + one), 1, 1))
+  expect_is(munge(iris, args, stagerunner = list(remember = TRUE)), "stageRunner")
+  expect_true(munge(iris, args, stagerunner = list(remember = TRUE))$remember)
+})
+
 test_that("it handles a mutating column transformation", {
   args <- lapply(seq_len(2),
     function(.) list(list(column_transformation(function(x, one) {
