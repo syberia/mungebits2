@@ -28,5 +28,12 @@ describe("printing mungebits", {
   test_that("it can print lack of predict function", {
     expect_output(print(mungebit$new(identity, NULL)), "No predict")
   })
+  
+  test_that("it can display if a mungebit is trained", {
+    mb <- mungebit$new()            
+    expect_output(print(mb), "ntrained")
+    mb$run(iris)
+    expect_output(print(mb), "[^n]trained")
+  })
 })
 
