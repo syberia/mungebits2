@@ -109,5 +109,21 @@ describe("transformations", {
   test_that("it can print a column transformation", {
     expect_output(print(column_transformation(identity)), "Column transformation")
   })
+
+  test_that("it can print a column transformation", {
+    expect_output(print(column_transformation(identity)), "Column transformation")
+  })
+  
+  test_that("it can display full column transformation body", {
+    ct <- column_transformation(utils::install.packages)
+    out <- capture.output(print(ct))
+    expect_false(any(grepl("Updating HTML", out)))
+    expect_output(print(ct, full = TRUE), "Updating HTML")
+  })
+  
+  test_that("it squishes braces", {
+    ct <- column_transformation(function(x) { 2 * x + 1 })
+    expect_output(print(ct), "function (x) {\n    2 * x", fixed = TRUE)
+  })
 })
 
