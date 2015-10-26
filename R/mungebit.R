@@ -224,13 +224,14 @@ mungebit <- R6::R6Class("mungebit",
         self$.trained <- isTRUE(val)
       }
     },
-    input      = function(val, list = TRUE) {
+    input       = function(val, list = TRUE) {
       if (missing(val) && isTRUE(list)) as.list(self$.input)
       else if (missing(val) && !isTRUE(list)) self$.input
       else if (is.environment(val)) self$.input <- val
       else self$.input <- list2env(val, parent = parent.env(self$.input))
     },
-    duplicate  = function(...) { duplicate_mungebit(self, ...) }
+    nonstandard = function() { isTRUE(self$.nse) },
+    duplicate   = function(...) { duplicate_mungebit(self, ...) }
   )
 )
 

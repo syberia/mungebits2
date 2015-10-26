@@ -33,7 +33,8 @@ print_mungebit <- function(x, ..., indent = 0L, prefix2 = "", show_trained = TRU
                     else  crayon::red$bold("untrained")), ") ")
     } else " "
   }
-  cat(sep = "", prefix, prefix2, crayon::green("Mungebit"), trained(), "with:\n")
+  cat(sep = "", prefix, prefix2, crayon::green("Mungebit"), trained(), "with",
+      if (x$nonstandard()) " nonstandard evaluation", ":\n")
   if (length(x$input()) > 0) {
     cat(sep = "", prefix, "  * ", crayon::magenta$bold("input"), ": \n")
     max_lines <- if (isTRUE(full)) Inf else 5L
