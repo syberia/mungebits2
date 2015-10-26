@@ -144,8 +144,6 @@ if (requireNamespace("microbenchmark", quietly = TRUE)) {
       column_transformation_runtime <- speeds$median[[1L]]
       apply_raw_function_runtime    <- speeds$median[[2L]]
     
-      # TODO: (RK) Reduce this to a factor of 5 by providing "standard evaluation"
-      # mungebits that do not bother with passing along the calling expressions.
       expect_true(column_transformation_runtime < 6 * apply_raw_function_runtime,
         paste0("Execution of ", crayon::blue("column_transformation"),
          " took too long: \nFormer took ",

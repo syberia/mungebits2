@@ -27,6 +27,11 @@ describe("errors", {
     expect_error(mungepiece$new(mb, list(), NULL), "as the third argument")
     expect_error(mungepiece$new(mb, list(), identity), "as the third argument")
   })
+
+  test_that("it errors when you pass a list with non-unique names as args", {
+    mb <- mungebit$new()
+    expect_error(mungepiece$new(mb, list(a = 1, a = 2)))
+  })
 })
 
 make_fn <- function(train) {
