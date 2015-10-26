@@ -117,6 +117,7 @@
 #'    application of the underlying mungebit. If \code{data} is a data.frame,
 #'    the transformed data.frame is returned.
 mungepiece_run <- function(data, ..., `_envir` = parent.frame()) {
+  # TODO: (RK) Document literately.
   if (self$.mungebit$trained()) {
     calling_environment <- self$.predict_args
     reference_function  <- self$.mungebit$predict_function()

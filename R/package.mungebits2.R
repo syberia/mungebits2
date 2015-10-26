@@ -29,5 +29,5 @@
 #' @docType package
 NULL
 
-utils::globalVariables("self")
+utils::globalVariables(c("self", "newpieces", "mungepieces", "size"))
 
