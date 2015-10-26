@@ -15,6 +15,11 @@ describe("Invalid inputs", {
     expect_error(parse_mungepiece(list(tran = identity, predict = identity)),
                  "you provided a list with keys")
   })
+
+  test_that("it breaks when you pass an illegal hybrid pair", {
+    expect_error(parse_mungepiece(list(list("monkey"), list("banana"))),
+                 "the only accepted format")
+  })
 })
 
 train_fn   <- function(data, by = 2) {
