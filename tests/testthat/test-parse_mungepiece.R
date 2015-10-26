@@ -20,6 +20,11 @@ describe("Invalid inputs", {
     expect_error(parse_mungepiece(list(list("monkey"), list("banana"))),
                  "the only accepted format")
   })
+
+  test_that("it breaks when you pass an illegal dual pair by type", {
+    expect_error(parse_mungepiece(list(train = "foo", predict = "bar")),
+                 "must pass a list on both sides")
+  })
 })
 
 train_fn   <- function(data, by = 2) {
