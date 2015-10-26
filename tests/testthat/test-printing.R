@@ -56,5 +56,10 @@ describe("printing mungebits", {
     expect_false(any(grepl("boom", out)))
     expect_output(print(mb, full = TRUE), "boom")
   })
+  
+  test_that("it can explain a mungebit uses nonstandard evaluation", {
+    mb <- mungebit$new(nse = TRUE)
+    expect_output(print(mb), "nonstandard")
+  })
 })
 
