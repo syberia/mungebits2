@@ -84,5 +84,19 @@ describe("printing mungebits", {
     mb <- mungebit$new(nse = TRUE)
     expect_output(print(mb), "nonstandard")
   })
+
+  test_that("it hides predict args when none are present", {
+    mp  <- mungepiece$new(mungebit$new(), train_args = list(a = 1), predict_args = list())
+    out <- capture.output(print(mp))
+    expect_false(any(grepl("predict arguments", out)))
+    expect_output(print(mp), "train arguments")
+  })
+
+  test_that("it hides train args when none are present", {
+    mp  <- mungepiece$new(mungebit$new(), train_args = list(), predict_args = list(a = 1))
+    out <- capture.output(print(mp))
+    expect_false(any(grepl("train arguments", out)))
+    expect_output(print(mp), "predict arguments")
+  })
 })
 
