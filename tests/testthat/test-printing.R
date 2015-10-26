@@ -114,6 +114,10 @@ describe("transformations", {
     expect_output(print(column_transformation(identity)), "Column transformation")
   })
   
+  test_that("it can print a multi column transformation", {
+    expect_output(print(multi_column_transformation(identity)), "Multi column transformation")
+  })
+  
   test_that("it can display full column transformation body", {
     ct <- column_transformation(utils::install.packages)
     out <- capture.output(print(ct))
@@ -124,6 +128,16 @@ describe("transformations", {
   test_that("it squishes braces", {
     ct <- column_transformation(function(x) { 2 * x + 1 })
     expect_output(print(ct), "function (x) {\n    2 * x", fixed = TRUE)
+  })
+  
+  test_that("it informs us when using nonstandard evaluation", {
+    ct <- column_transformation(function(x) { 2 * x + 1 }, nonstandard = TRUE)
+    expect_output(print(ct), "non-standard", fixed = TRUE)
+  })
+  
+  test_that("it informs us when using nonstandard evaluation for multi column transformations", {
+    ct <- multi_column_transformation(function(x) { 2 * x + 1 }, nonstandard = TRUE)
+    expect_output(print(ct), "non-standard", fixed = TRUE)
   })
 })
 
