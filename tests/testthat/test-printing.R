@@ -20,6 +20,13 @@ describe("printing mungepieces", {
     expect_output(print(mp, full = TRUE), "destdir")
   })
   
+  test_that("it can display full predict_args", {
+    mp <- mungepiece$new(mungebit$new(), list(body(utils::install.packages)))
+    out <- capture.output(print(mp))
+    expect_false(any(grepl("boom", out)))
+    expect_output(print(mp, full = TRUE), "destdir")
+  })
+  
 })
 
 describe("printing mungebits", {
