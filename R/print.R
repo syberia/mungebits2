@@ -1,17 +1,44 @@
 ## Elegant printing is hard work! This file contains some helpers
 ## to make outputting mungebits objects beautiful.
-# Print a `mungebit` object.
-print_mungebit <- function(x, ..., indent = 0L) {
-  prefix <- paste(rep("  ", indent), collapse = "")
-  cat(sep = "", prefix, crayon::green("Mungebit"), " with:\n")
-  print_mungebit_function(x, "train",   "green",  indent + 1L, ...)
-  print_mungebit_function(x, "predict", "yellow", indent + 1L, ...)
+# Print a `mungepiece` object.
+print_mungepiece <- function(x, ...) {
+  cat(crayon::blue$bold("Mungepiece"), "with:\n")
+  if (length(x$train_args()) > 0 && identical(x$train_args(), x$predict_args())) {
+    print_args(x$train_args(), "train and predict", "green", ...)
+  } else {
+    if (length(x$train_args()) > 0) {
+      print_args(x$train_args(), "train", "green", ...)
+    }
+    if (length(x$predict_args()) > 0) {
+      print_args(x$predict_args(), "predict", "green", ...)
+    }
+  }
+  print(x$mungebit(), ..., indent = 1L, prefix2 = "* ")
 }
 
-print_mungebit_function <- function(bit, type, color, indent, ..., full = FALSE) {
+print_args <- function(args, type, color, ..., full = FALSE) {
+  ## A dynamic way to fetch the color palette from the crayon package.
+  style <- getFromNamespace(color, "crayon")$bold
+  cat(sep = "", "  * ", style(paste0(type, " arguments")), ":\n")
+  max_lines <- if (isTRUE(full)) Inf else 5L
+  cat(crayon::silver(deparse2(args, max_lines = max_lines, indent = 3L)), "\n")
+}
+
+# Print a `mungebit` object.
+print_mungebit <- function(x, ..., indent = 0L, prefix2 = "") {
   prefix <- paste(rep("  ", indent), collapse = "")
-  ## Either `bit$train_function()` or `bit$predict_function()`.
-  fn <- bit[[paste0(type, "_function")]]()
+  cat(sep = "", prefix, prefix2, crayon::green("Mungebit"), " with:\n")
+  if (isTRUE(all.equal(x$train_function(), x$predict_function()))) {
+    print_mungebit_function(x$train_function(), "train and predict",
+                            "green", indent + 1L, ...)
+  } else {
+    print_mungebit_function(x$train_function(),   "train",   "green",  indent + 1L, ...)
+    print_mungebit_function(x$predict_function(), "predict", "yellow", indent + 1L, ...)
+  }
+}
+
+print_mungebit_function <- function(fn, type, color, indent, ..., full = FALSE) {
+  prefix <- paste(rep("  ", indent), collapse = "")
   ## A dynamic way to fetch the color palette from the crayon package.
   style <- getFromNamespace(color, "crayon")$bold
   if (is.null(fn)) {
@@ -92,5 +119,24 @@ function_snippet <- function(fn, indent = 0L, max_lines = 5L) {
   }
 
   paste(vapply(str_fn, function(s) paste0(prefix, s), character(1)), collapse = "\n")
+}
+
+## Instead of translating `list(a = 1)` to the rather overcumbersome
+## string `structure(list(a = 1), .Names = "a")`, this helper
+## will simply turn it to `list(a = 1)`.
+deparse2 <- function(obj, collapse = "\n", indent = 0L, max_lines = 5L) {
+  conn <- textConnection(NULL, "w")
+  ## Avoid printing unnecessary attributes.
+  dput(obj, conn, control = c("keepNA", "keepInteger"))
+  out <- textConnectionValue(conn)
+  close(conn)
+  ## `dput` uses four-space instead of two-space tabs.
+  out <- gsub("    ", "  ", out)
+  prefix <- paste(rep("  ", indent), collapse = "")
+  out <- vapply(out, function(s) paste0(prefix, s), character(1))
+  if (length(out) > max_lines + 1L) {
+    out <- c(out[seq_len(max_lines)], paste0(prefix, "..."))
+  }
+  paste(out, collapse = collapse)
 }
 
