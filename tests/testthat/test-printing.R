@@ -43,5 +43,12 @@ describe("printing mungebits", {
     mb$run(iris)
     expect_output(print(mb), "input")
   })
+  
+  test_that("it can display full function body", {
+    mb <- mungebit$new(function(x) { a; b; c; d; e; f; g; h; boom })
+    out <- capture.output(print(mb))
+    expect_false(any(grepl("boom", out)))
+    expect_output(print(mb, full = TRUE), "boom")
+  })
 })
 
