@@ -331,3 +331,59 @@ column_transformation_body <- quote({
   data
 })
 
+#' @export
+print.column_transformation <- function(x, ..., indent = 0L, full = FALSE) {
+  prefix <- paste(rep("  ", indent), collapse = "")
+  cat(sep = "", prefix, crayon::yellow("Column transformation"), ":")
+
+  snippet <- function(full. = full) {
+    function_snippet(unclass(environment(x)$transformation),
+                     indent = indent + 1L,
+                     max_lines = if (isTRUE(full.)) Inf else 5L)
+  }
+
+  if (!isTRUE(full) && !identical(snippet(FALSE), snippet(TRUE))) {
+    cat(" use", crayon::bold("print(fn, full = TRUE)"), "to show full body)")
+  }
+  cat(sep = "", "\n", crayon::silver(snippet()), "\n")
+}
+
+## A helper function to turn functions into their string
+## representations for convenient printing.
+function_snippet <- function(fn, indent = 0L, max_lines = 5L) {
+  prefix <- paste(rep("  ", indent), collapse = "")
+  ## Note that `utils::head` will convert the function to a string
+  ## for us. We use this to get a character representation of the
+  ## formals of the function along with its body.
+  str_fn <- as.character(utils::head(fn, 10000))
+  ## However, `utils::head` uses four spaces per tab instead of two.
+  str_fn <- gsub("    ", "  ", str_fn)
+
+  if (!is.call(body(fn)) || !identical(body(fn)[[1L]], as.name("{"))) {
+    ## If the function does not have braces `{` surrounding its
+    ## body, squish the last two lines into a single line, so e.g.,
+    ## `function(x)\n x` becomes `function(x) x`.
+    str_fn[length(str_fn) - 1] <-
+      c(paste(str_fn[seq(length(str_fn) - 1, length(str_fn))], collapse = ""))
+    str_fn <- str_fn[seq_len(length(str_fn) - 1)]
+    ## If the function body spills over, trim it.
+    if (length(str_fn) > max_lines + 1) {
+      str_fn <- c(str_fn[seq_len(max_lines)], paste0("..."))
+    }
+  } else {
+    ## Squish the `{` onto a single line.
+    braces <- str_fn == "{"
+    ## Note the first line can never be just `{` since it is the formals
+    ## of the function.
+    str_fn[which(braces) - 1L] <- vapply(str_fn[which(braces) - 1L],
+      function(s) paste0(s, "{"), character(1))
+    str_fn <- str_fn[!braces]
+    ## If the function body spills over, trim it.
+    if (length(str_fn) > max_lines + 2) {
+      str_fn <- c(str_fn[seq_len(max_lines)], "  # Rest of body...", "}")
+    }
+  }
+
+  paste(vapply(str_fn, function(s) paste0(prefix, s), character(1)), collapse = "\n")
+}
+
