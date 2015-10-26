@@ -5,6 +5,7 @@
 #' collection of variables. This is pretty loosely defined, but examples
 #' include dropping variables, mapping values, discretization, etc.
 #'
+#' @param self R6. Object reference (internal).
 #' @param train_function function. This specifies the behavior to perform
 #'    on the dataset when preparing for model training. A value of NULL
 #'    specifies that there should be no training step, i.e., the data
@@ -50,7 +51,8 @@
 #' # > Column scaled by 2
 #' #head(mp$data[[1]] / iris[[1]])
 #' # > [1] 4 4 4 4 4 4 
-mungebit_initialize <- function(train_function   = base::identity,
+mungebit_initialize <- function(self,
+                                train_function   = base::identity,
                                 predict_function = train_function,
                                 enforce_train    = TRUE, nse = FALSE) {
   stopifnot(isTRUE(enforce_train) || identical(enforce_train, FALSE),
