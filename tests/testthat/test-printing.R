@@ -14,5 +14,19 @@ describe("printing mungebits", {
     expect_output(print(mungebit$new(function(x) 2 * x + 1, NULL)),
                   "function (x) 2 * x + 1", fixed = TRUE)
   })
+
+  test_that("it can print a split mungebit on predict side", {
+    expect_output(print(mungebit$new(NULL, function(x) 2 * x + 1)), "predict function")
+    expect_output(print(mungebit$new(NULL, function(x) 2 * x + 1)),
+                  "function (x) 2 * x + 1", fixed = TRUE)
+  })
+
+  test_that("it can print lack of train function", {
+    expect_output(print(mungebit$new(NULL, identity)), "No train")
+  })
+
+  test_that("it can print lack of predict function", {
+    expect_output(print(mungebit$new(identity, NULL)), "No predict")
+  })
 })
 
