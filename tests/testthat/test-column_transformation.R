@@ -131,7 +131,7 @@ if (requireNamespace("microbenchmark", quietly = TRUE)) {
   describe("Benchmarks", {
 
     # This is technically a benchmark but I have no place to put it yet
-    test_that("it doubles a column no more than 4.5x as slow as a raw operation", {
+    test_that("it doubles a column no more than 6x as slow as a raw operation", {
       raw_double <- function(dataframe, cols) {
         class(dataframe) <- "list"
         for (col in cols) dataframe[[col]] <- 2 * dataframe[[col]]
@@ -157,7 +157,6 @@ if (requireNamespace("microbenchmark", quietly = TRUE)) {
          crayon::blue("raw_double"),
          " (see code for this unit test)"))
     })
-
   })
 }
 
