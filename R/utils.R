@@ -1,3 +1,5 @@
+# TODO: (RK) Document this file literately.
+
 #' Merge two lists and overwrite latter entries with former entries
 #' if names are the same.
 #'
