@@ -25,6 +25,10 @@ describe("errors", {
     expect_error(mungebit$new(NULL, iris), "as the second argument")
     expect_error(mungebit$new(NULL, new.env()), "as the second argument")
   })
+
+  test_that("it only runs on environments with data keys", {
+    expect_error(mungebit$new()$run(new.env()), "provide one that contains")
+  })
 })
 
 test_that("it correctly sets the trained flag after the first run", {
