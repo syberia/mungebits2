@@ -114,6 +114,17 @@ describe("Passing arguments", {
     })
   })
 
+  describe("Nonstandard evaluation pass-along with a call rather than a name", {
+    it("passes along nonstandard evaluation", {
+      nse <- mungebit$new(nse = TRUE, column_transformation(nonstandard = TRUE, function(x) {
+        paste0(deparse(substitute(x)), x) }))
+      balloo <- function() iris
+      iris2  <- nse$run(balloo(), 5)
+      expect_equal(iris2, transform(iris, Species = paste0('balloo()[["Species"]]', Species)),
+                   info = "column_transformation should pass along non-standard evaluation")
+    })
+  })
+
   describe("The name argument for named column transformations", {
 
     test_that("the name argument is respected", {

@@ -150,10 +150,6 @@ column_transformation_body <- quote({
   ## the expression used, or we will lose it upon first reference of `data`.
   if (nonstandard) {
     data_expr <- substitute(data)
-    ## Unfortunately, we forcibly have to disable nonstandard evaluation
-    ## support if a call was passed in instead of an atomic symbol,
-    ## since then we could be re-computing side effectful computations!
-    if (!is.name(data_expr)) nonstandard <- FALSE
   }
 
   if (!isTRUE(trained)) {
@@ -174,16 +170,7 @@ column_transformation_body <- quote({
     input$columns <- intersect(colnames(data), standard_column_format(columns, data))
   }
 
-  ## If the data.frame has duplicate column names, a rare but possible 
-  ## corruption, the `for` loop below that applies the transformations
-  ## will malfunction, so we should error.
   indices <- match(input$columns, names(data))
-  #if (length(indices) != 0L && min(indices) == 0L) { # Duplicates found.
-  #  duplicate_names <- utils::head(colnames(data)[duplicated(colnames(data))], 5)
-  #  stop("Cannot run a ", sQuote("column_transformation"), " on data ",
-  #       "with duplicate column names: ",
-  #       paste(vapply(duplicate_names, crayon::red, character(1)), collapse = ", "))
-  #}
 
   # An optimization trick to avoid the slow `[.data.frame` operator.
   old_class   <- class(data)
@@ -195,58 +182,35 @@ column_transformation_body <- quote({
   ## (which will use underlying C code).
   class(data) <- "list" 
 
-  ## We copy over the `transformation` passed to the function so we
-  ## can inject the `input` and `trained` locals below.
-
-  ## Recall that if the `transformation` has a `name` formal argument,
-  ## we will have to provide the column name dynamically.
-  ## This standard trick allows us to capture the unevaluated 
-  ## expressions in the `...` parameter.
   env$trained <- trained
   
+  ## If we wish to pass along the expression the transformation was called
+  ## with so we can use `substitute` correctly, the only effective way
+  ## to perform this capture is to use [`alist`](https://stat.ethz.ch/R-manual/R-devel/library/base/html/list.html)
+  ## and retain the `parent.frame()` during `do.call` below.
   if (nonstandard) {
     arguments  <- c(list(NULL), eval(substitute(alist(...))))
     eval_frame <- parent.frame()
   }
 
+  ## If the mungebit has not been trained yet (recall that `trained` is
+  ## injected during the `mungebit$train` and `mungebit$predict` functions),
+  ## we create a vector of environments, one for each column the 
+  ## `transformation` is run on, so that each respective run has access
+  ## to an `input` environment to store computations that will be required
+  ## during predict (e.g., storing the mean of the column during imputation).
   if (!isTRUE(trained)) {
     input$sub_inputs <- structure(replicate(
       length(input$columns), new.env(parent = emptyenv()), simplify = FALSE
     ), .Names = input$columns)
   }
 
-  #for (column_name in input$columns) {
-  #for (i in indices) {
   data[indices] <- lapply(seq_along(indices), function(j, ...) {
-    ## We have to inject the `input` local into the train or predict
-    ## function.
-    #if (isTRUE(trained)) {
-    #  if (length(input[[column_name]]) == 0L) {
-    #    mock_input <- empty_lock
-    #  } else {
-    #    mock_input <- list2env_safe(input[[column_name]])
-    #  }
-
-      ## `list2env_safe` is just [`list2env`](https://stat.ethz.ch/R-manual/R-devel/library/base/html/list2env.html)
-      ## with graceful handling of `NULL`s and empty lists.
-      #mock_input <- list2env_safe(input[[column_name]])
-      ## If the mungebit is already trained, we do not want the user
-      ## messing with the `input`! The mungebit is now considered immutable.
-      #lockEnvironment(mock_input, bindings = TRUE)
-    #} else {
-      ## Otherwise, we use a new environment to capture what they
-      ## assign to the `input`. Since the column transformation runs
-      ## once on each column, we have to make a "mock input" so we
-      ## capture do it separately for each column.
-    #  mock_input <- new.env(parent = emptyenv())
-    #}
-
-    ## Finally, we are ready to inject the `input` and `trained` locals
-    ## into the copy of the `transformation`.
-    #environment(transformation) <- list2env(
-    #  list(input = mock_input, trained = trained),
-    #  parent = parent_env 
-    #)
+    ## Since `indices` match the column names to iterate over on
+    ## the nose, `sub_inputs[[j]]` will be the correct environment to
+    ## use for the jth column. Here, `.subset2` is a trick to speed
+    ## things up a tiny bit by calling the C function that does the
+    ## actual subsetting.
     env$input <- .subset2(.subset2(input, "sub_inputs"), j)
 
     ## Assigning a function's environment clears its internal debug 
@@ -256,28 +220,29 @@ column_transformation_body <- quote({
       debug(transformation)
     }
 
+    ## And the non-standard evaluation trick! Imagine a user had called
+    ## a column transformation with the code below.
+    ##
+    ## ```r
+    ## ct <- column_transformation(nonstandard = TRUE, function(x) { y <- substitute(x) })
+    ## some_data <- data.frame(first = 1:2, second = c("a", "b"))
+    ## mungebit$new(ct)$run(some_data)
+    ## ```
+    ##
+    ## Then `substitute(x)` would be precisely the expression 
+    ## `some_data[["first"]]` during the first call and `some_data[["second"]]`
+    ## during the second call (in other words, it is equivalent to
+    ## `y <- quote(some_data[["first"]])` in the first call, etc.).
+    # Support non-standard evaluation at a slight speed cost.
     if (nonstandard) {
-      # Support non-standard evaluation at a slight speed cost.
-      ## And the non-standard evaluation trick! Imagine a user had called
-      ## a column transformation with the code below.
-      ##
-      ## ```r
-      ## ct <- column_transformation(nonstandard = TRUE, function(x) { y <- substitute(x) })
-      ## some_data <- data.frame(first = 1:2, second = c("a", "b"))
-      ## mungebit$new(ct)$run(some_data)
-      ## ```
-      ##
-      ## Then `substitute(x)` would be precisely the expression 
-      ## `some_data[["first"]]` during the first call and `some_data[["second"]]`
-      ## during the second call (in other words, it is equivalent to
-      ## `y <- quote(some_data[["first"]])` in the first call, etc.).
-
-      ## Recall that if the `transformation` has a formal argument called
-      ## "name", we must pass along the column name.
       if (named) {
+        ## Recall that if the `transformation` has a formal argument called
+        ## "name", we must pass along the column name.
         arguments$name <- .subset2(names(data), .subset2(indices, j))
       }
 
+      ## We replace the first argument with the column to apply the transformation
+      ## to.
       arguments[[1L]] <- bquote(.(data_expr)[[.(
         if (named) arguments$name else .subset2(names(data), .subset2(indices, j))
       )]])
@@ -285,9 +250,6 @@ column_transformation_body <- quote({
     } else {
       ## If NSE should not be carried over we do not bother with the
       ## magic and simply send the function the value.
-      #arguments[[1L]] <- .subset2(data, .subset2(indices, j)) #data[[column_name]]
-      # Jump to the environment that contains _2, _1 etc
-      #.Internal(do.call(transformation, arguments, parent.frame(3)))
       if (named) {
         transformation(.subset2(data, .subset2(indices, j)), ...,
                        name = .subset2(names(data), .subset2(indices, j)))
@@ -295,29 +257,10 @@ column_transformation_body <- quote({
         transformation(.subset2(data, .subset2(indices, j)), ...)
       }
     }
-
-    ## Finally, we require the `envir` argument to `do.call` to ensure
-    ## the NSE carry-over works correctly.
-    #do.call(transformation, arguments, envir = eval_frame)
-    #transformation(arguments[[1L]])
-
-    #if (!isTRUE(trained)) {
-      ## And here is the trick for partitioning up the `input`, one for
-      ## each column the transformation was applied to!
-      ## 
-      ## If we are running a `column_transformation` on columns `blue` and
-      ## `yellow`, then the underlying mungebit's `input` will have
-      ## keys `blue` and `yellow` with the respective "sub-inputs" (and
-      ## a reserved key `_colnames` as observed earlier in this function).
-
-      # THIS IS SLOOOOOOW
-      #input[[column_name]] <- as.list(mock_input)
-    #}
-
-    #out
-  #}
   }, ...)
 
+  ## After training, we lock the `input` environments so that the
+  ## user cannot modify them during predict.
   if (!isTRUE(trained)) {
     lapply(input$sub_inputs, lockEnvironment, bindings = TRUE)
   }
@@ -333,8 +276,7 @@ column_transformation_body <- quote({
 
 #' @export
 print.column_transformation <- function(x, ...) {
-  # `print_transformation` parameters include
-  #  `indent = 0L, full = FALSE`.
+  # `print_transformation` parameters include `indent = 0L, full = FALSE`.
   print_transformation(x, ..., byline = "Column transformation")
 }
 
