@@ -105,3 +105,9 @@ describe("printing mungebits", {
   })
 })
 
+describe("transformations", {
+  test_that("it can print a column transformation", {
+    expect_output(print(column_transformation(identity)), "Column transformation")
+  })
+})
+
