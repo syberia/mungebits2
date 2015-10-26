@@ -6,6 +6,12 @@ describe("printing mungepieces", {
     expect_output(print(mungepiece$new(mungebit$new())), "untrained")
   })
 
+  test_that("it can display full function body", {
+    mp <- mungepiece$new(mungebit$new(function(x) { a; b; c; d; e; f; g; h; boom }))
+    out <- capture.output(print(mp))
+    expect_false(any(grepl("boom", out)))
+    expect_output(print(mp, full = TRUE), "boom")
+  })
 })
 
 describe("printing mungebits", {
