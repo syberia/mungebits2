@@ -93,36 +93,3 @@ mungebit_predict <- function(data, ..., `_envir` = parent.frame()) {
   }
 }
 
-# TODO: (RK) Remove now that environment injection is implicit in
-# the train and predict functions.
-inject_metadata <- function(func, input, trained) {
-  ## If there is no training or prediction function, we perform 
-  ## *no transformation* on the data or the mungebit `input`, i.e.,
-  ## we use the [`identity` function](https://stat.ethz.ch/R-manual/R-devel/library/base/html/identity.html).
-  if (is.null(func)) {
-    identity
-  } else {
-    copy       <- func
-    debug_flag <- isdebugged(func)
-
-    environment(copy) <- list2env(list(
-      input   = input,
-      ## We also inject a helper called `trained` used for discriminating
-      ## whether the function has been trained already.
-      trained = isTRUE(trained)
-    ), parent = environment(func) %||% baseenv())
-
-    ## Touching a function's environment like in the expression above
-    ## *clears its internal debug flag*. We restore the flag to indicate
-    ## it is being debugged. I don't know how to detect whether a function
-    ## is [`debugonce`d](https://stat.ethz.ch/R-manual/R-devel/library/base/html/debug.html)
-    ## so if you know how to restore this flag please submit a
-    ## [pull request](https://github.com/robertzk/mungebits2).
-    if (isdebugged(func)) {
-      debug(copy)
-    }
-
-    copy
-  }
-}
-
