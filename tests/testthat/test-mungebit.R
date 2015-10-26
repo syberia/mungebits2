@@ -25,6 +25,10 @@ describe("errors", {
     expect_error(mungebit$new(NULL, iris), "as the second argument")
     expect_error(mungebit$new(NULL, new.env()), "as the second argument")
   })
+
+  test_that("it only runs on environments with data keys", {
+    expect_error(mungebit$new()$run(new.env()), "provide one that contains")
+  })
 })
 
 test_that("it correctly sets the trained flag after the first run", {
@@ -88,6 +92,13 @@ test_that("it can take variadic arguments in its predict function", {
 test_that("it can sustain nonstandard evaluation in train", {
   mb <- mungebit$new(function(d, foo) input$foo <- substitute(foo))
   mb$run(iris, foo = hello + world)
+  expect_identical(mb$input()$foo, quote(hello + world))
+})
+
+test_that("it can sustain nonstandard evaluation in train with an environment", {
+  mb <- mungebit$new(function(d, foo) input$foo <- substitute(foo), nse = TRUE)
+  env <- list2env(list(data = iris))
+  mb$run(env, foo = hello + world)
   expect_identical(mb$input()$foo, quote(hello + world))
 })
 

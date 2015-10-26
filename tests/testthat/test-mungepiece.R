@@ -551,5 +551,38 @@ describe("edge cases", {
     mp$run(iris)
     expect_equal(mp$run(iris), quote(iris))
   })
+
+  test_that("it can run with overwritten args", {
+    mp <- mungepiece$new(mungebit$new(`[`))
+    expect_equal(mp$run(iris, 1:2), iris[1:2])
+  })
+})
+
+describe("debugging", {
+  test_that("calling debug on a mungepiece sets the debug flag on its train function", {
+    mp <- mungepiece$new(mungebit$new(identity))
+    debug(mp)
+    expect_true(isdebugged(mp$mungebit()$.train_function))
+  })
+
+  test_that("calling debug on a mungepiece sets the debug flag on its predict function", {
+    mp <- mungepiece$new(mungebit$new(identity, identity))
+    debug(mp)
+    expect_true(isdebugged(mp$mungebit()$.predict_function))
+  })
+
+  test_that("calling undebug on a mungepiece unsets the debug flag on its train function", {
+    mp <- mungepiece$new(mungebit$new(identity))
+    debug(mp)
+    undebug(mp)
+    expect_false(isdebugged(mp$mungebit()$.train_function))
+  })
+
+  test_that("calling undebug on a mungepiece sets the undebug flag on its predict function", {
+    mp <- mungepiece$new(mungebit$new(identity, identity))
+    debug(mp)
+    undebug(mp)
+    expect_false(isdebugged(mp$mungebit()$.predict_function))
+  })
 })
 

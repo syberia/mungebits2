@@ -10,6 +10,21 @@ describe("Invalid inputs", {
   test_that("it breaks when you pass a list of length 0", {
     expect_error(parse_mungepiece(list()), "Invalid format passed")
   })
+
+  test_that("it breaks when you pass a named list without train and predict", {
+    expect_error(parse_mungepiece(list(tran = identity, predict = identity)),
+                 "you provided a list with keys")
+  })
+
+  test_that("it breaks when you pass an illegal hybrid pair", {
+    expect_error(parse_mungepiece(list(list("monkey"), list("banana"))),
+                 "the only accepted format")
+  })
+
+  test_that("it breaks when you pass an illegal dual pair by type", {
+    expect_error(parse_mungepiece(list(train = "foo", predict = "bar")),
+                 "must pass a list on both sides")
+  })
 })
 
 train_fn   <- function(data, by = 2) {
