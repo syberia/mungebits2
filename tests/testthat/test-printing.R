@@ -30,10 +30,18 @@ describe("printing mungebits", {
   })
   
   test_that("it can display if a mungebit is trained", {
-    mb <- mungebit$new()            
+    mb <- mungebit$new()
     expect_output(print(mb), "ntrained")
     mb$run(iris)
     expect_output(print(mb), "[^n]trained")
+  })
+  
+  test_that("it can display if a mungebit is trained", {
+    mb <- mungebit$new(function(x) { e <- get(paste0("in","put")); e$true <- TRUE; x })
+    out <- capture.output(print(mb))
+    expect_false(any(grepl("input", out)))
+    mb$run(iris)
+    expect_output(print(mb), "input")
   })
 })
 
