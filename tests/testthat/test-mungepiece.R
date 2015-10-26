@@ -551,5 +551,9 @@ describe("edge cases", {
     mp$run(iris)
     expect_equal(mp$run(iris), quote(iris))
   })
+
+  test_that("it can run with overwritten args", {
+    mp <- mungepiece$new(mungebit$new(`[`))
+  })
 })
 
