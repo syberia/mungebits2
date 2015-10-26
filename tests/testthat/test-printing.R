@@ -57,6 +57,14 @@ describe("printing mungebits", {
     expect_output(print(mb, full = TRUE), "boom")
   })
   
+  test_that("it can display full inputs", {
+    mb <- mungebit$new(function(x) { input$foo <- body(utils::install.packages); x })
+    out <- capture.output(print(mb))
+    expect_false(any(grepl("destdir", out)))
+    mb$run(iris)
+    expect_output(print(mb, full = TRUE), "destdir")
+  })
+  
   test_that("it can explain a mungebit uses nonstandard evaluation", {
     mb <- mungebit$new(nse = TRUE)
     expect_output(print(mb), "nonstandard")
