@@ -103,6 +103,11 @@ describe("printing mungebits", {
     expect_false(any(grepl("train arguments", out)))
     expect_output(print(mp), "predict arguments")
   })
+
+  test_that("it can print a mungebit containing a transformation", {
+    mp <- mungepiece$new(mungebit$new(column_transformation(identity)))
+    expect_output(print(mp), "Column transformation")
+  })
 })
 
 describe("transformations", {
