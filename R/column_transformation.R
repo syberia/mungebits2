@@ -338,16 +338,3 @@ print.column_transformation <- function(x, ...) {
   print_transformation(x, ..., byline = "Column transformation")
 }
 
-#' @export
-debug.transformation <- function(fun, text, condition) {
-  debug(get("transformation", envir = environment(fun)))
-}
-
-#' @export
-undebug.transformation <- function(fun, text, condition) {
-  transformation <- get("transformation", envir = environment(fun))
-  if (isdebugged(transformation)) {
-    undebug(transformation)
-  }
-}
-
