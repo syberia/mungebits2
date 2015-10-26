@@ -9,6 +9,9 @@ A re-implementation of mungebits that removes the need for non-standard
 evaluation, and provides better integration with
 [stageRunner](https://github.com/robertzk/stagerunner).
 
+The package has full test coverage and documentation, so you are
+encouraged to peek into the internals.
+
 ## Installation
 
 This package is not yet available from CRAN (as of October 26, 2015).
