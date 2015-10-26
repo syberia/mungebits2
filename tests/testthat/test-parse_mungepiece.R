@@ -10,6 +10,11 @@ describe("Invalid inputs", {
   test_that("it breaks when you pass a list of length 0", {
     expect_error(parse_mungepiece(list()), "Invalid format passed")
   })
+
+  test_that("it breaks when you pass a named list without train and predict", {
+    expect_error(parse_mungepiece(list(tran = identity, predict = identity)),
+                 "you provided a list with keys")
+  })
 })
 
 train_fn   <- function(data, by = 2) {
