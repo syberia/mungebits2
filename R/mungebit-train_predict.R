@@ -39,15 +39,22 @@ mungebit_train <- function(data, ..., `_envir` = parent.frame()) {
   ## so that we are confident the user does not modify it during prediction
   ## time (i.e., when it is run in a real-time production system).
   if (isTRUE(self$.enforce_train)) {
-    on.exit(lockEnvironment(self$.input, TRUE), add = TRUE)
+    on.exit({
+      lockEnvironment(self$.input, TRUE)
+      if (!is.null(self$.predict_function)) {
+        environment(self$.predict_function)$trained <- TRUE
+      }
+    }, add = TRUE)
   }
 
-  ## We inject the `input` helper so that the mungebit
-  ## can remember necessary metadata for replicating the
-  ## munging operation at prediction time.
-  fn <- inject_metadata(self$.train_function, self$.input, self$.trained)
-  args <- c(list(substitute(data)), eval(substitute(alist(...))))
-  do.call(fn, args, envir = `_envir`)
+  if (is.null(self$.train_function)) {
+    data
+  } else if (self$.nse) {
+    args <- c(list(substitute(data)), eval(substitute(alist(...))))
+    do.call(self$.train_function, args, envir = `_envir`)
+  } else {
+    self$.train_function(data, ...)
+  }
 }
 
 #' Run the predict function on a mungebit.
@@ -73,45 +80,16 @@ mungebit_train <- function(data, ..., `_envir` = parent.frame()) {
 #'   provided to the \code{predict_function} will be recorded on the mungebit
 #'   object.
 mungebit_predict <- function(data, ..., `_envir` = parent.frame()) {
+  # For some reason, accessing this takes some time..
   if (!isTRUE(self$.trained)) {
     stop("This mungebit cannot predict because it has not been trained.")
   }
 
-  ## We inject the `input` helper so that the mungebit
-  ## can use the metadata that was computed during training time.
-  fn <- inject_metadata(self$.predict_function, self$.input, self$.trained)
-  args <- c(list(substitute(data)), eval(substitute(alist(...))))
-  do.call(fn, args, envir = `_envir`)
-}
-
-inject_metadata <- function(func, input, trained) {
-  ## If there is no training or prediction function, we perform 
-  ## *no transformation* on the data or the mungebit `input`, i.e.,
-  ## we use the [`identity` function](https://stat.ethz.ch/R-manual/R-devel/library/base/html/identity.html).
-  if (is.null(func)) {
-    identity
+  if (self$.nse) {
+    args <- c(list(substitute(data)), eval(substitute(alist(...))))
+    do.call(self$.predict_function, args, envir = `_envir`)
   } else {
-    copy       <- func
-    debug_flag <- isdebugged(func)
-
-    environment(copy) <- list2env(list(
-      input   = input,
-      ## We also inject a helper called `trained` used for discriminating
-      ## whether the function has been trained already.
-      trained = isTRUE(trained)
-    ), parent = environment(func) %||% baseenv())
-
-    ## Touching a function's environment like in the expression above
-    ## *clears its internal debug flag*. We restore the flag to indicate
-    ## it is being debugged. I don't know how to detect whether a function
-    ## is [`debugonce`d](https://stat.ethz.ch/R-manual/R-devel/library/base/html/debug.html)
-    ## so if you know how to restore this flag please submit a
-    ## [pull request](https://github.com/robertzk/mungebits2).
-    if (isdebugged(func)) {
-      debug(copy)
-    }
-
-    copy
+    self$.predict_function(data, ...)
   }
 }
 

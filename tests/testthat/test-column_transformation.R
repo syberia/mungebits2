@@ -105,11 +105,22 @@ describe("Passing arguments", {
 
   describe("Nonstandard evaluation pass-along", {
     it("passes along nonstandard evaluation", {
-      nse <- mungebit$new(column_transformation(nonstandard = TRUE, function(x) {
+      nse <- mungebit$new(nse = TRUE, column_transformation(nonstandard = TRUE, function(x) {
         paste0(deparse(substitute(x)), x) }))
       balloo <- iris
       iris2  <- nse$run(balloo, 5)
       expect_equal(iris2, transform(iris, Species = paste0('balloo[["Species"]]', Species)),
+                   info = "column_transformation should pass along non-standard evaluation")
+    })
+  })
+
+  describe("Nonstandard evaluation pass-along with a call rather than a name", {
+    it("passes along nonstandard evaluation", {
+      nse <- mungebit$new(nse = TRUE, column_transformation(nonstandard = TRUE, function(x) {
+        paste0(deparse(substitute(x)), x) }))
+      balloo <- function() iris
+      iris2  <- nse$run(balloo(), 5)
+      expect_equal(iris2, transform(iris, Species = paste0('balloo()[["Species"]]', Species)),
                    info = "column_transformation should pass along non-standard evaluation")
     })
   })
@@ -131,7 +142,7 @@ if (requireNamespace("microbenchmark", quietly = TRUE)) {
   describe("Benchmarks", {
 
     # This is technically a benchmark but I have no place to put it yet
-    test_that("it doubles a column no more than 4.5x as slow as a raw operation", {
+    test_that("it doubles a column no more than 6x as slow as a raw operation", {
       raw_double <- function(dataframe, cols) {
         class(dataframe) <- "list"
         for (col in cols) dataframe[[col]] <- 2 * dataframe[[col]]
@@ -144,9 +155,7 @@ if (requireNamespace("microbenchmark", quietly = TRUE)) {
       column_transformation_runtime <- speeds$median[[1L]]
       apply_raw_function_runtime    <- speeds$median[[2L]]
     
-      # TODO: (RK) Reduce this to a factor of 5 by providing "standard evaluation"
-      # mungebits that do not bother with passing along the calling expressions.
-      expect_true(column_transformation_runtime < 20 * apply_raw_function_runtime,
+      expect_true(column_transformation_runtime < 6 * apply_raw_function_runtime,
         paste0("Execution of ", crayon::blue("column_transformation"),
          " took too long: \nFormer took ",
          crayon::red(paste0(column_transformation_runtime, "ms")), 
@@ -157,7 +166,6 @@ if (requireNamespace("microbenchmark", quietly = TRUE)) {
          crayon::blue("raw_double"),
          " (see code for this unit test)"))
     })
-
   })
 }
 

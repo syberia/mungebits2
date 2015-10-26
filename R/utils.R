@@ -1,3 +1,5 @@
+# TODO: (RK) Document this file literately.
+
 #' Merge two lists and overwrite latter entries with former entries
 #' if names are the same.
 #'
@@ -29,6 +31,12 @@ is.acceptable_function <- function(x) {
   is.function(x) || 
   is.null(x)     ||
   is.mungebit(x)
+}
+
+is.simple_character_vector <- function(x) {
+  is.character(x) && all(nzchar(x)) &&
+  !any(is.na(x)) && length(x) > 0 &&
+  length(unique(x)) == length(x)
 }
 
 # If an environment contains variables "a" and "b",
@@ -64,6 +72,10 @@ make_env <- function(lst, parent = emptyenv()) {
     paste0("_", seq_along(lst)),
     paste0("_", initial_names)
   )
+
+  if (anyDuplicated(names(lst))) {
+    stop("Cannot accept lists with duplicate names")
+  }
 
   if (length(lst) == 0) {
     env <- new.env(parent = parent)

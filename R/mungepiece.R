@@ -80,3 +80,8 @@ is.mungepiece <- function(x) {
   inherits(x, "mungepiece")
 }
 
+#' @export
+print.mungepiece <- function(x, ...) {
+  print_mungepiece(x, ...)
+}
+

@@ -27,9 +27,16 @@ describe("errors", {
     expect_error(mungepiece$new(mb, list(), NULL), "as the third argument")
     expect_error(mungepiece$new(mb, list(), identity), "as the third argument")
   })
+
+  test_that("it errors when you pass a list with non-unique names as args", {
+    mb <- mungebit$new()
+    expect_error(mungepiece$new(mb, list(a = 1, a = 2)), "duplicate names")
+    expect_error(mungepiece$new(mb, predict_args = list(a = 1, a = 2)), "duplicate names")
+  })
 })
 
 make_fn <- function(train) {
+  force(train)
   function(data, first = NULL, ...) {
     list(train = train, first = first, dots = list(...),
          first_expr = substitute(first),
@@ -530,8 +537,19 @@ describe("edge cases", {
   })
 
   test_that("it can run builtin train functions", {
-    mp <- mungepiece$new(mungebit$new(`[`), list("Sepal.Width", drop = FALSE))
+    mp <- mungepiece$new(mungebit$new(`[`), list("Sepal.Width"))
     expect_equal(mp$run(iris), iris["Sepal.Width"])
+  })
+
+  test_that("it can use NSE during train", {
+    mp <- mungepiece$new(mungebit$new(nse = TRUE, function(x) substitute(x)))
+    expect_equal(mp$run(iris), quote(iris))
+  })
+
+  test_that("it can use NSE during predict", {
+    mp <- mungepiece$new(mungebit$new(nse = TRUE, function(x) substitute(x)))
+    mp$run(iris)
+    expect_equal(mp$run(iris), quote(iris))
   })
 })
 

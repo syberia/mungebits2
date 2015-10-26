@@ -5,7 +5,7 @@
 \title{Constructor for mungebit class.}
 \usage{
 mungebit_initialize(train_function = base::identity,
-  predict_function = train_function, enforce_train = TRUE)
+  predict_function = train_function, enforce_train = TRUE, nse = FALSE)
 }
 \arguments{
 \item{train_function}{function. This specifies the behavior to perform
@@ -21,6 +21,15 @@ should remain untouched.}
 \item{enforce_train}{logical. Whether or not to flip the trained flag
 during runtime. Set this to FALSE if you are experimenting with
 or debugging the mungebit.}
+
+\item{nse}{logical. Whether or not we expect to use non-standard evaluation
+with this mungebit. Non-standard evaluation allows us to obtain the
+correct R expression when using \code{substitute} from within the body
+of a train or predict function for the mungebit. By default, \code{FALSE},
+meaning non-standard evaluation will not be available to the train and
+predict functions, but this ability can be switched on at a slight speed
+detriment (2-3x prediction slowdown for the fastest functions, somewhat
+negligible for slower functions).}
 }
 \description{
 Mungebits are atomic data transformations of a data.frame that,
