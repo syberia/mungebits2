@@ -23,6 +23,15 @@ test_that("it correctly adds to the mungepieces list", {
   expect_equal(length(attr(iris2, 'mungepieces')), 2)
 })
 
+test_that("it works with tundraContainers", {
+  args <- lapply(seq_len(2),
+    function(.) list(column_transformation(function(x, one) x + one), 1, 1))
+  iris2 <- munge(iris, args)
+  iris2 <- munge(iris, structure(list(munge_procedure = attr(iris2, "mungepieces")),
+                                 class = "tundraContainer"))
+  expect_equal(length(attr(iris2, 'mungepieces')), 2)
+})
+
 test_that("it handles a mutating column transformation", {
   args <- lapply(seq_len(2),
     function(.) list(list(column_transformation(function(x, one) {
