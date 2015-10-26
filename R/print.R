@@ -16,16 +16,16 @@ print_mungepiece <- function(x, ...) {
   print(x$mungebit(), ..., indent = 1L, prefix2 = "* ")
 }
 
-print_args <- function(args, type, color, ..., full = FALSE) {
+print_args <- function(args, type, color, ..., full = FALSE, label = "arguments") {
   ## A dynamic way to fetch the color palette from the crayon package.
   style <- getFromNamespace(color, "crayon")$bold
-  cat(sep = "", "  * ", style(paste0(type, " arguments")), ":\n")
+  cat(sep = "", "  * ", style(paste(type, label)), ":\n")
   max_lines <- if (isTRUE(full)) Inf else 5L
   cat(crayon::silver(deparse2(args, max_lines = max_lines, indent = 3L)), "\n")
 }
 
 # Print a `mungebit` object.
-print_mungebit <- function(x, ..., indent = 0L, prefix2 = "", show_trained = TRUE) {
+print_mungebit <- function(x, ..., indent = 0L, prefix2 = "", show_trained = TRUE, full = FALSE) {
   prefix <- paste(rep("  ", indent), collapse = "")
   trained <- function() {
     if (isTRUE(show_trained)) {
@@ -34,12 +34,17 @@ print_mungebit <- function(x, ..., indent = 0L, prefix2 = "", show_trained = TRU
     } else " "
   }
   cat(sep = "", prefix, prefix2, crayon::green("Mungebit"), trained(), "with:\n")
+  if (length(x$input()) > 0) {
+    cat(sep = "", prefix, "  * ", crayon::magenta$bold("input"), ": \n")
+    max_lines <- if (isTRUE(full)) Inf else 5L
+    cat(crayon::silver(deparse2(x$input(), max_lines = max_lines, indent = indent + 2L)), "\n")
+  }
   if (isTRUE(all.equal(x$train_function(), x$predict_function()))) {
     print_mungebit_function(x$train_function(), "train and predict",
-                            "green", indent + 1L, ...)
+                            "green", indent + 1L, ..., full = full)
   } else {
-    print_mungebit_function(x$train_function(),   "train",   "green",  indent + 1L, ...)
-    print_mungebit_function(x$predict_function(), "predict", "yellow", indent + 1L, ...)
+    print_mungebit_function(x$train_function(),   "train",   "green",  indent + 1L, ..., full = full)
+    print_mungebit_function(x$predict_function(), "predict", "yellow", indent + 1L, ..., full = full)
   }
 }
 
