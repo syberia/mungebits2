@@ -70,12 +70,12 @@ standard_column_format <- function(cols, dataframe) {
 #' @param x ANY. An R object.
 #' @export
 except <- function(x) {
-  class(x) <- c('except', class(x))
+  class(x) <- c("except", class(x))
   x
 }
 
 unexcept <- function(x) {
-  class(x) <- setdiff(class(x), 'except')
+  class(x) <- setdiff(class(x), "except")
   x
 }
 
