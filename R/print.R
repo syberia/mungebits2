@@ -25,9 +25,15 @@ print_args <- function(args, type, color, ..., full = FALSE) {
 }
 
 # Print a `mungebit` object.
-print_mungebit <- function(x, ..., indent = 0L, prefix2 = "") {
+print_mungebit <- function(x, ..., indent = 0L, prefix2 = "", show_trained = TRUE) {
   prefix <- paste(rep("  ", indent), collapse = "")
-  cat(sep = "", prefix, prefix2, crayon::green("Mungebit"), " with:\n")
+  trained <- function() {
+    if (isTRUE(show_trained)) {
+      paste0(" (", (if (x$trained()) crayon::green$bold("trained")
+                    else  crayon::red$bold("untrained")), ") ")
+    } else " "
+  }
+  cat(sep = "", prefix, prefix2, crayon::green("Mungebit"), trained(), "with:\n")
   if (isTRUE(all.equal(x$train_function(), x$predict_function()))) {
     print_mungebit_function(x$train_function(), "train and predict",
                             "green", indent + 1L, ...)
