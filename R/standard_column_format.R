@@ -35,6 +35,9 @@ standard_column_format <- function(cols, dataframe) {
           ix <- logical(length(dataframe))
           if (is.element("name", names(formals(subcols)))) {
             for (i in seq_along(dataframe)) {
+              ## The `[` and `[[` operator internally call out to 
+              ## `.subset2`, which references the actual C function
+              ## and is thus faster (avoiding unnecessary checks).
               ix[i] <- subcols(.subset2(dataframe, i), name = .subset2(colnames(dataframe), i))
             }
           } else {
