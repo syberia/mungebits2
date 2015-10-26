@@ -95,6 +95,13 @@ test_that("it can sustain nonstandard evaluation in train", {
   expect_identical(mb$input()$foo, quote(hello + world))
 })
 
+test_that("it can sustain nonstandard evaluation in train with an environment", {
+  mb <- mungebit$new(function(d, foo) input$foo <- substitute(foo))
+  env <- list2env(list(data = iris))
+  mb$run(env, foo = hello + world)
+  expect_identical(mb$input()$foo, quote(hello + world))
+})
+
 test_that("it can sustain nonstandard evaluation in predict", {
   other <- new.env()
   mb <- mungebit$new(NULL, function(d, faa) other$faa <- substitute(faa))
