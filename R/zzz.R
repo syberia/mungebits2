@@ -4,8 +4,9 @@
 .onLoad <- function(libPath, pkg) {
   if (as.package_version(R.version) < as.package_version("3.1.0")) {
     packageStartupMessage(crayon::red(paste0(
-      "Using mungebits2 with R version < 3.1 will result ",
-      "in dramatic performance slowdowns."
+      "Using the mungebits2 package with R version < 3.1 will result ",
+      "in dramatic performance slowdowns: use the mungebits package instead ",
+      "(https://github.com/robertzk/mungebits)"
     )))
   }
 }
