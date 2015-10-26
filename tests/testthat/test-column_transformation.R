@@ -169,3 +169,18 @@ if (requireNamespace("microbenchmark", quietly = TRUE)) {
   })
 }
 
+describe("debugging", {
+  test_that("calling debug on a column transformation sets the debug flag", {
+    ct <- column_transformation(identity)
+    debug(ct)
+    expect_true(isdebugged(get("transformation", envir = environment(ct))))
+  })
+
+  test_that("calling undebug on a column transformation unsets the debug flag", {
+    ct <- column_transformation(identity)
+    debug(ct)
+    undebug(ct)
+    expect_false(isdebugged(get("transformation", envir = environment(ct))))
+  })
+})
+
