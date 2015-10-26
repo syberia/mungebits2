@@ -82,7 +82,7 @@ debug.transformation <- function(fun, text, condition) {
 }
 
 #' @export
-undebug.transformation <- function(fun, text, condition) {
+undebug.transformation <- function(fun) {
   transformation <- get("transformation", envir = environment(fun))
   if (isdebugged(transformation)) {
     undebug(transformation)
