@@ -32,6 +32,14 @@ test_that("it works with tundraContainers", {
   expect_equal(length(attr(iris2, 'mungepieces')), 2)
 })
 
+test_that("munge works with environments", {
+  args <- lapply(seq_len(2),
+    function(.) list(column_transformation(function(x, one) x + one), 1, 1))
+  env <- list2env(list(data = iris))
+  iris2 <- munge(env, args)
+  expect_equal(length(attr(env$data, 'mungepieces')), 2)
+})
+
 test_that("it handles a mutating column transformation", {
   args <- lapply(seq_len(2),
     function(.) list(list(column_transformation(function(x, one) {
