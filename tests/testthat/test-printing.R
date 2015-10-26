@@ -85,6 +85,11 @@ describe("printing mungebits", {
     expect_output(print(mb), "nonstandard")
   })
 
+  test_that("it train and predict args when they are identical", {
+    mp  <- mungepiece$new(mungebit$new(), list(a = 1))
+    expect_output(print(mp), "train and predict arguments")
+  })
+
   test_that("it hides predict args when none are present", {
     mp  <- mungepiece$new(mungebit$new(), train_args = list(a = 1), predict_args = list())
     out <- capture.output(print(mp))
