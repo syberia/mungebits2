@@ -4,10 +4,12 @@
 \alias{mungebit_initialize}
 \title{Constructor for mungebit class.}
 \usage{
-mungebit_initialize(train_function = base::identity,
+mungebit_initialize(self, train_function = base::identity,
   predict_function = train_function, enforce_train = TRUE, nse = FALSE)
 }
 \arguments{
+\item{self}{R6. Object reference (internal).}
+
 \item{train_function}{function. This specifies the behavior to perform
 on the dataset when preparing for model training. A value of NULL
 specifies that there should be no training step, i.e., the data

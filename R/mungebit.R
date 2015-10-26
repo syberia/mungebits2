@@ -203,7 +203,11 @@ mungebit <- R6::R6Class("mungebit",
     .enforce_train    = TRUE,  # Logical
     .nse              = FALSE, # Logicl
 
-    initialize = mungebit_initialize,
+    initialize = function(...) {
+      mungebit_initialize(self, ...)
+      #args <- eval(substitute(alist(...)))
+      #do.call(mungebit_initialize, args, envir = environment())
+    },
     run        = mungebit_run,
     train      = mungebit_train,
     predict    = mungebit_predict,
