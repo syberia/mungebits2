@@ -1,4 +1,4 @@
-Mungebits 2 [![Build Status](https://travis-ci.org/robertzk/mungebits2.svg?branch=master)](https://travis-ci.org/robertzk/mungebits2) [![Coverage Status](https://coveralls.io/repos/robertzk/mungebits2/badge.svg?branch=master&service=github)](https://coveralls.io/r/robertzk/mungebits2) [![Documentation](https://img.shields.io/badge/rocco--docs-%E2%9C%93-blue.svg)](http://robertzk.github.io/mungebits2/)
+Mungebits 2 [![Build Status](https://travis-ci.org/syberia/mungebits2.svg?branch=master)](https://travis-ci.org/syberia/mungebits2) [![Coverage Status](https://coveralls.io/repos/syberia/mungebits2/badge.svg?branch=master&service=github)](https://coveralls.io/r/syberia/mungebits2) [![Documentation](https://img.shields.io/badge/rocco--docs-%E2%9C%93-blue.svg)](http://syberia.github.io/mungebits2/)
 ===========
 
 Mungebits2 defines a way of thinking about data preparation that couples the definition
@@ -9,7 +9,7 @@ without writing additional code.
 
 This is a re-implementation of [mungebits](https://github.com/robertzk/mungebits)
 that removes the need for non-standard evaluation, and provides better integration with
-[stageRunner](https://github.com/robertzk/stagerunner).
+[stageRunner](https://github.com/syberia/stagerunner).
 
 The package has full test coverage and documentation, so you are
 encouraged to peek into the internals.
@@ -150,7 +150,7 @@ To install the latest development builds directly from GitHub, run this instead:
 
 ```R
 if (!require("devtools")) install.packages("devtools")
-devtools::install_github("robertzk/mungebits2")
+devtools::install_github("syberia/mungebits2")
 ```
 
 ### License
