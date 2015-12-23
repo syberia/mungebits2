@@ -157,7 +157,7 @@ devtools::install_github("robertzk/mungebits2")
 
 This project is licensed under the MIT License:
 
-Copyright (c) 2015-2016 Robert Krzyzanowski
+Copyright (c) 2015-2016 Syberia, Avant, Robert Krzyzanowski
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
