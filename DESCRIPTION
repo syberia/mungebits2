@@ -22,9 +22,9 @@ Imports:
     stagerunner,
     whisker
 Suggests:
+    microbenchmark,
     testthat,
-    testthatsomemore,
-    microbenchmark
+    testthatsomemore
 Roxygen: list(wrap = FALSE)
 Collate:
     'column_transformation.R'
