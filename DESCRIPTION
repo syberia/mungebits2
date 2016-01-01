@@ -6,7 +6,7 @@ Description: A way of thinking about data preparation that
     online prediction so that both can be described by the same codebase.
     With mungebits, you can save time on having to re-implement your
     R code to work in production and instead re-use the same codebase.
-Version: 0.1.0
+Version: 0.1.0.9000
 Author: Robert Krzyzanowski <technoguyrob@gmail.com>
 Maintainer: Robert Krzyzanowski <technoguyrob@gmail.com>
 Authors@R: c(person("Robert", "Krzyzanowski",
