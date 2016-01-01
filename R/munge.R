@@ -245,8 +245,7 @@
 #' # The munge function uses the attached "mungepieces" attribute, a list of
 #' # trained mungepieces.
 munge <- function(data, mungelist, stagerunner = FALSE, list = FALSE, parse = TRUE) {
-  stopifnot(is.data.frame(data) ||
-            (is.environment(data) && exists("data", envir = data, inherits = FALSE)))
+  stopifnot(is.data.frame(data) || (is.environment(data) && any(ls(data) == "data")))
 
   if (length(mungelist) == 0L) {
     return(data)
