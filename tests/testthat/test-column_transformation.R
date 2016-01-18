@@ -1,5 +1,12 @@
 context("column transformation")
 
+describe("dropping columns", {
+  test_that("it can drop columns using a column_transformation", {
+    dropper <- mungebit$new(column_transformation(function(x) NULL))
+    expect_equal(dropper$run(iris, 1), iris[-1])
+  })
+})
+
 describe("Simplest examples", {
   test_that("it can run an identity column transformation", {
     expect_equal(mungebit$new(column_transformation(identity))$run(iris), iris)
@@ -136,14 +143,6 @@ describe("Passing arguments", {
 
   })
 
-})
-
-describe("dropping columns", {
-  test_that("it can drop columns using a column_transformation", {
-    dropper <- mungebit$new(column_transformation(function(x) NULL))
-    browser()
-    expect_equal(dropper$run(iris, 1), iris[-1])
-  })
 })
 
 if (requireNamespace("microbenchmark", quietly = TRUE)) {
