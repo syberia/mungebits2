@@ -285,7 +285,7 @@ column_transformation_body <- quote({
   }
 
   ## Finally, if some of the columns *were* dropped, explicitly 
-  ## remove the from the dataframe using `[[<-` list assignment.
+  ## remove them from the dataframe using `[[<-` list assignment.
   ## This ensures that we do not drop any attributes and is faster
   ## than subsetting to non-`NULL` columns.
   if (!env$has_no_null) {
