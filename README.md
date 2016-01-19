@@ -180,7 +180,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ### Authors
 
-This package was created by Robert Krzyzanowski, technoguyrob@gmail.com.
+This package was created by Robert Krzyzanowski, rob@syberia.io.
 It is based on the original package [mungebits](https://github.com/robertzk/mungebits)
 by the same author. 
 
