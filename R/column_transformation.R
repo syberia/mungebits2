@@ -309,3 +309,10 @@ print.column_transformation <- function(x, ...) {
   print_transformation(x, ..., byline = "Column transformation")
 }
 
+#' @export
+all.equal.transformation <- function(target, current, ...) {
+  identical(parent.env(environment(target))$transformation,
+            parent.env(environment(current))$transformation)
+  FALSE
+}
+
