@@ -87,6 +87,71 @@ describe("Simplest examples", {
 
 })
 
+describe("Dropping columns", {
+  test_that("it can drop columns using a column_transformation", {
+    dropper <- mungebit$new(column_transformation(function(x) NULL))
+    expect_equal(dropper$run(iris, 1), iris[-1])
+  })
+
+  test_that("it can partially drop columns using a column_transformation", {
+    dropper <- mungebit$new(column_transformation(function(x) if (is.numeric(x)) x))
+    expect_equal(dropper$run(iris), Filter(is.numeric, iris))
+  })
+
+  test_that("it can partially drop columns in predict using a column_transformation", {
+    dropper <- mungebit$new(column_transformation(function(x) if (is.numeric(x)) x))
+    dropper$run(iris)
+    expect_equal(dropper$run(iris), Filter(is.numeric, iris))
+  })
+
+  test_that("it can drop columns using a column_transformation in predict", {
+    dropper <- mungebit$new(column_transformation(function(x) NULL))
+    dropper$run(iris, 1)
+    expect_equal(dropper$run(iris, 1), iris[-1])
+  })
+})
+
+
+describe("Passing arguments", {
+
+  test_that("it correctly passes dots arguments", {
+    scaler <- mungebit$new(column_transformation(function(x, v) { v * x }))
+    iris2  <- scaler$run(iris[1:4], , 2)
+    expect_equal(iris2[1:4], 2 * iris[1:4],
+                 info = "column_transformation must double first column of iris")
+  })
+
+  test_that('accepts transformation calls with missing arguments', {
+    doubler <- mungebit$new(column_transformation(function(x) { 2 * x }))
+    iris2   <- doubler$run(iris[1: 4])
+    expect_equal(iris2, 2 * iris[, 1:4],
+                 info = "column_transformation must double first column of iris")
+  })
+
+  describe("Nonstandard evaluation pass-along", {
+    it("passes along nonstandard evaluation", {
+      nse <- mungebit$new(nse = TRUE, column_transformation(nonstandard = TRUE, function(x) {
+        paste0(deparse(substitute(x)), x) }))
+      balloo <- iris
+      iris2  <- nse$run(balloo, 5)
+      expect_equal(iris2, transform(iris, Species = paste0('balloo[["Species"]]', Species)),
+                   info = "column_transformation should pass along non-standard evaluation")
+    })
+  })
+
+  describe("Nonstandard evaluation pass-along with a call rather than a name", {
+    it("passes along nonstandard evaluation", {
+      nse <- mungebit$new(nse = TRUE, column_transformation(nonstandard = TRUE, function(x) {
+        paste0(deparse(substitute(x)), x) }))
+      balloo <- function() iris
+      iris2  <- nse$run(balloo(), 5)
+      expect_equal(iris2, transform(iris, Species = paste0('balloo()[["Species"]]', Species)),
+                   info = "column_transformation should pass along non-standard evaluation")
+    })
+  })
+})
+
+
 describe("Passing arguments", {
 
   test_that("it correctly passes dots arguments", {
@@ -183,4 +248,5 @@ describe("debugging", {
     expect_false(isdebugged(get("transformation", envir = environment(ct))))
   })
 })
+
 

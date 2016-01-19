@@ -110,7 +110,7 @@ column_transformation <- function(transformation, nonstandard = FALSE) {
   full_transformation <- function(data, columns = colnames(data), ...) { }
   was_debugged <- isdebugged(transformation)
   environment(transformation) <- list2env(list(
-    input = NULL, trained = NULL
+    input = NULL, trained = NULL, has_no_null = NULL
   ), parent = environment(transformation) %||% baseenv())
 
   ## We create a copy of the `standard_column_format` helper
@@ -205,6 +205,17 @@ column_transformation_body <- quote({
     ), .Names = input$columns)
   }
 
+  ## Dataframe subset assignment (`[<-.data.frame`) does not behave in the
+  ## same manner as list assignment (`[<-`). Since we stripped the data.frame
+  ## of its class earlier, the next line will perform *list assignment*. 
+  ## This has advantageous speedups, but in particular if we drop some of
+  ## the columns by including `NULL` in the output of the transformation,
+  ## this will corrupt the data.frame with actual `NULL` values 
+  ## instead of dropping columns. We work around this with performance 
+  ## considerations by recording whether any of the values in the inner loop
+  ## are `NULL`.
+  env$has_no_null <- TRUE
+
   data[indices] <- lapply(seq_along(indices), function(j, ...) {
     ## Since `indices` match the column names to iterate over on
     ## the nose, `sub_inputs[[j]]` will be the correct environment to
@@ -246,23 +257,41 @@ column_transformation_body <- quote({
       arguments[[1L]] <- bquote(.(data_expr)[[.(
         if (named) arguments$name else .subset2(names(data), .subset2(indices, j))
       )]])
-      .Internal(do.call(transformation, arguments, eval_frame))
+      result <- .Internal(do.call(transformation, arguments, eval_frame))
     } else {
       ## If NSE should not be carried over we do not bother with the
       ## magic and simply send the function the value.
       if (named) {
-        transformation(.subset2(data, .subset2(indices, j)), ...,
+        result <- transformation(.subset2(data, .subset2(indices, j)), ...,
                        name = .subset2(names(data), .subset2(indices, j)))
       } else {
-        transformation(.subset2(data, .subset2(indices, j)), ...)
+        result <- transformation(.subset2(data, .subset2(indices, j)), ...)
       }
     }
+    
+    ## Using a `has_no_null` flag is slightly faster than `has_null`,
+    ## since we can save on a call to `!` in the condition below.
+    if (env$has_no_null && is.null(result)) {
+      env$has_no_null <- FALSE
+    }
+
+    result
   }, ...)
 
   ## After training, we lock the `input` environments so that the
   ## user cannot modify them during predict.
   if (!isTRUE(trained)) {
     lapply(input$sub_inputs, lockEnvironment, bindings = TRUE)
+  }
+
+  ## Finally, if some of the columns *were* dropped, explicitly 
+  ## remove them from the dataframe using `[[<-` list assignment.
+  ## This ensures that we do not drop any attributes and is faster
+  ## than subsetting to non-`NULL` columns.
+  if (!env$has_no_null) {
+    for (i in which(vapply(data, is.null, logical(1)))) {
+      data[[i]] <- NULL
+    }
   }
 
   ## Finally, we reset the class to `data.frame` after stripping it
