@@ -170,5 +170,10 @@ describe("transformations", {
     expect_output(print(bit), "train function")
     expect_output(print(bit), "predict function")
   })
+
+  test_that("it can tell when the train and predict of a column transformation are equivalent", {
+    bit <- mungebit$new(column_transformation(function(x) x))
+    expect_output(print(bit), "train and predict function")
+  })
 })
 
