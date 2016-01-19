@@ -313,6 +313,5 @@ print.column_transformation <- function(x, ...) {
 all.equal.transformation <- function(target, current, ...) {
   identical(parent.env(environment(target))$transformation,
             parent.env(environment(current))$transformation)
-  FALSE
 }
 
