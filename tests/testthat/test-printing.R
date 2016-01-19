@@ -164,5 +164,16 @@ describe("transformations", {
     ct <- multi_column_transformation(function(x) { 2 * x + 1 }, nonstandard = TRUE)
     expect_output(print(ct), "non-standard", fixed = TRUE)
   })
+
+  test_that("it can tell when the train and predict of a column transformation differ", {
+    bit <- mungebit$new(column_transformation(function(x) x), column_transformation(function(x) x + 1))
+    expect_output(print(bit), "train function")
+    expect_output(print(bit), "predict function")
+  })
+
+  test_that("it can tell when the train and predict of a column transformation are equivalent", {
+    bit <- mungebit$new(column_transformation(function(x) x))
+    expect_output(print(bit), "train and predict function")
+  })
 })
 
