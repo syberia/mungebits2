@@ -1,3 +1,8 @@
+### Version 0.1.0.9003
+
+  * Fixed an issue where `column_transformation` does not correctly drop multiple
+    columns.
+
 ### Version 0.1.0.9001-2
 
   * Define `all.equal` for object of S3 class "transformation".
