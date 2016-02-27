@@ -85,6 +85,11 @@ describe("Simplest examples", {
     expect_equal(iris2[, 1:4], iris[, 1:4] * 2)
   })
 
+  test_that("it can drop multiple columns", {
+    dropper <- mungebit$new(column_transformation(function(x) { NULL }))
+    iris2   <- dropper$run(iris, c("Sepal.Length", "Sepal.Width"))
+    expect_equal(iris2, iris[, -c(1, 2)])
+  })
 })
 
 describe("Dropping columns", {
