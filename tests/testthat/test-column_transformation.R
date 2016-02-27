@@ -90,6 +90,18 @@ describe("Simplest examples", {
     iris2   <- dropper$run(iris, c("Sepal.Length", "Sepal.Width"))
     expect_equal(iris2, iris[, -c(1, 2)])
   })
+
+  test_that("it can drop multiple columns using logical indexing", {
+    dropper <- mungebit$new(column_transformation(function(x) { NULL }))
+    iris2   <- dropper$run(iris, c(TRUE, FALSE))
+    expect_equal(iris2, iris[, c(2, 4)])
+  })
+
+  test_that("it can drop multiple columns using negative indexing", {
+    dropper <- mungebit$new(column_transformation(function(x) { NULL }))
+    iris2   <- dropper$run(iris, -5)
+    expect_equal(iris2, iris[5])
+  })
 })
 
 describe("Dropping columns", {
