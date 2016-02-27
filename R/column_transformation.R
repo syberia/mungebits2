@@ -289,8 +289,11 @@ column_transformation_body <- quote({
   ## This ensures that we do not drop any attributes and is faster
   ## than subsetting to non-`NULL` columns.
   if (!env$has_no_null) {
+    count <- 0
     for (i in which(vapply(data, is.null, logical(1)))) {
-      data[[i]] <- NULL
+      ## As we're dropping columns, we need to "shift" the indices.
+      data[[i - count]] <- NULL
+      count <- count + 1
     }
   }
 
