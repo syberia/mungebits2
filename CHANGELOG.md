@@ -1,3 +1,10 @@
+### Version 0.1.0.9004
+
+  * Provide backwards compatibility with
+    [legacy mungebits](https://github.com/robertzk/mungebits)
+    so that using `munge` with mixed legacy and new mungepieces
+    works as expected.
+
 ### Version 0.1.0.9003
 
   * Fixed an issue where `column_transformation` does not correctly drop multiple
