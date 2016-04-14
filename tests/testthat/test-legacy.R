@@ -69,6 +69,17 @@ describe("Creating legacy mungebits using the munge function", {
     attr(iris2, "mungepieces") <- NULL
     expect_equal(iris2, iris[-1])
   })
+
+  test_that("we can use the new munge function with mixed legacy and non-legacy mungebits", {
+    legacy_fn <- function(df) {
+      eval.parent(substitute({ df[[1]] <- NULL }))
+    }
+    class(legacy_fn) <- "legacy_mungebit_function"
+    non_legacy_fn <- function(df) { df[[1]] <- NULL; df }
+    iris2 <- munge(iris, list(list(legacy_fn), list(non_legacy_fn)))
+    attr(iris2, "mungepieces") <- NULL
+    expect_equal(iris2, iris[-c(1,2)])
+  })
 })
 
 
