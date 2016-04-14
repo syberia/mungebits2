@@ -26,8 +26,7 @@ Suggests:
     mungebits,
     testthat,
     testthatsomemore
-Remotes:
-    robertzk/mungebits,
+Remotes: robertzk/mungebits,
     syberia/stagerunner
 Roxygen: list(wrap = FALSE)
 Collate:
@@ -49,3 +48,4 @@ Collate:
     'standard_column_format.R'
     'utils.R'
     'zzz.R'
+RoxygenNote: 5.0.1.9000

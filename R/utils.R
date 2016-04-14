@@ -110,10 +110,20 @@ unnamed_count <- function(el) {
 ## [legacy mungebits](https://github.com/robertzk/mungebits),
 ## we perform nothing in many cases if the piece is not an R6 object (and hence
 ## a new mungepiece in the style of this package).
+#' Whether a mungepiece is a legacy mungepiece (from the mungepieces package).
+#'
+#' @param x ANY. An R object to test.
+#' @export
+#' @return TRUE or FALSE according as the mungepiece is a legacy mungepiece.
 is.legacy_mungepiece <- function(x) {
   is(x, "mungepiece") && !is(x, "R6")
 }
 
+#' Whether a mungebit is a legacy mungebit (from the mungebits package).
+#'
+#' @param x ANY. An R object to test.
+#' @export
+#' @return TRUE or FALSE according as the mungebit is a legacy mungebit.
 is.legacy_mungebit <- function(x) {
   is(x, "mungebit") && !is(x, "R6")
 }
