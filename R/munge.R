@@ -345,8 +345,28 @@ mungepiece_stages_contiguous <- function(mungelist) {
 }
 
 mungepiece_stage <- function(mungepiece_index, context) {
-  newpieces <- list() # make R CMD CHECK happy
-  stage <- function(env) {
+
+  stage <- function(env) { }
+
+  ## For mungebits2 objects (as opposed to [mungebits](https://github.com/robertzk/syberia))
+  ## we have to use different logic to allow backwards-compatible
+  ## mixing with legacy mungebits. We set the body of the `stage`
+  ## accordingly by checking whether the mungebit2 is an
+  ## [R6 object](https://github.com/wch/R6).
+  if (is(context$mungepieces[[mungepiece_index]], "R6")) {
+    body(stage) <- mungepiece_stage_body()
+  } else {
+    body(stage) <- legacy_mungepiece_stage_body()
+  }
+
+  environment(stage) <- list2env(parent = context,
+    list(mungepiece_index = mungepiece_index)
+  )
+  stage
+}
+
+mungepiece_stage_body <- function() {
+  quote({
     ## Each mungepiece will correspond to one stage in a stagerunner.
     ## We will construct a *new* mungepiece on-the-fly to avoid
     ## sharing state with other mungepiece objects, run that
@@ -367,10 +387,12 @@ mungepiece_stage <- function(mungepiece_index, context) {
       attr(env$data, "mungepieces") <-
         append(attr(env$data, "mungepieces"), newpieces)
     }
-  }
-  environment(stage) <- list2env(parent = context,
-    list(mungepiece_index = mungepiece_index)
-  )
-  stage
+  })
+}
+
+## To achieve backwards-compatibility with [mungebits](https://github.com/robertzk/syberia)),
+## we use different parsing logic for legacy mungepieces.
+legacy_mungepiece_stage_body <- function() {
+  
 }
 
