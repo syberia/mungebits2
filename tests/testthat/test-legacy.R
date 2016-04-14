@@ -24,6 +24,13 @@ describe("Munging with legacy mungebits", {
     attr(iris2, "mungepieces") <- NULL
     expected_iris <- iris[, 2:5]; expected_iris[[3]] <- expected_iris[[1]] + expected_iris[[2]]
     expect_equal(iris2, expected_iris)
+
+    # Check that mixed new and legacy munging is order-independent
+    iris2 <- munge(iris, list(newmp, mp))
+    attr(iris2, "mungepieces") <- NULL
+    expected_iris <- iris; expected_iris[[3]] <- expected_iris[[1]] + expected_iris[[2]]
+    expected_iris[[1]] <- NULL
+    expect_equal(iris2, expected_iris)
   })
 })
 
