@@ -456,8 +456,20 @@ to_function.mungepiece <- function(func, type) {
 }
 
 to_function.mungebit <- function(func, type) {
-  if (type == "train") func$train_function()
-  else func$predict_function()
+  if (is.legacy_mungebit(func)) {
+    if (type == "train") {
+      func$train_function
+    } else {
+      func$predict_function
+    }
+  } else {
+    if (type == "train") {
+      func$train_function()
+    }
+    else {
+      func$predict_function()
+    }
+  }
 }
 
 to_function.default <- function(func, type) {
