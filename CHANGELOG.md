@@ -1,9 +1,10 @@
-### Version 0.1.0.9004
+### Version 0.1.0.9004-5
 
   * Provide backwards compatibility with
     [legacy mungebits](https://github.com/robertzk/mungebits)
     so that using `munge` with mixed legacy and new mungepieces
-    works as expected.
+    works as expected, including construction of mungebits
+    from raw train and predict functions.
 
 ### Version 0.1.0.9003
 
