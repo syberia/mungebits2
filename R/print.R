@@ -2,6 +2,10 @@
 ## to make outputting mungebits objects beautiful.
 # Print a `mungepiece` object.
 print_mungepiece <- function(x, ...) {
+  if (is.legacy_mungepiece(x)) {
+    cat(crayon::blue$bold("Legacy mungepiece"))
+    return()
+  }
   cat(crayon::blue$bold("Mungepiece"), "with:\n")
   if (length(x$train_args()) > 0 && identical(x$train_args(), x$predict_args())) {
     print_args(x$train_args(), "train and predict", "green", ...)
@@ -26,6 +30,10 @@ print_args <- function(args, type, color, ..., full = FALSE, label = "arguments"
 
 # Print a `mungebit` object.
 print_mungebit <- function(x, ..., indent = 0L, prefix2 = "", show_trained = TRUE, full = FALSE) {
+  if (is.legacy_mungebit(x)) {
+    cat(crayon::blue$bold("Legacy mungebit"))
+    return()
+  }
   prefix <- paste(rep("  ", indent), collapse = "")
   trained <- function() {
     if (isTRUE(show_trained)) {
