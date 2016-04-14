@@ -23,9 +23,11 @@ Imports:
     whisker
 Suggests:
     microbenchmark,
+    mungebits,
     testthat,
     testthatsomemore
 Remotes:
+    robertzk/mungebits,
     syberia/stagerunner
 Roxygen: list(wrap = FALSE)
 Collate:
