@@ -128,3 +128,23 @@ is.legacy_mungebit <- function(x) {
   is(x, "mungebit") && !is(x, "R6")
 }
 
+#' Whether a train or predict function is a legacy function (from the mungebits package).
+#'
+#' Note that only functions constructed by the \code{munge} helper
+#' will be identifiable using this method.
+#'
+#' @param x ANY. An R object to test.
+#' @export
+#' @return TRUE or FALSE according as the mungebit is a legacy train or
+#'    predict function, determined using the \code{"legacy_mungebit_function"}
+#"    class.
+is.legacy_mungebit_function <- function(x) {
+  is(x, "legacy_mungebit_function")
+}
+
+ensure_legacy_mungebits_package <- function() {
+  if (!requireNamespace("mungebits", quietly = TRUE)) {
+    stop("The legacy mungebits package is required to create legacy mungebits.")
+  }
+}
+

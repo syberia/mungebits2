@@ -387,10 +387,11 @@ parse_mungepiece_simple <- function(args, func) {
   ## There is no real work to be done in the simple case
   ## when we call `parse_mungepiece(list(train_fn, ...))`.
   if (is.mungebit(func) || is.mungepiece(func)) {
-    mungepiece$new(mungebit$new(to_function(func, "train"),
-                                to_function(func, "predict")), args)
+    create_mungepiece(train_function   = to_function(func, "train"),
+                      predict_function = to_function(func, "predict"),
+                      train_args       = args)
   } else {
-    mungepiece$new(mungebit$new(func), args)
+    create_mungepiece(train_function = func, train_args = args)
   }
 }
 
@@ -417,7 +418,33 @@ parse_mungepiece_hybrid <- function(args, funcs) {
   funcs <- list(to_function(funcs[[1L]], "train"),
                 to_function(funcs[[2L]], "predict"))
 
-  do.call(mungepiece$new, c(list(mungebit$new(funcs[[1]], funcs[[2]])), dual_args))
+  create_mungepiece(funcs[[1]], funcs[[2]], dual_args[[1]], dual_args[[2]])
+}
+
+## To support backwards-compatibility with [legacy mungebits](https://github.com/robertzk/mungebits),
+## we allow creation of both legacy and new mungebits using the `munge` method.
+create_mungepiece <- function(train_function, predict_function = train_function,
+                              train_args = list(), predict_args = train_args) {
+  is.invalid_pair <- function(fn1, fn2) {
+    is.legacy_mungebit_function(fn1) &&
+    !is.null(fn2) && !is.legacy_mungebit_function(fn2)
+  }
+  ## If we are creating a legacy mungebit, *both* the train and predict function
+  ## must be decorated with the `"legacy_mungebit_function"` class.
+  if (is.invalid_pair(train_function, predict_function) ||
+      is.invalid_pair(predict_function, train_function)) {
+    stop("Cannot mix new and legacy mungebit train or predict functions.")
+  } else if (is.legacy_mungebit_function(train_function) ||
+             is.legacy_mungebit_function(predict_function)) {
+    ensure_legacy_mungebits_package()
+    getFromNamespace("mungepiece", "mungebits")$new(
+      getFromNamespace("mungebit", "mungebits")$new(train_function, predict_function),
+      train_args, predict_args
+    )
+  } else {
+    mungepiece$new(mungebit$new(train_function, predict_function),
+                   train_args, predict_args)
+  }
 }
 
 to_function <- function(func, type) {
