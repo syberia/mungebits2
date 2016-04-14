@@ -393,6 +393,32 @@ mungepiece_stage_body <- function() {
 ## To achieve backwards-compatibility with [mungebits](https://github.com/robertzk/syberia)),
 ## we use different parsing logic for legacy mungepieces.
 legacy_mungepiece_stage_body <- function() {
-  
+  quote({
+    ## This code is taken directly from [legacy mungebits](https://github.com/robertzk/mungebits/blob/99e2b30b01bfb6af39dc1bfd8d37334ea9c458b6/R/munge.r#L78-L93).
+    if (!is.element("mungebits", installed.packages()[, 1])) {
+      stop("To use legacy mungebits with mungebits2, make sure you have ",
+           "the mungebits package installed.")
+    }
+    reference_piece <- mungepieces[[mungepiece_index]]
+    bit <- mungebits:::mungebit$new(
+      reference_piece$bit$train_function, reference_piece$bit$predict_function,
+      enforce_train = reference_piece$bit$enforce_train
+    )
+    bit$trained <- reference_piece$bit$trained
+    bit$inputs  <- reference_piece$bit$inputs
+
+    piece <- mungebits:::mungepiece$new(
+      bit, reference_piece$train_args, reference_piece$predict_args
+    )
+
+    newpieces[[mungepiece_index]] <<- piece
+
+    piece$run(env)
+    
+    if (mungepiece_index == size) {
+      attr(env$data, "mungepieces") <-
+        append(attr(env$data, "mungepieces"), newpieces)
+    }
+  })
 }
 
