@@ -32,5 +32,20 @@ describe("Munging with legacy mungebits", {
     expected_iris[[1]] <- NULL
     expect_equal(iris2, expected_iris)
   })
+
+  test_that("legacy mungebits work as expected in predict", {
+    mb <- mungebits:::mungebit$new(function(df) { eval.parent(substitute({
+      if (!is.element("levels", ls(inputs))) {
+        inputs$levels <<- levels(df[[5]])
+      } else {
+        levels(df[[5]]) <- inputs$levels
+      }
+      df
+    })) })
+    mp <- mungebits:::mungepiece$new(mb)
+    iris2 <- munge(iris, list(mp))
+    iris1 <- iris[1, ]; iris1[[5]] <- as.factor(as.character(iris1[[5]]))
+    expect_equal(levels(munge(iris1, iris2)[[5]]), levels(iris[[5]]))
+  })
 })
 
