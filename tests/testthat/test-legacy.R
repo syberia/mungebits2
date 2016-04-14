@@ -49,3 +49,15 @@ describe("Munging with legacy mungebits", {
   })
 })
 
+describe("Creating legacy mungebits using the munge function", {
+  test_that("combining legacy and non-legacy functions is illegal", {
+    legacy_fn <- function(x) x; class(legacy_fn) <- "legacy_mungebit_function"
+    expect_error(munge(iris, list(list(list(legacy_fn, identity)))),
+                 "Cannot mix new and legacy")
+  })
+
+  test_that("we can use the new munge function with legacy mungebits", {
+  })
+})
+
+
