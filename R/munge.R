@@ -245,7 +245,9 @@
 #' # The munge function uses the attached "mungepieces" attribute, a list of
 #' # trained mungepieces.
 munge <- function(data, mungelist, stagerunner = FALSE, list = FALSE, parse = TRUE) {
-  stopifnot(is.data.frame(data) || (is.environment(data) && any(ls(data) == "data")))
+  stopifnot(is.data.frame(data) ||
+    (is.environment(data) &&
+     (!identical(stagerunner, FALSE) || any(ls(data) == "data"))))
 
   if (length(mungelist) == 0L) {
     return(data)
@@ -395,7 +397,7 @@ mungepiece_stage_body <- function() {
 legacy_mungepiece_stage_body <- function() {
   quote({
     ## This code is taken directly from [legacy mungebits](https://github.com/robertzk/mungebits/blob/99e2b30b01bfb6af39dc1bfd8d37334ea9c458b6/R/munge.r#L78-L93).
-    if (!is.element("mungebits", installed.packages()[, 1])) {
+    if (!requireNamespace("mungebits", quietly = TRUE)) {
       stop("To use legacy mungebits with mungebits2, make sure you have ",
            "the mungebits package installed.")
     }
