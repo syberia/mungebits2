@@ -25,6 +25,8 @@ Suggests:
     microbenchmark,
     testthat,
     testthatsomemore
+Remotes:
+    syberia/stagerunner
 Roxygen: list(wrap = FALSE)
 Collate:
     'column_transformation.R'
