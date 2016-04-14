@@ -240,7 +240,7 @@ the active R session (if mungebits2 is not attached to the search path).</p>
               <code class="R"><span class="spacer">  full_transformation <- function(data, columns = colnames(data), ...) { }
   was_debugged <- isdebugged(transformation)
   environment(transformation) <- list2env(list(
-    input = NULL, trained = NULL
+    input = NULL, trained = NULL, has_no_null = NULL
   ), parent = environment(transformation) %||% baseenv())
 </span></code>
             </pre>
@@ -404,6 +404,27 @@ during predict (e.g., storing the mean of the column during imputation).</p>
       length(input$columns), new.env(parent = emptyenv()), simplify = FALSE
     ), .Names = input$columns)
   }
+</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>Dataframe subset assignment (<code>[&lt;-.data.frame</code>) does not behave in the
+same manner as list assignment (<code>[&lt;-</code>). Since we stripped the data.frame
+of its class earlier, the next line will perform <em>list assignment</em>. 
+This has advantageous speedups, but in particular if we drop some of
+the columns by including <code>NULL</code> in the output of the transformation,
+this will corrupt the data.frame with actual <code>NULL</code> values 
+instead of dropping columns. We work around this with performance 
+considerations by recording whether any of the values in the inner loop
+are <code>NULL</code>.</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">  env$has_no_null <- TRUE
 
   data[indices] <- lapply(seq_along(indices), function(j, ...) {</span></code>
             </pre>
@@ -495,7 +516,7 @@ to.</p>
               <code class="R"><span class="spacer">      arguments[[1L]] <- bquote(.(data_expr)[[.(
         if (named) arguments$name else .subset2(names(data), .subset2(indices, j))
       )]])
-      .Internal(do.call(transformation, arguments, eval_frame))
+      result <- .Internal(do.call(transformation, arguments, eval_frame))
     } else {</span></code>
             </pre>
           </div>
@@ -510,12 +531,30 @@ magic and simply send the function the value.</p>
           <div class="code">
             <pre>
               <code class="R"><span class="spacer">      if (named) {
-        transformation(.subset2(data, .subset2(indices, j)), ...,
+        result <- transformation(.subset2(data, .subset2(indices, j)), ...,
                        name = .subset2(names(data), .subset2(indices, j)))
       } else {
-        transformation(.subset2(data, .subset2(indices, j)), ...)
+        result <- transformation(.subset2(data, .subset2(indices, j)), ...)
       }
     }
+    </span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>Using a <code>has_no_null</code> flag is slightly faster than <code>has_null</code>,
+since we can save on a call to <code>!</code> in the condition below.</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">    if (env$has_no_null && is.null(result)) {
+      env$has_no_null <- FALSE
+    }
+
+    result
   }, ...)
 </span></code>
             </pre>
@@ -532,6 +571,39 @@ user cannot modify them during predict.</p>
             <pre>
               <code class="R"><span class="spacer">  if (!isTRUE(trained)) {
     lapply(input$sub_inputs, lockEnvironment, bindings = TRUE)
+  }
+</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>Finally, if some of the columns <em>were</em> dropped, explicitly 
+remove them from the dataframe using <code>[[&lt;-</code> list assignment.
+This ensures that we do not drop any attributes and is faster
+than subsetting to non-<code>NULL</code> columns.</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">  if (!env$has_no_null) {
+    count <- 0
+    for (i in which(vapply(data, is.null, logical(1)))) {</span></code>
+            </pre>
+          </div>
+        </div>
+        <div class="section">
+          <div class="markdown markdown-body">
+            <p>As we&#39;re dropping columns, we need to &ldquo;shift&rdquo; the indices.</p>
+
+          </div>
+
+          <div class="code">
+            <pre>
+              <code class="R"><span class="spacer">      data[[i - count]] <- NULL
+      count <- count + 1
+    }
   }
 </span></code>
             </pre>
@@ -557,6 +629,13 @@ checks have been completed.</p>
 print.column_transformation <- function(x, ...) {
   # `print_transformation` parameters include `indent = 0L, full = FALSE`.
   print_transformation(x, ..., byline = "Column transformation")
+}
+
+#' @method all.equal transformation
+#' @export
+all.equal.transformation <- function(target, current, ...) {
+  identical(parent.env(environment(target))$transformation,
+            parent.env(environment(current))$transformation)
 }
 </span></code>
             </pre>
@@ -1486,8 +1565,7 @@ correctly replicate the same munging it performed during model training.</p>
 #' # The munge function uses the attached "mungepieces" attribute, a list of
 #' # trained mungepieces.
 munge <- function(data, mungelist, stagerunner = FALSE, list = FALSE, parse = TRUE) {
-  stopifnot(is.data.frame(data) ||
-            (is.environment(data) && exists("data", envir = data, inherits = FALSE)))
+  stopifnot(is.data.frame(data) || (is.environment(data) && any(ls(data) == "data")))
 
   if (length(mungelist) == 0L) {
     return(data)
