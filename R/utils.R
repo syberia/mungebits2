@@ -106,3 +106,15 @@ unnamed_count <- function(el) {
   sum(unnamed(el))
 }
 
+## To ensure backwards compatibility with
+## [legacy mungebits](https://github.com/robertzk/mungebits),
+## we perform nothing in many cases if the piece is not an R6 object (and hence
+## a new mungepiece in the style of this package).
+is.legacy_mungepiece <- function(x) {
+  is(x, "mungepiece") && !is(x, "R6")
+}
+
+is.legacy_mungebit <- function(x) {
+  is(x, "mungebit") && !is(x, "R6")
+}
+

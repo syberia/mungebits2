@@ -345,8 +345,28 @@ mungepiece_stages_contiguous <- function(mungelist) {
 }
 
 mungepiece_stage <- function(mungepiece_index, context) {
-  newpieces <- list() # make R CMD CHECK happy
-  stage <- function(env) {
+
+  stage <- function(env) { }
+
+  ## For mungebits2 objects (as opposed to [mungebits](https://github.com/robertzk/syberia))
+  ## we have to use different logic to allow backwards-compatible
+  ## mixing with legacy mungebits. We set the body of the `stage`
+  ## accordingly by checking whether the mungebit2 is an
+  ## [R6 object](https://github.com/wch/R6).
+  if (is(context$mungepieces[[mungepiece_index]], "R6")) {
+    body(stage) <- mungepiece_stage_body()
+  } else {
+    body(stage) <- legacy_mungepiece_stage_body()
+  }
+
+  environment(stage) <- list2env(parent = context,
+    list(mungepiece_index = mungepiece_index)
+  )
+  stage
+}
+
+mungepiece_stage_body <- function() {
+  quote({
     ## Each mungepiece will correspond to one stage in a stagerunner.
     ## We will construct a *new* mungepiece on-the-fly to avoid
     ## sharing state with other mungepiece objects, run that
@@ -367,10 +387,38 @@ mungepiece_stage <- function(mungepiece_index, context) {
       attr(env$data, "mungepieces") <-
         append(attr(env$data, "mungepieces"), newpieces)
     }
-  }
-  environment(stage) <- list2env(parent = context,
-    list(mungepiece_index = mungepiece_index)
-  )
-  stage
+  })
+}
+
+## To achieve backwards-compatibility with [mungebits](https://github.com/robertzk/syberia)),
+## we use different parsing logic for legacy mungepieces.
+legacy_mungepiece_stage_body <- function() {
+  quote({
+    ## This code is taken directly from [legacy mungebits](https://github.com/robertzk/mungebits/blob/99e2b30b01bfb6af39dc1bfd8d37334ea9c458b6/R/munge.r#L78-L93).
+    if (!is.element("mungebits", installed.packages()[, 1])) {
+      stop("To use legacy mungebits with mungebits2, make sure you have ",
+           "the mungebits package installed.")
+    }
+    reference_piece <- mungepieces[[mungepiece_index]]
+    bit <- mungebits:::mungebit$new(
+      reference_piece$bit$train_function, reference_piece$bit$predict_function,
+      enforce_train = reference_piece$bit$enforce_train
+    )
+    bit$trained <- reference_piece$bit$trained
+    bit$inputs  <- reference_piece$bit$inputs
+
+    piece <- mungebits:::mungepiece$new(
+      bit, reference_piece$train_args, reference_piece$predict_args
+    )
+
+    newpieces[[mungepiece_index]] <<- piece
+
+    piece$run(env)
+    
+    if (mungepiece_index == size) {
+      attr(env$data, "mungepieces") <-
+        append(attr(env$data, "mungepieces"), newpieces)
+    }
+  })
 }
 

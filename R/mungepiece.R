@@ -66,8 +66,16 @@ mungepiece <- R6::R6Class("mungepiece",
 ## A helper used to make a fresh untrained replica of an
 ## existing mungepiece.
 duplicate_mungepiece <- function(piece, ...) {
-  mungepiece$new(piece$mungebit()$duplicate(...),
-                 piece$train_args(), piece$predict_args())
+  ## To ensure backwards compatibility with
+  ## [legacy mungebits](https://github.com/robertzk/mungebits),
+  ## we perform nothing is the piece is not an R6 object (and hence
+  ## a new mungepiece in the style of this package).
+  if (is.legacy_mungepiece(piece)) {
+    piece
+  } else {
+    mungepiece$new(piece$mungebit()$duplicate(...),
+                   piece$train_args(), piece$predict_args())
+  }
 }
 
 #' Determine whether an object is a mungepiece.
