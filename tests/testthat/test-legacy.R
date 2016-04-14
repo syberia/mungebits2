@@ -54,9 +54,20 @@ describe("Creating legacy mungebits using the munge function", {
     legacy_fn <- function(x) x; class(legacy_fn) <- "legacy_mungebit_function"
     expect_error(munge(iris, list(list(list(legacy_fn, identity)))),
                  "Cannot mix new and legacy")
+    expect_error(munge(iris, list(list(list(identity, legacy_fn)))),
+                 "Cannot mix new and legacy")
   })
 
   test_that("we can use the new munge function with legacy mungebits", {
+    legacy_fn <- function(df) {
+      eval.parent(substitute({ df[[1]] <- NULL }))
+    }
+    # This must be a legacy function.
+    expect_error(munge(iris, list(list(legacy_fn))))
+    class(legacy_fn) <- "legacy_mungebit_function"
+    iris2 <- munge(iris, list(list(legacy_fn)))
+    attr(iris2, "mungepieces") <- NULL
+    expect_equal(iris2, iris[-1])
   })
 })
 
