@@ -296,8 +296,9 @@ parse_mungepiece_dual <- function(args) {
   args <- Map(list, parse_mungepiece_dual_chunk(args$train,   type = "train"),
                     parse_mungepiece_dual_chunk(args$predict, type = "predict"))
 
-  ## This is the format we need to use the `mungebit` and `mungepiece`
-  ## constructors.
+  ## We use the `create_mungepiece` helper defined below to ensure this 
+  ## construction works for new and [legacy](https://github.com/robertzk/mungebits)
+  ## mungepieces.
   do.call(create_mungepiece, c(args[[1L]], args[[2L]]))
 }
 
