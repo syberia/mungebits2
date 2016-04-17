@@ -243,7 +243,11 @@ parse_mungepiece <- function(args) {
   } else if (length(args) == 1L && is.mungebit(args[[1L]])) {
     ## This case is technically handled already in parse_mungepiece_single,
     ## but we make it explicit here.
-    mungepiece$new(duplicate_mungebit(args[[1L]]))
+    if (is.legacy_mungebit(args[[1L]])) {
+      getFromNamespace("mungepiece", "mungebits")$new(args[[1L]])
+    } else {
+      mungepiece$new(duplicate_mungebit(args[[1L]]))
+    }
     ## The third permissible format requires no unnamed arguments, since it
     ## must be a list consisting of a "train" and "predict" key.
   } else if (is.list(args) && length(args) > 0L) {

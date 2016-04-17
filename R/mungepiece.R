@@ -68,7 +68,7 @@ mungepiece <- R6::R6Class("mungepiece",
 duplicate_mungepiece <- function(piece, ...) {
   ## To ensure backwards compatibility with
   ## [legacy mungebits](https://github.com/robertzk/mungebits),
-  ## we perform nothing is the piece is not an R6 object (and hence
+  ## we perform nothing if the piece is not an R6 object (and hence
   ## a new mungepiece in the style of this package).
   if (is.legacy_mungepiece(piece)) {
     piece

@@ -437,7 +437,7 @@ environment_has_data <- function(env) {
       is.element("objectdiff", loadedNamespaces())) {
     any(getFromNamespace("ls", "objectdiff")(data) == "data")
   } else {
-    any(ls(data) == "data")
+    any(ls(env) == "data")
   }
 }
 
