@@ -298,7 +298,7 @@ parse_mungepiece_dual <- function(args) {
 
   ## This is the format we need to use the `mungebit` and `mungepiece`
   ## constructors.
-  do.call(mungepiece$new, c(list(do.call(mungebit$new, args[[1L]])), args[[2L]]))
+  do.call(create_mungepiece, c(args[[1L]], args[[2L]]))
 }
 
 ## We perform [type dispatch](http://adv-r.had.co.nz/OO-essentials.html#s3) to
