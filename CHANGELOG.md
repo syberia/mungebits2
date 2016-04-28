@@ -1,4 +1,4 @@
-### Version 0.1.0.9004-7
+### Version 0.1.0.9004-8
 
   * Provide backwards compatibility with
     [legacy mungebits](https://github.com/robertzk/mungebits)
