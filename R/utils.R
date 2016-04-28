@@ -116,7 +116,7 @@ unnamed_count <- function(el) {
 #' @export
 #' @return TRUE or FALSE according as the mungepiece is a legacy mungepiece.
 is.legacy_mungepiece <- function(x) {
-  is(x, "mungepiece") && !is(x, "R6")
+  methods::is(x, "mungepiece") && !methods::is(x, "R6")
 }
 
 #' Whether a mungebit is a legacy mungebit (from the mungebits package).
@@ -125,7 +125,7 @@ is.legacy_mungepiece <- function(x) {
 #' @export
 #' @return TRUE or FALSE according as the mungebit is a legacy mungebit.
 is.legacy_mungebit <- function(x) {
-  is(x, "mungebit") && !is(x, "R6")
+  methods::is(x, "mungebit") && !methods::is(x, "R6")
 }
 
 #' Whether a train or predict function is a legacy function (from the mungebits package).
@@ -139,7 +139,7 @@ is.legacy_mungebit <- function(x) {
 #'    predict function, determined using the \code{"legacy_mungebit_function"}
 #"    class.
 is.legacy_mungebit_function <- function(x) {
-  is(x, "legacy_mungebit_function")
+  methods::is(x, "legacy_mungebit_function")
 }
 
 ensure_legacy_mungebits_package <- function() {

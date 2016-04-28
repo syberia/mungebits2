@@ -65,7 +65,7 @@ print_mungebit_function <- function(fn, type, color, indent, ..., full = FALSE) 
     cat(sep = "", prefix, "* ", style(paste0("No ", type, " function.")), "\n")
   } else {
     cat(sep = "", prefix, "* ", style(paste0(type, " function")), ":\n")
-    if (is(fn, "transformation")) {
+    if (methods::is(fn, "transformation")) {
       ## We delegate the printing work to the transformation.
       print(fn, indent = indent, ..., full = isTRUE(full))
     } else {

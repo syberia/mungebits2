@@ -270,7 +270,7 @@ munge <- function(data, mungelist, stagerunner = FALSE, list = FALSE, parse = TR
     }
     Recall(data, attr(mungelist, "mungepieces"), stagerunner = stagerunner,
            list = list, parse = FALSE)
-  } else if (is(mungelist, "tundraContainer")) {
+  } else if (methods::is(mungelist, "tundraContainer")) {
     # An optional interaction effect with the tundra package.
     Recall(data, mungelist$munge_procedure, stagerunner = stagerunner,
            list = list, parse = FALSE)
@@ -355,7 +355,7 @@ mungepiece_stage <- function(mungepiece_index, context) {
   ## mixing with legacy mungebits. We set the body of the `stage`
   ## accordingly by checking whether the mungebit2 is an
   ## [R6 object](https://github.com/wch/R6).
-  if (is(context$mungepieces[[mungepiece_index]], "R6")) {
+  if (methods::is(context$mungepieces[[mungepiece_index]], "R6")) {
     body(stage) <- mungepiece_stage_body()
   } else {
     body(stage) <- legacy_mungepiece_stage_body()
