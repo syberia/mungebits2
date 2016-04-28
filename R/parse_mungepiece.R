@@ -235,7 +235,9 @@
 #' # The munge function uses the attached "mungepieces" attribute, a list of
 #' # trained mungepieces.
 parse_mungepiece <- function(args) {
-  if (is.mungepiece(args) || is.mungebit(args)) { args <- list(args) }
+  if (is.mungepiece(args) || is.mungebit(args) || is.function(args)) {
+    args <- list(args)
+  }
 
   if (length(args) == 1L && is.mungepiece(args[[1L]])) {
     ## We duplicate the mungepiece to avoid training it.

@@ -95,6 +95,18 @@ describe("it can procure the mungepieces list", {
   })
 })
 
+test_that("mungepiece names are preserved", {
+  iris2 <- munge(iris, list("Step 1" = list(identity), "Step 2" = list(identity)))
+  expect_equal(names(attr(iris2, "mungepieces")), c("Step 1", "Step 2"))
+})
+
+test_that("mungepiece names are preserved for legacy mungebits", {
+  legacy_function <- function(x) { x }
+  class(legacy_function) <- c("legacy_mungebit_function", class(legacy_function))
+  iris2 <- munge(iris, list("Step 1" = list(legacy_function), "Step 2" = list(legacy_function)))
+  expect_equal(names(attr(iris2, "mungepieces")), c("Step 1", "Step 2"))
+})
+
 describe("using mungepieces with inputs", {
 
   simple_imputer <- function(...) {

@@ -3,7 +3,7 @@ context("parse_mungepiece")
 describe("Invalid inputs", {
   test_that("it breaks when it does not receive a list", {
     expect_error(parse_mungepiece(5))
-    expect_error(parse_mungepiece(identity))
+    expect_error(parse_mungepiece(NULL))
     expect_error(parse_mungepiece(iris))
   })
 
@@ -36,6 +36,12 @@ train_fn   <- function(data, by = 2) {
 }
 
 predict_fn <- function(data, ...) { data[[1]] <- input$by * data[[1]]; data }
+
+test_that("it can receive a simple function", {
+  piece  <- parse_mungepiece(identity)
+  piece2 <- mungepiece$new(mungebit$new(identity))
+  expect_same_piece(piece, piece2)
+})
 
 describe("First format", {
   test_that("it correctly creates a mungepiece using the first format with no additional arguments", {
