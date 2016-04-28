@@ -20,7 +20,8 @@ Imports:
     lazyeval,
     R6,
     stagerunner,
-    whisker
+    whisker,
+    methods
 Suggests:
     microbenchmark,
     mungebits,
