@@ -303,7 +303,7 @@ munge_ <- function(data, mungelist, stagerunner, list_output, parse) {
   ## by the `mungepiece_stages` helper.
   stages <- mungepiece_stages(mungelist)
   if (is.environment(data)) {
-    context <- data
+    context <- normalize_environment(data)
   } else {
     context <- list2env(list(data = data), parent = emptyenv())
   }
@@ -430,12 +430,23 @@ legacy_mungepiece_stage_body <- function() {
   })
 }
 
+normalize_environment <- function(env) {
+  ## For compatibility with [objectdiff](https://github.com/robertzk/objectdiff),
+  ## we use its special-purpose `ls`.
+  if (is(env, "tracked_environment") && 
+      is.element("objectdiff", loadedNamespaces())) {
+    getFromNamespace("environment", "objectdiff")(env)
+  } else {
+    env
+  }
+}
+
 environment_has_data <- function(env) {
   ## For compatibility with [objectdiff](https://github.com/robertzk/objectdiff),
   ## we use its special-purpose `ls`.
   if (is(env, "tracked_environment") && 
       is.element("objectdiff", loadedNamespaces())) {
-    any(getFromNamespace("ls", "objectdiff")(data) == "data")
+    any(getFromNamespace("ls", "objectdiff")(env) == "data")
   } else {
     any(ls(env) == "data")
   }
