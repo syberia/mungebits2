@@ -80,6 +80,16 @@ describe("Creating legacy mungebits using the munge function", {
     attr(iris2, "mungepieces") <- NULL
     expect_equal(iris2, iris[-c(1,2)])
   })
+
+  test_that("it should be able to create a legacy mungebit using the third munge format", {
+    legacy_fn <- function(df, ...) {
+      eval.parent(substitute({ df[[1]] <- NULL }))
+    }
+    class(legacy_fn) <- "legacy_mungebit_function"
+    iris2 <- munge(iris, list(list(train = list(legacy_fn, "foo"), predict = list(legacy_fn, "bar"))))
+    attr(iris2, "mungepieces") <- NULL
+    expect_equal(iris2, iris[-1L])
+  })
 })
 
 

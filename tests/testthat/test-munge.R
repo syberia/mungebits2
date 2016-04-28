@@ -10,6 +10,22 @@ describe("Invalid inputs", {
   test_that("when munging against a data.frame it must have a mungepieces attribute", {
     expect_error(munge(iris, beaver2), "must have a ")
   })
+
+  test_that("when passing an environment it contains a data key", {
+    env <- list2env(list(foo = iris))
+    expect_error(munge(env, identity), "is.data.frame")
+    env <- list2env(list(data = iris))
+    munge(env, list(list(identity)))
+  })
+
+  test_that("when passing a tracked_environment it contains a data key", {
+    if (requireNamespace("objectdiff", quietly = TRUE)) {
+      env <- objectdiff::tracked_environment(list2env(list(foo = iris)))
+      expect_error(munge(env, identity), "is.data.frame")
+      env <- objectdiff::tracked_environment(list2env(list(data = iris)))
+      munge(env, list(list(identity)))
+    }
+  })
 })
 
 test_that("it does nothing when no mungepieces are passed", {
@@ -77,6 +93,29 @@ describe("it can procure the mungepieces list", {
     list <- munge(iris, args, list = TRUE)
     expect_equal(munge(iris, args), munge(iris, list))
   })
+})
+
+test_that("mungepiece names are preserved", {
+  iris2 <- munge(iris, list("Step 1" = list(identity), "Step 2" = list(identity)))
+  expect_equal(names(attr(iris2, "mungepieces")), c("Step 1", "Step 2"))
+})
+
+test_that("mungepiece names are preserved for legacy mungebits", {
+  legacy_function <- function(x) { x }
+  class(legacy_function) <- c("legacy_mungebit_function", class(legacy_function))
+  iris2 <- munge(iris, list("Step 1" = list(legacy_function), "Step 2" = list(legacy_function)))
+  expect_equal(names(attr(iris2, "mungepieces")), c("Step 1", "Step 2"))
+})
+
+test_that("munging works with a stagerunner generated for an objectdiff tracked environment", {
+  if (requireNamespace("objectdiff", quietly = TRUE)) {
+    env <- objectdiff::tracked_environment(list2env(list(data = iris)))
+    runner <- munge(env, list("Step 1" = list(identity)), stagerunner = list(remember = TRUE))
+    runner$run(1)
+    result <- runner$context$data
+    attr(result, "mungepieces") <- NULL
+    expect_equal(result, iris)
+  }
 })
 
 describe("using mungepieces with inputs", {
@@ -181,4 +220,5 @@ describe("using mungepieces with inputs", {
     })
   })
 })
+
 

@@ -235,7 +235,9 @@
 #' # The munge function uses the attached "mungepieces" attribute, a list of
 #' # trained mungepieces.
 parse_mungepiece <- function(args) {
-  if (is.mungepiece(args) || is.mungebit(args)) { args <- list(args) }
+  if (is.mungepiece(args) || is.mungebit(args) || is.function(args)) {
+    args <- list(args)
+  }
 
   if (length(args) == 1L && is.mungepiece(args[[1L]])) {
     ## We duplicate the mungepiece to avoid training it.
@@ -243,7 +245,11 @@ parse_mungepiece <- function(args) {
   } else if (length(args) == 1L && is.mungebit(args[[1L]])) {
     ## This case is technically handled already in parse_mungepiece_single,
     ## but we make it explicit here.
-    mungepiece$new(duplicate_mungebit(args[[1L]]))
+    if (is.legacy_mungebit(args[[1L]])) {
+      getFromNamespace("mungepiece", "mungebits")$new(args[[1L]])
+    } else {
+      mungepiece$new(duplicate_mungebit(args[[1L]]))
+    }
     ## The third permissible format requires no unnamed arguments, since it
     ## must be a list consisting of a "train" and "predict" key.
   } else if (is.list(args) && length(args) > 0L) {
@@ -292,9 +298,10 @@ parse_mungepiece_dual <- function(args) {
   args <- Map(list, parse_mungepiece_dual_chunk(args$train,   type = "train"),
                     parse_mungepiece_dual_chunk(args$predict, type = "predict"))
 
-  ## This is the format we need to use the `mungebit` and `mungepiece`
-  ## constructors.
-  do.call(mungepiece$new, c(list(do.call(mungebit$new, args[[1L]])), args[[2L]]))
+  ## We use the `create_mungepiece` helper defined below to ensure this 
+  ## construction works for new and [legacy](https://github.com/robertzk/mungebits)
+  ## mungepieces.
+  do.call(create_mungepiece, c(args[[1L]], args[[2L]]))
 }
 
 ## We perform [type dispatch](http://adv-r.had.co.nz/OO-essentials.html#s3) to

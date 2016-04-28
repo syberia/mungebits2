@@ -247,7 +247,9 @@
 munge <- function(data, mungelist, stagerunner = FALSE, list = FALSE, parse = TRUE) {
   stopifnot(is.data.frame(data) ||
     (is.environment(data) &&
-     (!identical(stagerunner, FALSE) || any(ls(data) == "data"))))
+    ## We have to be slightly careful here to ensure that we handle
+    ## [objectdiff](https://github.com/robertzk/objectdiff) environments correctly.
+     (!identical(stagerunner, FALSE) || environment_has_data(data))))
 
   if (length(mungelist) == 0L) {
     return(data)
@@ -301,7 +303,11 @@ munge_ <- function(data, mungelist, stagerunner, list_output, parse) {
   ## by the `mungepiece_stages` helper.
   stages <- mungepiece_stages(mungelist)
   if (is.environment(data)) {
-    context <- data
+    if (identical(stagerunner, FALSE)) {
+      context <- normalize_environment(data)
+    } else {
+      context <- data
+    }
   } else {
     context <- list2env(list(data = data), parent = emptyenv())
   }
@@ -376,7 +382,9 @@ mungepiece_stage_body <- function() {
     ## the trained mungepiece.
     # Make a fresh copy to avoid shared stage problems.
     piece <- mungepieces[[mungepiece_index]]$duplicate(private = TRUE)
-    piece$run(env)
+    ## We don't do the straightforward `piece$run(env)` to ensure
+    ## compatibility with [tracked environments](https://github.com/robertzk/objectdiff).
+    env$data <- piece$run(env$data)
     newpieces[[mungepiece_index]] <<- piece
 
     ## When we are out of mungepieces, that is, when the current index equals
@@ -386,6 +394,7 @@ mungepiece_stage_body <- function() {
     ## the munging actions on new data by passing the dataframe as the second 
     ## argument to the `munge` function.
     if (mungepiece_index == size) {
+      names(newpieces) <- names(mungepieces)
       attr(env$data, "mungepieces") <-
         append(attr(env$data, "mungepieces"), newpieces)
     }
@@ -418,9 +427,32 @@ legacy_mungepiece_stage_body <- function() {
     piece$run(env)
     
     if (mungepiece_index == size) {
+      names(newpieces) <- names(mungepieces)
       attr(env$data, "mungepieces") <-
         append(attr(env$data, "mungepieces"), newpieces)
     }
   })
+}
+
+normalize_environment <- function(env) {
+  ## For compatibility with [objectdiff](https://github.com/robertzk/objectdiff),
+  ## we use its special-purpose `ls`.
+  if (is(env, "tracked_environment") && 
+      is.element("objectdiff", loadedNamespaces())) {
+    getFromNamespace("environment", "objectdiff")(env)
+  } else {
+    env
+  }
+}
+
+environment_has_data <- function(env) {
+  ## For compatibility with [objectdiff](https://github.com/robertzk/objectdiff),
+  ## we use its special-purpose `ls`.
+  if (is(env, "tracked_environment") && 
+      is.element("objectdiff", loadedNamespaces())) {
+    any(getFromNamespace("ls", "objectdiff")(env) == "data")
+  } else {
+    any(ls(env) == "data")
+  }
 }
 
