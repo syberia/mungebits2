@@ -43,6 +43,13 @@ test_that("it can receive a simple function", {
   expect_same_piece(piece, piece2)
 })
 
+test_that("it can parse a pre-existing legacy mungebit", {
+  if ("mungebits" %in% row.names(installed.packages())) {
+    legacy_mungebit <- mungebits:::mungebit$new(function(x) { x })
+    parse_mungepiece(list(legacy_mungebit))
+  }
+})
+
 describe("First format", {
   test_that("it correctly creates a mungepiece using the first format with no additional arguments", {
     piece  <- parse_mungepiece(list(train_fn, 2))
