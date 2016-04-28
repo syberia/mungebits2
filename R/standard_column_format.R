@@ -67,7 +67,7 @@ standard_column_format <- function(cols, dataframe) {
       ## "all variables except `dep_var`", or if we had written
       ## `except(is.character)`, it would mean "all variables except
       ## the `character` variables." 
-      if (is(subcols, "except")) {
+      if (methods::is(subcols, "except")) {
         unexcepted <- unexcept(subcols)
         if (!is.list(unexcepted)) unexcepted <- list(unexcepted)
         setdiff(colnames(dataframe), process(unexcepted))
@@ -113,7 +113,7 @@ standard_column_format <- function(cols, dataframe) {
     ## but as mentioned before that would be inconvenient here since
     ## we must include it in full in `column_transformation`s to ensure
     ## they are portable.
-    if (is(cols, "except")) {
+    if (methods::is(cols, "except")) {
       setdiff(colnames(dataframe), process(list(unexcept(cols))))
     } else if (is.list(cols)) {
       process(cols)
