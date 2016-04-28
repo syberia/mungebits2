@@ -107,6 +107,17 @@ test_that("mungepiece names are preserved for legacy mungebits", {
   expect_equal(names(attr(iris2, "mungepieces")), c("Step 1", "Step 2"))
 })
 
+test_that("munging works with a stagerunner generated for an objectdiff tracked environment", {
+  if (requireNamespace("objectdiff", quietly = TRUE)) {
+    env <- objectdiff::tracked_environment(list2env(list(data = iris)))
+    runner <- munge(env, list("Step 1" = list(identity)), stagerunner = list(remember = TRUE))
+    runner$run(1)
+    result <- runner$context$data
+    attr(result, "mungepieces") <- NULL
+    expect_equal(result, iris)
+  }
+})
+
 describe("using mungepieces with inputs", {
 
   simple_imputer <- function(...) {

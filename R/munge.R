@@ -303,7 +303,11 @@ munge_ <- function(data, mungelist, stagerunner, list_output, parse) {
   ## by the `mungepiece_stages` helper.
   stages <- mungepiece_stages(mungelist)
   if (is.environment(data)) {
-    context <- normalize_environment(data)
+    if (identical(stagerunner, FALSE)) {
+      context <- normalize_environment(data)
+    } else {
+      context <- data
+    }
   } else {
     context <- list2env(list(data = data), parent = emptyenv())
   }
