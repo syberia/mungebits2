@@ -33,7 +33,7 @@
 #'   or \code{data.frame}.
 mungebit_run <- function(data, ...) {
   if (is.environment(data)) {
-    if (!exists("data", envir = data, inherits = FALSE)) {
+    if (!get("exists", envir = parent.frame())("data", envir = data, inherits = FALSE)) {
       stop("If you are passing an environment to a mungebit, you must ",
            "provide one that contains a ", sQuote("data"), " key.")
     }
