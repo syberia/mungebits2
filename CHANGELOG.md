@@ -1,3 +1,7 @@
+### Version 0.1.0.9010
+
+  * Fix `parse_mungepiece` for dual format with legacy functions.
+
 ### Version 0.1.0.9009
 
   * Modify `mungebit$run` to work correctly with shadowed versions
