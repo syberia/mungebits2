@@ -1,3 +1,12 @@
+### Version 0.1.0.9010
+
+  * Fix `parse_mungepiece` for dual format with legacy functions.
+
+### Version 0.1.0.9009
+
+  * Modify `mungebit$run` to work correctly with shadowed versions
+    of `exists`, as in [objectdiff](https://github.com/robertzk/objectdiff).
+
 ### Version 0.1.0.9004-8
 
   * Provide backwards compatibility with
