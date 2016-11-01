@@ -148,3 +148,12 @@ ensure_legacy_mungebits_package <- function() {
   }
 }
 
+#' Tag a function as a legacy mungebit function.
+#'
+#' @param x function. An R function to tag.
+#' @return \code{x} with additional class "legacy_mungebit_function".
+as.legacy_function <- function(x) {
+  class(x) <- c("legacy_mungebit_function", class(x))
+  x
+}
+
