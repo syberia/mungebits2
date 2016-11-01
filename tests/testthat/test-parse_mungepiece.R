@@ -137,6 +137,11 @@ describe("Third format", {
       expect_error(parse_mungepiece(list(train = list(identity), predict = list(2))),
                                     "must be a function")
     })
+
+    test_that("it errors if you mix legacy and non-legacy functions", {
+      expect_error(parse_mungepiece(list(train = list(identity), predict = list(as.legacy_function(identity)))), "Cannot mix")
+      expect_error(parse_mungepiece(list(train = list(as.legacy_function(identity)), predict = list(identity))), "Cannot mix")
+    })
   })
 
   test_that("the third format passes for a simple example", {
@@ -175,6 +180,16 @@ describe("Third format", {
     piece  <- parse_mungepiece(list(train = list(train_fn, 2), predict = list(ref_piece, 3)))
     piece$run(iris)
     expect_output(piece$run(iris), "Foo 3")
+  })
+
+  test_that("it correctly creates a legacy mungepiece from legacy inputs", {
+    piece <- parse_mungepiece(list(train = as.legacy_function(identity), predict = as.legacy_function(identity)))
+    expect_true(is.legacy_mungepiece(piece))
+  })
+
+  test_that("it correctly creates a legacy mungepiece from legacy inputs with heterogeneous arguments", {
+    piece <- parse_mungepiece(list(train = list(as.legacy_function(identity), "foo"), predict = list(as.legacy_function(identity), "bar")))
+    expect_true(is.legacy_mungepiece(piece))
   })
 })
 

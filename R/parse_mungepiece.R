@@ -429,9 +429,9 @@ create_mungepiece <- function(train_function, predict_function = train_function,
                               train_args = list(), predict_args = train_args, legacy) {
   missing_legacy <- missing(legacy)
   is.invalid_pair <- function(fn1, fn2) {
-    !missing_legacy &&
-    is.legacy_mungebit_function(fn1) &&
-    !is.null(fn2) && !is.legacy_mungebit_function(fn2)
+    if (!missing_legacy) FALSE
+    else is.legacy_mungebit_function(fn1) &&
+      !is.null(fn2) && !is.legacy_mungebit_function(fn2)
   }
   ## If we are creating a legacy mungebit, *both* the train and predict function
   ## must be decorated with the `"legacy_mungebit_function"` class.
