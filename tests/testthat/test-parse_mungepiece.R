@@ -209,6 +209,11 @@ describe("Passing existing mungebit or mungepiece", {
       piece <- mungepiece$new(mungebit$new(train_fn, predict_fn2))
       expect_same_piece(parse_mungepiece(list(bit)), piece)
     })
+
+    test_that("it accepts a legacy mungebit and create a legacy mungepiece", {
+      bit <- mungebits:::mungebit$new(train_fn, predict_fn)
+      expect_true(is.legacy_mungepiece(parse_mungepiece(list(bit))))
+    })
   })
 
   describe("Passing a mungebit with arguments", {

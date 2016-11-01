@@ -243,7 +243,9 @@ parse_mungepiece <- function(args) {
   } else if (length(args) == 1L && is.mungebit(args[[1L]])) {
     ## This case is technically handled already in parse_mungepiece_single,
     ## but we make it explicit here.
-    mungepiece$new(duplicate_mungebit(args[[1L]]))
+    create_mungepiece(to_function(args[[1L]], "train"),
+                      to_function(args[[1L]], "predict"),
+                      legacy = is.legacy_mungebit(args[[1L]]))
     ## The third permissible format requires no unnamed arguments, since it
     ## must be a list consisting of a "train" and "predict" key.
   } else if (is.list(args) && length(args) > 0L) {
@@ -424,8 +426,10 @@ parse_mungepiece_hybrid <- function(args, funcs) {
 ## To support backwards-compatibility with [legacy mungebits](https://github.com/robertzk/mungebits),
 ## we allow creation of both legacy and new mungebits using the `munge` method.
 create_mungepiece <- function(train_function, predict_function = train_function,
-                              train_args = list(), predict_args = train_args) {
+                              train_args = list(), predict_args = train_args, legacy) {
+  missing_legacy <- missing(legacy)
   is.invalid_pair <- function(fn1, fn2) {
+    !missing_legacy &&
     is.legacy_mungebit_function(fn1) &&
     !is.null(fn2) && !is.legacy_mungebit_function(fn2)
   }
@@ -434,7 +438,8 @@ create_mungepiece <- function(train_function, predict_function = train_function,
   if (is.invalid_pair(train_function, predict_function) ||
       is.invalid_pair(predict_function, train_function)) {
     stop("Cannot mix new and legacy mungebit train or predict functions.")
-  } else if (is.legacy_mungebit_function(train_function) ||
+  } else if ((!missing_legacy && isTRUE(legacy)) ||
+             is.legacy_mungebit_function(train_function) ||
              is.legacy_mungebit_function(predict_function)) {
     ensure_legacy_mungebits_package()
     getFromNamespace("mungepiece", "mungebits")$new(
