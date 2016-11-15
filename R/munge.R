@@ -375,7 +375,7 @@ mungepiece_stage_body <- function() {
     ## mungepiece, and then modify the `newpieces` to store
     ## the trained mungepiece.
     # Make a fresh copy to avoid shared stage problems.
-    piece <- mungepieces[[mungepiece_index]]$duplicate(private = TRUE)
+    piece <- mungepieces[[mungepiece_index]]$duplicate()
     piece$run(env)
     newpieces[[mungepiece_index]] <<- piece
 
