@@ -73,7 +73,7 @@ duplicate_mungepiece <- function(piece, ...) {
   if (is.legacy_mungepiece(piece)) {
     piece
   } else {
-    mungepiece$new(piece$mungebit()$duplicate(...),
+    mungepiece$new(piece$mungebit()$duplicate(..., private = piece$trained()),
                    piece$train_args(), piece$predict_args())
   }
 }
