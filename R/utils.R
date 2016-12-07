@@ -157,3 +157,6 @@ as.legacy_function <- function(x) {
   x
 }
 
+#' @export
+is.transformation <- function(x) inherits(x, "transformation")
+
