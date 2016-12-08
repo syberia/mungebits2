@@ -157,6 +157,12 @@ as.legacy_function <- function(x) {
   x
 }
 
+#' Determine whether or not a given object is a transformation.
+#'
+#' Transformations can be either column or multi column transformations.
+#'
 #' @export
-is.transformation <- function(x) inherits(x, "transformation")
+is.transformation <- function(x) {
+  inherits(x, "transformation")
+}
 
