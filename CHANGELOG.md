@@ -1,3 +1,7 @@
+### Version 0.1.0.9013
+
+* Add `is.transformation` helper.
+
 ### Version 0.1.0.9012
  
   * Remember the value of `trained` when duplicating a mungebit.
