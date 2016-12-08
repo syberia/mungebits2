@@ -6,6 +6,12 @@
 \usage{
 is.transformation(x)
 }
+\arguments{
+\item{x}{ANY. R object to test.}
+}
+\value{
+\code{TRUE} or \code{FALSE} according as it is a transformation.
+}
 \description{
 Transformations can be either column or multi column transformations.
 }

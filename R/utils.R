@@ -161,6 +161,8 @@ as.legacy_function <- function(x) {
 #'
 #' Transformations can be either column or multi column transformations.
 #'
+#' @param x ANY. R object to test.
+#' @return \code{TRUE} or \code{FALSE} according as it is a transformation.
 #' @export
 is.transformation <- function(x) {
   inherits(x, "transformation")
