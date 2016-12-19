@@ -79,6 +79,35 @@ describe("it can procure the mungepieces list", {
   })
 })
 
+describe("adding names to the mungepieces attribute", {
+  test_that("it respects when names are given with a stagerunner munger", {
+    env <- list2env(list(data = iris))
+    rnr <- munge(env, list(foo = list(function(x, y) { x[y, ]}, 1:100),
+                           bar = list(function(y) { y[[1]] <- y[[1]] * 2; y })),
+                 stagerunner = list(remember = TRUE))
+    rnr$run()
+    expect_equal(names(attr(env$data, "mungepieces")), c("foo", "bar"))
+  })
+
+  test_that("it respects when names are given", {
+    out <- munge(iris, list(foo = list(function(x, y) { x[y, ]}, 1:100),
+                            bar = list(function(y) { y[[1]] <- y[[1]] * 2; y })))
+    expect_equal(names(attr(out, "mungepieces")), c("foo", "bar"))
+  })
+
+  test_that("it respects when no names are given", {
+    out <- munge(iris, list(list(function(x, y) { x[y, ]}, 1:100),
+                            list(function(y) { y[[1]] <- y[[1]] * 2; y })))
+    expect_equal(names(attr(out, "mungepieces")), NULL)
+  })
+
+  test_that("it respects when partial names are given", {
+    out <- munge(iris, list(list(function(x, y) { x[y, ]}, 1:100),
+                            bar = list(function(y) { y[[1]] <- y[[1]] * 2; y })))
+    expect_equal(names(attr(out, "mungepieces")), c(NA_character_, "bar"))
+  })
+})
+
 describe("using mungepieces with inputs", {
 
   simple_imputer <- function(...) {

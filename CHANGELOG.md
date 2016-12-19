@@ -1,3 +1,7 @@
+### Version 0.1.0.9014
+
+* Ensure that names are preserved when munging using `munge`.
+
 ### Version 0.1.0.9013
 
 * Add `is.transformation` helper.

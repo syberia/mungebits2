@@ -343,10 +343,11 @@ mungepiece_stages_contiguous <- function(mungelist) {
          newpieces = list())
   )
 
-  lapply(seq_along(mungelist), mungepiece_stage, shared_context)
+  mungepiece_names <- names(mungelist) %||% character(length(mungelist))
+  lapply(Map(list, seq_along(mungelist), mungepiece_names), mungepiece_stage, shared_context)
 }
 
-mungepiece_stage <- function(mungepiece_index, context) {
+mungepiece_stage <- function(mungepiece_index_name_pair, context) {
 
   stage <- function(env) { }
 
@@ -355,14 +356,15 @@ mungepiece_stage <- function(mungepiece_index, context) {
   ## mixing with legacy mungebits. We set the body of the `stage`
   ## accordingly by checking whether the mungebit2 is an
   ## [R6 object](https://github.com/wch/R6).
-  if (methods::is(context$mungepieces[[mungepiece_index]], "R6")) {
+  if (methods::is(context$mungepieces[[mungepiece_index_name_pair[[1]]]], "R6")) {
     body(stage) <- mungepiece_stage_body()
   } else {
     body(stage) <- legacy_mungepiece_stage_body()
   }
 
   environment(stage) <- list2env(parent = context,
-    list(mungepiece_index = mungepiece_index)
+    list(mungepiece_index = mungepiece_index_name_pair[[1]],
+         mungepiece_name  = mungepiece_index_name_pair[[2]])
   )
   stage
 }
@@ -378,6 +380,9 @@ mungepiece_stage_body <- function() {
     piece <- mungepieces[[mungepiece_index]]$duplicate()
     piece$run(env)
     newpieces[[mungepiece_index]] <<- piece
+    if (isTRUE(nzchar(mungepiece_name) & !is.na(mungepiece_name))) {
+      names(newpieces)[mungepiece_index] <<- mungepiece_name
+    }
 
     ## When we are out of mungepieces, that is, when the current index equals
     ## the number of mungepieces in the actively processed contiguous chain 
