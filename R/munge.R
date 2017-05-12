@@ -2,7 +2,7 @@
 ## before it is ready to be fed to a machine learning classifier.
 ##
 ## The `munge` function defined in this file allows for a quick way to
-## apply a list of mungepieces to a dataframe. 
+## apply a list of mungepieces to a dataframe.
 ##
 ## ```r
 ## munged_data <- munge(raw_data, list(
@@ -12,7 +12,7 @@
 ##   "Discretize vars"   = list(list(discretize, restore_levels), discretized_vars)
 ## ))
 ## ```
-## 
+##
 ## Translated in English, we are saying:
 ##
 ##   1. Drop a static list of useless variables from the data set.
@@ -33,7 +33,7 @@
 ##      (categorical) variables.
 ##
 ## Instead of building the mungepieces and bits by hand by calling the
-## `mungepiece$new` and `mungebit$new` constructors (which is another 
+## `mungepiece$new` and `mungebit$new` constructors (which is another
 ## alternative), we use this convenient format to construct and apply
 ## the mungepieces on-the-fly.
 ##
@@ -59,9 +59,9 @@
 ## correctly replicate the same munging it performed during model training.
 #' Apply a list of mungepieces to data.
 #'
-#' The \code{munge} function allows a convenient format for applying a 
-#' sequence of \code{\link{mungepiece}} objects to a dataset. 
-#' 
+#' The \code{munge} function allows a convenient format for applying a
+#' sequence of \code{\link{mungepiece}} objects to a dataset.
+#'
 #' The \code{munge} helper accepts a raw, pre-munged (pre-cleaned)
 #' dataset and a list of lists. Each sublist represents the code
 #' and hyperparameters necessary to clean the dataset. For example,
@@ -79,12 +79,12 @@
 #' For each sublist in the list of pre-mungepieces passed to \code{munge},
 #' the following format is available. See the examples for a more hands-on
 #' example.
-#'   
+#'
 #' \enumerate{
 #'   \item{\code{list(train_fn, ...)}}{ -- If the first element of \code{args} is
 #'     a function followed by other arguments, the constructed mungepiece
 #'     will use the \code{train_fn} as both the \emph{train and predict}
-#'     function for the mungebit, and \code{list(...)} (that is, the remaining 
+#'     function for the mungebit, and \code{list(...)} (that is, the remaining
 #'     elements in the list) will be used as both the train and predict
 #'     arguments in the mungepiece. In other words, using this format
 #'     specifies you would like \emph{exactly the same behavior in
@@ -99,10 +99,10 @@
 #'     with not both elements \code{NULL}. If the \code{train_fn}
 #'     or \code{predict_fn}, resp., is \code{NULL}, this will signify to have
 #'     \emph{no effect} during training or prediction, resp.
-#'      
+#'
 #'     The remaining arguments, that is \code{list(...)}, will be used
 #'     as both the training and prediction arguments.
-#' 
+#'
 #'     This structure is ideal if the behavior during training and prediction
 #'     has an identical parametrization but very different implementation,
 #'     such as imputation, so you can pass two different functions.
@@ -172,7 +172,7 @@
 #' # predict functions and arguments.
 #' train_fn   <- predict_fn   <- function(x, ...) { x }
 #' train_arg1 <- predict_arg1 <- dual_arg1 <- TRUE # Can be any parameter value.
-#' 
+#'
 #' # The typical way to construct mungepieces would be using the constructor.
 #' piece <- mungepiece$new(
 #'   mungebit$new(train_fn, predict_fn),
@@ -182,7 +182,7 @@
 #' # This is tedious and can be simplified with the munge syntax, which
 #' # allows one to specify a nested list that defines all the mungebits
 #' # and enclosing mungepieces at once.
-#' 
+#'
 #' raw_data <- iris
 #' munged_data <- munge(raw_data, list(
 #'   # If the train function with train args is the same as the predict function
@@ -191,27 +191,27 @@
 #'   # arguments will be used as both the `train_args` and `predict_args`
 #'   # for the resulting mungepiece.
 #'   "Same train and predict" = list(train_fn, train_arg1, train_arg2 = "blah"),
-#'  
+#'
 #'   # If the train and predict arguments to the mungepiece match, but we
 #'   # wish to use a different train versus predict function for the mungebit.
 #'   "Different functions, same args" =
 #'     list(list(train_fn, predict_fn), dual_arg1, dual_arg2 = "blah"),
-#'   
+#'
 #'   # If we wish to only run this mungepiece during training.
 #'   "Only run in train" = list(list(train_fn, NULL), train_arg1, train_arg2 = "blah"),
-#'   
+#'
 #'   # If we wish to only run this mungepiece during prediction.
 #'   "Only run in predict" = list(list(NULL, predict_fn), predict_arg1, predict_arg2 = "blah"),
-#'  
+#'
 #'   # If we wish to run different arguments but the same function during
 #'   # training versus prediction.
-#'   "Totally different train and predict args, but same functions" = 
+#'   "Totally different train and predict args, but same functions" =
 #'      list(train = list(train_fn, train_arg1),
 #'           predict = list(train_fn, predict_arg1)),
-#'  
+#'
 #'   # If we wish to run different arguments with different functions during
 #'   # training versus prediction.
-#'   "Totally different train and predict function and args" = 
+#'   "Totally different train and predict function and args" =
 #'     list(train = list(train_fn, train_arg1),
 #'                       predict = list(predict_fn, predict_arg1))
 #' )) # End the call to munge()
@@ -220,7 +220,7 @@
 #' # The munged_data variable will have the transformed data set along
 #' # with a "mungepieces" attribute recording a list of trained mungepieces
 #' # derived from the above syntax.
-#'  
+#'
 #' # A slightly more real-life example.
 #' \dontrun{
 #' munged_data <- munge(raw_data, list(
@@ -229,13 +229,13 @@
 #'   "Impute variables"  = list(imputer, imputed_vars),
 #'   "Discretize vars"   = list(list(discretize, restore_levels), discretized_vars)
 #' ))
-#' 
+#'
 #' # Here, we have requested to munge the raw_data by dropping useless variables,
 #' # including the dependent variable dep_var after model training,
 #' # imputing a static list of imputed_vars, discretizing a static list
 #' # of discretized_vars being careful to use separate logic when merely
 #' # using the computed discretization cuts to bin the numeric features into
-#' # categorical features. The end result is a munged_data set with an 
+#' # categorical features. The end result is a munged_data set with an
 #' # attribute "mungepieces" that holds the list of mungepieces used for
 #' # munging the data, and can be used to perform the exact same set of
 #' # operations on a single row dataset coming through in a real-time production
@@ -261,7 +261,7 @@ munge <- function(data, mungelist, stagerunner = FALSE, list = FALSE, parse = TR
   ## We allow munging in prediction mode using an existing *trained* data.frame.
   ## For example, if we had ran `iris2 <- munge(iris, some_list_of_mungepieces)`,
   ## an attributes would be created on `iris2` with the name `"mungepieces"`.
-  ## The `munge` function is capable of re-using this attribute, a list of 
+  ## The `munge` function is capable of re-using this attribute, a list of
   ## trained mungepieces, and apply it to a new dataset. In English, it is
   ## asking to "perform the exact same munging that was done on `iris2`".
   if (is.data.frame(mungelist)) {
@@ -322,9 +322,9 @@ mungepiece_stages <- function(mungelist, contiguous = FALSE) {
   ## but also stagerunners earlier produced by `munge`. If we have a
   ## mungelist that looks like `list(mungepiece, runner, mungepiece, mungepiece, runner, ...)`
   ## then each *contiguous* block of mungepieces needs to be transformed
-  ## into a sequence of stages. We will see later why this is necessary: we 
-  ## have to append the `mungepieces` to the data.frame after the last 
-  ## mungepiece has been executed. 
+  ## into a sequence of stages. We will see later why this is necessary: we
+  ## have to append the `mungepieces` to the data.frame after the last
+  ## mungepiece has been executed.
   if (!isTRUE(contiguous)) {
     singles <- which(vapply(mungelist, Negate(is), logical(1), "stageRunner"))
     groups  <- cumsum(diff(c(singles[1L] - 1, singles)) != 1)
@@ -385,10 +385,10 @@ mungepiece_stage_body <- function() {
     }
 
     ## When we are out of mungepieces, that is, when the current index equals
-    ## the number of mungepieces in the actively processed contiguous chain 
+    ## the number of mungepieces in the actively processed contiguous chain
     ## of mungepieces, we append the mungepieces to the dataframe's
     ## `"mungepieces"` attribute. This is what allows us to later replay
-    ## the munging actions on new data by passing the dataframe as the second 
+    ## the munging actions on new data by passing the dataframe as the second
     ## argument to the `munge` function.
     if (mungepiece_index == size) {
       attr(env$data, "mungepieces") <-
@@ -419,9 +419,10 @@ legacy_mungepiece_stage_body <- function() {
     )
 
     newpieces[[mungepiece_index]] <<- piece
+    names(newpieces)[[mungepiece_index]] <<- names(mungepieces)[[mungepiece_index]]
 
     piece$run(env)
-    
+
     if (mungepiece_index == size) {
       attr(env$data, "mungepieces") <-
         append(attr(env$data, "mungepieces"), newpieces)
