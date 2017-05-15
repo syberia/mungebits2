@@ -423,7 +423,7 @@ legacy_mungepiece_stage_body <- function() {
     piece$run(env)
 
     if (mungepiece_index == size) {
-      names(newpieces) <<- names(mungepieces)
+      #names(newpieces) <<- names(mungepieces)
       attr(env$data, "mungepieces") <-
         append(attr(env$data, "mungepieces"), newpieces)
     }
