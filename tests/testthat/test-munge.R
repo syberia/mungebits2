@@ -209,5 +209,16 @@ describe("using mungepieces with inputs", {
       expect_equal(iris3[TRUE], iris)
     })
   })
+
+  describe("Legacy mungebits", {
+    legacy_identity_function <- function(dataframe, ...) { dataframe }
+    class(legacy_identity_function) <- c("legacy_mungebit_function", "transformation", "function")
+
+    iris2 <- munge(iris, list("Apply legacy identity" = list(list(legacy_identity_function, NULL))))
+    test_that("it attaches legacy mungebits, with names, to the dataframe", {
+      expect_equal(names(attr(iris2, "mungepieces")), "Apply legacy identity")
+    })
+  })
+
 })
 
