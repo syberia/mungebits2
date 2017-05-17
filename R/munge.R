@@ -44,7 +44,7 @@
 ## In other words, the munged data *remembers* how it was obtained
 ## from the raw data. The list of trained mungepieces, informally called a
 ## **munge procedure**, can be used to replicate the munging in a real-time
-## streaming production system without remember the full training set:
+## streaming production system without having to remember the full training set:
 ##
 ## ```r
 ## munged_single_row <- munge(single_row, attr(munged_data, "mungepieces"))
