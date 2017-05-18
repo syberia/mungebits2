@@ -145,7 +145,7 @@ repository. Examples include
 
 ## Installation
 
-This package is not yet available from CRAN (as of October 26, 2015).
+This package is in active development and not yet available from CRAN (as of May 18, 2017).
 To install the latest development builds directly from GitHub, run this instead:
 
 ```R
@@ -157,7 +157,7 @@ devtools::install_github("syberia/mungebits2")
 
 This project is licensed under the MIT License:
 
-Copyright (c) 2015-2016 Syberia, Avant, Robert Krzyzanowski
+Copyright (c) 2015-2017 Syberia, Avant, Robert Krzyzanowski
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
