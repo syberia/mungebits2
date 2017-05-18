@@ -1,3 +1,6 @@
+### Version 0.1.0.9015
+
+* Ensure that names are preserved for legacy mungebits too.
 ### Version 0.1.0.9014
 
 * Ensure that names are preserved when munging using `munge`.
@@ -7,7 +10,7 @@
 * Add `is.transformation` helper.
 
 ### Version 0.1.0.9012
- 
+
   * Remember the value of `trained` when duplicating a mungebit.
 
 ### Version 0.1.0.9010-9011
