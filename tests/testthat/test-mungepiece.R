@@ -589,6 +589,7 @@ describe("debugging", {
 describe("some tricky NSE examples", {
   test_that("it can use NSE with mungepieces in a simple example", {
     mpx <- mungepiece$new(mungebit$new(transform), train_args = alist(sep = Sepal.Length * 2))
+    debugonce(mpx$run)
     expect_equal(mpx$run(iris)$sep, iris$Sepal.Length * 2)
   })
 })
