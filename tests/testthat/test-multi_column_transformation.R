@@ -35,41 +35,42 @@ describe("With inputs", {
 
 })
 
-if (requireNamespace("microbenchmark", quietly = TRUE)) {
-  describe("Benchmarks", {
-
-    # This is technically a benchmark but I have no place to put it yet
-    test_that("it triples a column no more than 7x as slow as a raw operation", {
-      raw_triple <- function(dataframe, cols) {
-        class(dataframe) <- "list"
-        for (col in cols) dataframe[[paste0(col, "2")]] <- 3 * dataframe[[col]]
-        class(dataframe) <- "data.frame"
-        dataframe
-      }
-      tripler <- mungebit$new(multi_column_transformation(function(x) { 3 * x }))
-      expect_equal(
-        tripler$run(iris, "Sepal.Length", "Sepal.Length2"),
-        raw_triple(iris, "Sepal.Length")
-      )
-
-      speeds  <- summary(microbenchmark::microbenchmark(
-        tripler$run(iris, "Sepal.Length", "Sepal.Length2"),
-        raw_triple(iris, "Sepal.Length"), times = 5L))
-      multi_column_transformation_runtime <- speeds$median[[1L]]
-      apply_raw_function_runtime    <- speeds$median[[2L]]
-    
-      # TODO: (RK) Figure out why this is 2x slower on Linux rather than on OSX.
-      expect_true(multi_column_transformation_runtime < 12 * apply_raw_function_runtime,
-        paste0("Execution of ", crayon::blue("multi_column_transformation"),
-         " took too long: \nFormer took ",
-         crayon::red(paste0(multi_column_transformation_runtime, "ms")), 
-         " but latter took ",
-         crayon::red(paste0(apply_raw_function_runtime, "ms")), ".\n",
-         "You need to make sure the code for multi_column_transformation\n",
-         "stays efficient relative to ",
-         crayon::blue("raw_triple"),
-         " (see code for this unit test)"))
-    })
-  })
-}
+# https://github.com/syberia/mungebits2/issues/41
+# if (requireNamespace("microbenchmark", quietly = TRUE)) {
+#   describe("Benchmarks", {
+#
+#     # This is technically a benchmark but I have no place to put it yet
+#     test_that("it triples a column no more than 7x as slow as a raw operation", {
+#       raw_triple <- function(dataframe, cols) {
+#         class(dataframe) <- "list"
+#         for (col in cols) dataframe[[paste0(col, "2")]] <- 3 * dataframe[[col]]
+#         class(dataframe) <- "data.frame"
+#         dataframe
+#       }
+#       tripler <- mungebit$new(multi_column_transformation(function(x) { 3 * x }))
+#       expect_equal(
+#         tripler$run(iris, "Sepal.Length", "Sepal.Length2"),
+#         raw_triple(iris, "Sepal.Length")
+#       )
+#
+#       speeds  <- summary(microbenchmark::microbenchmark(
+#         tripler$run(iris, "Sepal.Length", "Sepal.Length2"),
+#         raw_triple(iris, "Sepal.Length"), times = 5L))
+#       multi_column_transformation_runtime <- speeds$median[[1L]]
+#       apply_raw_function_runtime    <- speeds$median[[2L]]
+#
+#       # TODO: (RK) Figure out why this is 2x slower on Linux rather than on OSX.
+#       expect_true(multi_column_transformation_runtime < 12 * apply_raw_function_runtime,
+#         paste0("Execution of ", crayon::blue("multi_column_transformation"),
+#          " took too long: \nFormer took ",
+#          crayon::red(paste0(multi_column_transformation_runtime, "ms")),
+#          " but latter took ",
+#          crayon::red(paste0(apply_raw_function_runtime, "ms")), ".\n",
+#          "You need to make sure the code for multi_column_transformation\n",
+#          "stays efficient relative to ",
+#          crayon::blue("raw_triple"),
+#          " (see code for this unit test)"))
+#     })
+#   })
+# }
 

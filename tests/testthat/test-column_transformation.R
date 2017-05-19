@@ -41,7 +41,7 @@ describe("Simplest examples", {
   test_that("correctly transforms a column into rounded factors", {
     round_and_factor <- column_transformation(function(x) { factor(round(x)) })
     iris2 <- mungebit$new(round_and_factor)$run(iris, "Sepal.Length")
-    
+
     expect_equal(iris2, transform(iris, Sepal.Length = factor(round(Sepal.Length))),
                  info = paste("column_transformation must convert to factor",
                               "after rounding first column of iris"))
@@ -50,7 +50,7 @@ describe("Simplest examples", {
   test_that("correctly transforms using numeric column indices", {
     doubler <- column_transformation(function(x) { 2 * x })
     iris2 <- mungebit$new(doubler)$run(iris, 2)
-    
+
     expect_equal(iris2, transform(iris, Sepal.Width = 2 * Sepal.Width),
                  info = paste("column_transformation must be able to reference",
                               "columns using numeric indices",
@@ -60,7 +60,7 @@ describe("Simplest examples", {
   test_that("correctly transforms using logical column indices", {
     doubler <- column_transformation(function(x) 2 * x)
     iris2   <- mungebit$new(doubler)$run(iris, "Sepal.Width" == colnames(iris))
-    
+
     expect_equal(iris2, transform(iris, Sepal.Width = 2 * Sepal.Width),
                  info = paste("column_transformation must be able to reference",
                               "columns using numeric indices",
@@ -74,7 +74,7 @@ describe("Simplest examples", {
     iris2       <- iris
     iris2[1, 1] <- NA
     iris2       <- mungebit$new(mean_imputer)$run(iris2, 1)
-    
+
     expect_equal(iris2, transform(iris, Sepal.Length = c(mean(Sepal.Length[-1L]), Sepal.Length[-1L])),
                  info = paste("column_transformation must impute NAs with mean"))
   })
@@ -220,37 +220,38 @@ describe("Passing arguments", {
 
 })
 
-if (requireNamespace("microbenchmark", quietly = TRUE)) {
-  describe("Benchmarks", {
-
-    # This is technically a benchmark but I have no place to put it yet
-    test_that("it doubles a column no more than 6x as slow as a raw operation", {
-      raw_double <- function(dataframe, cols) {
-        class(dataframe) <- "list"
-        for (col in cols) dataframe[[col]] <- 2 * dataframe[[col]]
-        class(dataframe) <- "data.frame"
-        dataframe
-      }
-      doubler <- mungebit$new(column_transformation(function(x) { 2 * x }))
-      speeds  <- summary(microbenchmark::microbenchmark(
-        doubler$run(iris, 1:4), raw_double(iris, 1:4), times = 5L))
-      column_transformation_runtime <- speeds$median[[1L]]
-      apply_raw_function_runtime    <- speeds$median[[2L]]
-    
-      # TODO: (RK) Figure out why this is 2x slower on Linux rather than on OSX.
-      expect_true(column_transformation_runtime < 12 * apply_raw_function_runtime,
-        paste0("Execution of ", crayon::blue("column_transformation"),
-         " took too long: \nFormer took ",
-         crayon::red(paste0(column_transformation_runtime, "ms")), 
-         " but latter took ",
-         crayon::red(paste0(apply_raw_function_runtime, "ms")), ".\n",
-         "You need to make sure the code for column_transformation\n",
-         "stays efficient relative to ",
-         crayon::blue("raw_double"),
-         " (see code for this unit test)"))
-    })
-  })
-}
+# https://github.com/syberia/mungebits2/issues/41
+# if (requireNamespace("microbenchmark", quietly = TRUE)) {
+#   describe("Benchmarks", {
+#
+#     # This is technically a benchmark but I have no place to put it yet
+#     test_that("it doubles a column no more than 6x as slow as a raw operation", {
+#       raw_double <- function(dataframe, cols) {
+#         class(dataframe) <- "list"
+#         for (col in cols) dataframe[[col]] <- 2 * dataframe[[col]]
+#         class(dataframe) <- "data.frame"
+#         dataframe
+#       }
+#       doubler <- mungebit$new(column_transformation(function(x) { 2 * x }))
+#       speeds  <- summary(microbenchmark::microbenchmark(
+#         doubler$run(iris, 1:4), raw_double(iris, 1:4), times = 5L))
+#       column_transformation_runtime <- speeds$median[[1L]]
+#       apply_raw_function_runtime    <- speeds$median[[2L]]
+#
+#       # TODO: (RK) Figure out why this is 2x slower on Linux rather than on OSX.
+#       expect_true(column_transformation_runtime < 12 * apply_raw_function_runtime,
+#         paste0("Execution of ", crayon::blue("column_transformation"),
+#          " took too long: \nFormer took ",
+#          crayon::red(paste0(column_transformation_runtime, "ms")),
+#          " but latter took ",
+#          crayon::red(paste0(apply_raw_function_runtime, "ms")), ".\n",
+#          "You need to make sure the code for column_transformation\n",
+#          "stays efficient relative to ",
+#          crayon::blue("raw_double"),
+#          " (see code for this unit test)"))
+#     })
+#   })
+# }
 
 describe("debugging", {
   test_that("calling debug on a column transformation sets the debug flag", {

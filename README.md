@@ -1,5 +1,5 @@
 Mungebits 2 [![Build Status](https://travis-ci.org/syberia/mungebits2.svg?branch=master)](https://travis-ci.org/syberia/mungebits2) [![Coverage Status](https://coveralls.io/repos/syberia/mungebits2/badge.svg?branch=master&service=github)](https://coveralls.io/r/syberia/mungebits2) [![Documentation](https://img.shields.io/badge/rocco-%E2%9C%93-blue.svg)](http://syberia.github.io/mungebits2/) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/syberia/syberia/blob/master/LICENSE) [![Join the chat at https://gitter.im/syberia/Lobby](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/syberia/Lobby) 
-===========
+============
 
 Mungebits2 defines a way of thinking about data preparation that couples the definition
 of what happens in batch processing versus online prediction so that
