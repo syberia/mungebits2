@@ -82,7 +82,8 @@ describe("Simplest examples", {
 
   test_that("it correctly imputes means in predict", {
     mean_imputer <- column_transformation(function(x) {
-      x[is.na(x)] <- mean(x, na.rm = TRUE); x
+      if (!trained) { input$mean <- mean(x, na.rm = TRUE) }
+      x[is.na(x)] <- input$mean; x
     })
     iris2       <- iris
     iris2[1, 1] <- NA
