@@ -73,10 +73,23 @@ describe("Simplest examples", {
     })
     iris2       <- iris
     iris2[1, 1] <- NA
-    iris2       <- mungebit$new(mean_imputer)$run(iris2, 1)
+    mb          <- mungebit$new(mean_imputer)
+    iris2       <- mb$run(iris2, 1)
 
     expect_equal(iris2, transform(iris, Sepal.Length = c(mean(Sepal.Length[-1L]), Sepal.Length[-1L])),
                  info = paste("column_transformation must impute NAs with mean"))
+  })
+
+  test_that("it correctly imputes means in predict", {
+    mean_imputer <- column_transformation(function(x) {
+      x[is.na(x)] <- mean(x, na.rm = TRUE); x
+    })
+    iris2       <- iris
+    iris2[1, 1] <- NA
+    mb          <- mungebit$new(mean_imputer)
+    iris3       <- mb$run(iris2, 1)
+
+    expect_equal(iris3[1, ], mb$run(iris2[1, ], 1))
   })
 
   test_that("it correctly runs column transformations using a function as column name specifier", {
