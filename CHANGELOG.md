@@ -1,6 +1,13 @@
+### Version 0.1.0.9016
+
+* Explicitly use `base::` in `column_transformation` to avoid crazy
+  scenarios where a global function exists with the same name (because
+  not everyone knows what's in base).
+
 ### Version 0.1.0.9015
 
 * Ensure that names are preserved for legacy mungebits too.
+
 ### Version 0.1.0.9014
 
 * Ensure that names are preserved when munging using `munge`.

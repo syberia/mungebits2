@@ -149,7 +149,13 @@ column_transformation_body <- quote({
   ## If we are supporting non-standard evaluation, we precompute
   ## the expression used, or we will lose it upon first reference of `data`.
   if (nonstandard) {
-    data_expr <- substitute(data)
+    ## We explicitly reference all base functions to avoid issues where
+    ## the mungebit is called in a reference frame where that function
+    ## has been accidentally overwritten (e.g., if someone makes a 
+    ## global `substitute` variable that points to a function).
+    ##
+    ## Yes, people are silly, and this does sometimes happen!
+    data_expr <- base::substitute(data)
   }
 
   if (!isTRUE(trained)) {
@@ -167,20 +173,20 @@ column_transformation_body <- quote({
     ## training versus prediction, it is by definition not the same mathematical
     ## transformation, and thus a mungebit is likely not the appropriate
     ## tool for your problem.
-    input$columns <- intersect(colnames(data), standard_column_format(columns, data))
+    input$columns <- base::intersect(colnames(data), standard_column_format(columns, data))
   }
 
-  indices <- match(input$columns, names(data))
+  indices <- base::match(input$columns, base::names(data))
 
   # An optimization trick to avoid the slow `[.data.frame` operator.
-  old_class   <- class(data)
+  old_class   <- base::class(data)
   ## Try to run ``print(`[.data.frame`)`` from your R console. Notice how
   ## much code is run to perform data.frame subsetting! The same is
   ## true for ``print(`[[<-.data.frame`)``, data.frame element assignment.
   ## Since we use this operation below, we want to skip over the typical
   ## checks for the sake of performance and use straight-up list subsetting
   ## (which will use underlying C code).
-  class(data) <- "list" 
+  class(data) <- "list" # If you've overwritten `class<-` globally then too bad.
 
   env$trained <- trained
   
@@ -189,8 +195,8 @@ column_transformation_body <- quote({
   ## to perform this capture is to use [`alist`](https://stat.ethz.ch/R-manual/R-devel/library/base/html/list.html)
   ## and retain the `parent.frame()` during `do.call` below.
   if (nonstandard) {
-    arguments  <- c(list(NULL), eval(substitute(alist(...))))
-    eval_frame <- parent.frame()
+    arguments  <- c(base::list(NULL), base::eval(substitute(alist(...))))
+    eval_frame <- base::parent.frame()
   }
 
   ## If the mungebit has not been trained yet (recall that `trained` is
@@ -200,8 +206,8 @@ column_transformation_body <- quote({
   ## to an `input` environment to store computations that will be required
   ## during predict (e.g., storing the mean of the column during imputation).
   if (!isTRUE(trained)) {
-    input$sub_inputs <- structure(replicate(
-      length(input$columns), new.env(parent = emptyenv()), simplify = FALSE
+    input$sub_inputs <- base::structure(base::replicate(
+      base::length(input$columns), base::new.env(parent = emptyenv()), simplify = FALSE
     ), .Names = input$columns)
   }
 
@@ -216,19 +222,19 @@ column_transformation_body <- quote({
   ## are `NULL`.
   env$has_no_null <- TRUE
 
-  data[indices] <- lapply(seq_along(indices), function(j, ...) {
+  data[indices] <- base::lapply(base::seq_along(indices), function(j, ...) {
     ## Since `indices` match the column names to iterate over on
     ## the nose, `sub_inputs[[j]]` will be the correct environment to
     ## use for the jth column. Here, `.subset2` is a trick to speed
     ## things up a tiny bit by calling the C function that does the
     ## actual subsetting.
-    env$input <- .subset2(.subset2(input, "sub_inputs"), j)
+    env$input <- base::.subset2(base::.subset2(input, "sub_inputs"), j)
 
     ## Assigning a function's environment clears its internal debug 
     ## flag, so if the function was previously being debugged we
     ## retain this property.
     if (was_debugged) {
-      debug(transformation)
+      base::debug(transformation)
     }
 
     ## And the non-standard evaluation trick! Imagine a user had called
@@ -249,29 +255,29 @@ column_transformation_body <- quote({
       if (named) {
         ## Recall that if the `transformation` has a formal argument called
         ## "name", we must pass along the column name.
-        arguments$name <- .subset2(names(data), .subset2(indices, j))
+        arguments$name <- base::.subset2(base::names(data), base::.subset2(indices, j))
       }
 
       ## We replace the first argument with the column to apply the transformation
       ## to.
-      arguments[[1L]] <- bquote(.(data_expr)[[.(
-        if (named) arguments$name else .subset2(names(data), .subset2(indices, j))
+      arguments[[1L]] <- base::bquote(.(data_expr)[[.(
+        if (named) arguments$name else base::.subset2(base::names(data), base::.subset2(indices, j))
       )]])
-      result <- .Internal(do.call(transformation, arguments, eval_frame))
+      result <- base::.Internal(base::do.call(transformation, arguments, eval_frame))
     } else {
       ## If NSE should not be carried over we do not bother with the
       ## magic and simply send the function the value.
       if (named) {
-        result <- transformation(.subset2(data, .subset2(indices, j)), ...,
-                       name = .subset2(names(data), .subset2(indices, j)))
+        result <- transformation(base::.subset2(data, base::.subset2(indices, j)), ...,
+                       name = base::.subset2(names(data), base::.subset2(indices, j)))
       } else {
-        result <- transformation(.subset2(data, .subset2(indices, j)), ...)
+        result <- transformation(base::.subset2(data, base::.subset2(indices, j)), ...)
       }
     }
     
     ## Using a `has_no_null` flag is slightly faster than `has_null`,
     ## since we can save on a call to `!` in the condition below.
-    if (env$has_no_null && is.null(result)) {
+    if (env$has_no_null && base::is.null(result)) {
       env$has_no_null <- FALSE
     }
 
@@ -280,8 +286,8 @@ column_transformation_body <- quote({
 
   ## After training, we lock the `input` environments so that the
   ## user cannot modify them during predict.
-  if (!isTRUE(trained)) {
-    lapply(input$sub_inputs, lockEnvironment, bindings = TRUE)
+  if (!base::isTRUE(trained)) {
+    base::lapply(input$sub_inputs, lockEnvironment, bindings = TRUE)
   }
 
   ## Finally, if some of the columns *were* dropped, explicitly 
@@ -290,7 +296,7 @@ column_transformation_body <- quote({
   ## than subsetting to non-`NULL` columns.
   if (!env$has_no_null) {
     count <- 0
-    for (i in which(vapply(data, is.null, logical(1)))) {
+    for (i in base::which(base::vapply(data, is.null, logical(1)))) {
       ## As we're dropping columns, we need to "shift" the indices.
       data[[i - count]] <- NULL
       count <- count + 1
