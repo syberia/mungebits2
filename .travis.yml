@@ -1,6 +1,7 @@
 language: r
 sudo: required
 cache: packages
+dist: trusty
 r_github_packages:
     - syberia/stagerunner
     - robertzk/testthatsomemore
