@@ -1,3 +1,9 @@
+### Version 0.1.0.9016
+
+* Explicitly use `base::` in `column_transformation` to avoid crazy
+  scenarios where a global function exists with the same name (because
+  not everyone knows what's in base).
+
 ### Version 0.1.0.9015
 
 * Allow NULL values in lists passed to `munge` function.
