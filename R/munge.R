@@ -281,6 +281,8 @@ munge <- function(data, mungelist, stagerunner = FALSE, list = FALSE, parse = TR
 
 # Assume proper arguments.
 munge_ <- function(data, mungelist, stagerunner, list_output, parse) {
+  mungelist <- Filter(Negate(is.null), mungelist)
+
   if (isTRUE(parse)) {
     ## It is possible to have nested stagerunners of mungeprocedures,
     ## but this is a more advanced feature. We skip stagerunners

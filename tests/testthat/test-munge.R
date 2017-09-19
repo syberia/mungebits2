@@ -195,6 +195,16 @@ describe("using mungepieces with inputs", {
     expect_equal(iris3[TRUE], iris2[colnames(iris3)]) 
   })
 
+  test_that("it removes NULL values from the munge procedure", {
+    imputer    <- simple_imputer("Sepal.Length")
+    iris[1, 1] <- NA
+    
+    iris2 <- munge(iris, list("Impute first column" = imputer, 
+                              "Foo"                 = NULL,
+                              "Drop species"        = list(drop_variables, "Species")))
+    expect_equal(iris2[1, 1], mean(iris$Sepal.Length[-1]))
+  })
+
   describe("One-sided munging", {
     test_that("it works with a predict-only mungebit", {
       iris2 <- munge(iris, list("Drop nothing" = list(list(NULL, drop_variables), "Species")))
