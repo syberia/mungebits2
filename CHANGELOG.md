@@ -1,6 +1,11 @@
 ### Version 0.1.0.9015
 
+* Allow NULL values in lists passed to `munge` function.
+
+### Version 0.1.0.9015
+
 * Ensure that names are preserved for legacy mungebits too.
+
 ### Version 0.1.0.9014
 
 * Ensure that names are preserved when munging using `munge`.
